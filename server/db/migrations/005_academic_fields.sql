@@ -1,0 +1,4 @@
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS faculty TEXT;
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS department TEXT;
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS enrollment_year TEXT;
+ALTER TABLE profiles ADD COLUMN IF NOT EXISTS academic_standing TEXT;

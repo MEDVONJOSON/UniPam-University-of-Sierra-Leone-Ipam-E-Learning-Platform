@@ -1,0 +1,2 @@
+ALTER TABLE courses ADD COLUMN IF NOT EXISTS instructor_id UUID REFERENCES users(id);
+ALTER TABLE courses ADD COLUMN IF NOT EXISTS instructor_name TEXT;
