@@ -3,6 +3,7 @@ import react from "@vitejs/plugin-react";
 import { VitePWA } from "vite-plugin-pwa";
 
 export default defineConfig({
+  base: "/UniPam-University-Of-Sierra-Leone-eCampus-E-leaning-/",
   plugins: [
     react(),
     VitePWA({
