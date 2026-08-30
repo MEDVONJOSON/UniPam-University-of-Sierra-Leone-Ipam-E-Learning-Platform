@@ -36,7 +36,8 @@ exports.register = async (req, res) => {
       currentAcademicYear: "Year 1",
       currentSemester: "Semester 1",
       approvalStatus: "pending",
-      isActive: false
+      isActive: false,
+      hasChangedPassword: false
     });
 
     res.status(201).json({
@@ -50,7 +51,8 @@ exports.register = async (req, res) => {
         studentIdNumber: user.studentIdNumber,
         universityProgramId: universityProgramId || null,
         approvalStatus: "pending",
-        defaultPassword: defaultPassword
+        defaultPassword: defaultPassword,
+        hasChangedPassword: false
       }
     });
   } catch (error) {
@@ -113,7 +115,8 @@ exports.login = async (req, res) => {
         studentIdNumber: user.student_id_number,
         universityProgramId: user.university_program_id,
         currentAcademicYear: user.current_academic_year,
-        currentSemester: user.current_semester
+        currentSemester: user.current_semester,
+        hasChangedPassword: user.has_changed_password === true
       }
     });
   } catch (error) {
@@ -128,7 +131,12 @@ exports.getMe = async (req, res) => {
     if (!user) {
       return res.status(404).json({ error: "User not found." });
     }
-    res.json({ user });
+    res.json({
+      user: {
+        ...user,
+        hasChangedPassword: user.has_changed_password === true
+      }
+    });
   } catch (error) {
     console.error("GetMe error:", error);
     res.status(500).json({ error: "Failed to fetch user data." });
@@ -170,11 +178,15 @@ exports.changePassword = async (req, res) => {
     }
 
     user.password_hash = await bcrypt.hash(newPassword, 10);
+    user.has_changed_password = true;
+    user.is_default_password = false;
+    user.password_changed_at = new Date().toISOString();
     user.updated_at = new Date().toISOString();
     pool.save();
 
     res.json({
-      message: "Password updated successfully! Please use your new password for all future logins."
+      hasChangedPassword: true,
+      message: "Password updated successfully! The default password notice has been cleared. Please use your new password for future logins."
     });
   } catch (error) {
     console.error("Change password error:", error);

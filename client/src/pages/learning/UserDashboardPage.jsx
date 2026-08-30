@@ -13,7 +13,7 @@ import {
   GraduationCap, PlayCircle, User,
   Building2, Bell, Zap, ExternalLink, Download,
   FileText, Video, Link2, File, FileSpreadsheet, Image as ImageIcon, FolderOpen,
-  Camera
+  Camera, ShieldAlert, Key, ShieldCheck
 } from "lucide-react";
 import DashboardStat from "../../components/DashboardStat";
 
@@ -95,6 +95,34 @@ function UserDashboardPage() {
 
   return (
     <div className="space-y-10 pb-20 max-w-7xl mx-auto">
+
+      {/* ⚠️ DEFAULT PASSWORD SECURITY NOTICE BANNER (Only shows until password is changed) */}
+      {!isLecturer && user?.hasChangedPassword === false && (
+        <div className="bg-gradient-to-r from-amber-500/15 via-amber-500/10 to-transparent border-2 border-amber-500/30 rounded-[2rem] p-6 flex flex-col md:flex-row items-center justify-between gap-6 shadow-sm">
+          <div className="flex items-center gap-5">
+            <div className="w-14 h-14 rounded-2xl bg-amber-500 text-white flex items-center justify-center flex-shrink-0 shadow-md shadow-amber-500/20">
+              <ShieldAlert className="w-7 h-7" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="bg-amber-100 text-amber-900 text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full border border-amber-200">
+                  Security Action Required
+                </span>
+                <h3 className="text-base font-black text-amber-950">Default Login Password Active</h3>
+              </div>
+              <p className="text-xs text-amber-900/80 font-semibold leading-relaxed max-w-2xl">
+                You are currently logged in with your initial default password (your Student ID). Please update your password in your profile to secure your account. Once updated, this notice will disappear immediately.
+              </p>
+            </div>
+          </div>
+          <Link
+            to="/app/profile"
+            className="px-6 py-3.5 bg-amber-600 hover:bg-amber-700 text-white text-xs font-black uppercase tracking-widest rounded-xl transition-all shadow-md flex-shrink-0 hover:scale-105"
+          >
+            Change Password Now &rarr;
+          </Link>
+        </div>
+      )}
 
       {/* ════════════════════════════════════════════════════════════════════════
           SECTION 1: STUDENT PROFILE OVERVIEW & IDENTITY CARD

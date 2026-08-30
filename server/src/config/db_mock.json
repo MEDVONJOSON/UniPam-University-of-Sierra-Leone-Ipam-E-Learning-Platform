@@ -23,6 +23,14 @@
       "role": "learner",
       "is_active": true,
       "created_at": "2026-08-30T21:08:14.710Z"
+    },
+    {
+      "id": "user-8yur6432n",
+      "email": "abassconthe@gmail.com",
+      "password_hash": "$2a$10$BH0tZ.gsF4C9Tv1fQfWHYu/iO/jNdZmiWeSxKVh9gt5vuakCizXcC",
+      "role": "lecturer",
+      "is_active": true,
+      "created_at": "2026-08-30T22:03:37.432Z"
     }
   ],
   "profiles": [
@@ -70,8 +78,8 @@
       "full_name": "Mohamed Vonjo",
       "student_id_number": "I-23-62625",
       "university_program_id": "f2::BSc Information Systems",
-      "current_academic_year": null,
-      "current_semester": null,
+      "current_academic_year": 4,
+      "current_semester": 2,
       "phone_number": "+232 76 000000",
       "country_code": "SL",
       "preferred_language": "English",
@@ -79,11 +87,34 @@
       "skills_interests": "[]",
       "learning_goals": "Learn Web Development",
       "institution_name": "University of Sierra Leone",
-      "faculty": "Faculty of Pure & Applied Sciences",
+      "faculty": "Faculty of Information Systems & Technology",
       "department": "Department of Computer Science",
       "enrollment_year": "2025",
       "academic_standing": "Good",
-      "created_at": "2026-08-30T21:08:14.726Z"
+      "created_at": "2026-08-30T21:08:14.726Z",
+      "profile_photo_url": "",
+      "designation": "",
+      "website_url": "",
+      "bio": "",
+      "updated_at": "2026-08-30T21:10:22.731Z"
+    },
+    {
+      "user_id": "user-8yur6432n",
+      "full_name": "MR ABASS CONTHE",
+      "phone_number": "+23233013411",
+      "country_code": "SL",
+      "preferred_language": "English",
+      "education_background": "",
+      "skills_interests": "[]",
+      "learning_goals": "",
+      "institution_name": "University of Sierra Leone",
+      "faculty": "Faculty of Information Systems & Technology",
+      "department": "Department of Information Technology",
+      "enrollment_year": "2026",
+      "academic_standing": "Good",
+      "designation": "Lecturer",
+      "created_at": "2026-08-30T22:03:37.433Z",
+      "updated_at": "2026-08-30T22:04:48.725Z"
     }
   ],
   "providers": [
@@ -334,6 +365,14 @@
       "title": "Welcome to UniPam",
       "message": "Congratulations on setting up your premium student account on UniPam!",
       "created_at": "2026-08-30T21:08:14.710Z",
+      "read_at": null
+    },
+    {
+      "id": "n-cc32pmkrf",
+      "user_id": "user-8yur6432n",
+      "title": "Welcome to UniPam",
+      "message": "Your lecturer account has been created by the administrator.",
+      "created_at": "2026-08-30T22:03:37.433Z",
       "read_at": null
     }
   ],

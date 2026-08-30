@@ -157,7 +157,7 @@ function LoginPage() {
               <p className="text-[10px] text-slate-400 font-semibold mt-2 ml-1">
                 {isLecturer
                   ? <>Use the password provided by the university administration.</>
-                  : <>Default password is your <strong>Student ID</strong>. Change it in your profile after first login.</>
+                  : <>Enter your portal password. (First-time login after Registry approval uses your <strong>Student ID</strong> as default password).</>
                 }
               </p>
             </div>

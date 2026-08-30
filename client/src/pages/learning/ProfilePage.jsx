@@ -192,6 +192,7 @@ function ProfilePage() {
         newPassword: passForm.newPassword
       });
       setPassMessage(res.message || "Password updated successfully!");
+      setSessionUser(prev => ({ ...(prev || {}), hasChangedPassword: true }));
       setPassForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
     } catch (err) {
       setPassError(err.message || "Failed to update password.");
@@ -395,15 +396,37 @@ function ProfilePage() {
             {/* Password & Security Management */}
             <ProfileSection title="SECURITY & PASSWORD MANAGEMENT">
               <form onSubmit={handlePasswordChange} className="space-y-6">
-                <div className="bg-emerald-50/50 p-4 rounded-2xl border border-emerald-100 flex items-start gap-3">
-                  <ShieldCheck className="w-5 h-5 text-[#0B5E3C] flex-shrink-0 mt-0.5" />
-                  <div>
-                    <p className="text-[10px] font-black text-[#0B5E3C] uppercase tracking-widest">Update Default Login Password</p>
-                    <p className="text-xs text-slate-600 mt-1 leading-relaxed">
-                      If you are logging in with your initial default password (your Student ID), change your password below to secure your student portal account.
-                    </p>
+                {sessionUser?.hasChangedPassword ? (
+                  <div className="bg-emerald-50 p-4 rounded-2xl border border-emerald-200 flex items-start gap-3">
+                    <ShieldCheck className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="bg-emerald-100 text-emerald-800 text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full border border-emerald-200">
+                          ✓ Password Secured
+                        </span>
+                        <p className="text-[10px] font-black text-emerald-800 uppercase tracking-widest">Personal Password Active</p>
+                      </div>
+                      <p className="text-xs text-emerald-700/90 font-medium mt-1 leading-relaxed">
+                        Your student portal account is protected with your personal password. You can update your password anytime below using your current password.
+                      </p>
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  <div className="bg-amber-500/10 p-4 rounded-2xl border border-amber-500/30 flex items-start gap-3">
+                    <ShieldAlert className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="bg-amber-100 text-amber-800 text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full border border-amber-200">
+                          Default Password Active
+                        </span>
+                        <p className="text-[10px] font-black text-amber-900 uppercase tracking-widest">Initial Password Update Required</p>
+                      </div>
+                      <p className="text-xs text-amber-900/90 font-medium mt-1 leading-relaxed">
+                        You are currently using your initial default password (your Student ID). Please choose a new password below to secure your portal account. Once updated, this notice will disappear instantly.
+                      </p>
+                    </div>
+                  </div>
+                )}
 
                 {passError && (
                   <div className="flex items-center gap-3 p-4 text-xs font-black text-red-600 bg-red-50 rounded-2xl border border-red-100">
@@ -420,7 +443,9 @@ function ProfilePage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div className="space-y-2">
-                    <label className="text-[10px] font-black text-hover-500 uppercase tracking-widest leading-none block ml-1">Current / Default Password</label>
+                    <label className="text-[10px] font-black text-hover-500 uppercase tracking-widest leading-none block ml-1">
+                      {sessionUser?.hasChangedPassword ? "Current Password" : "Current / Default Password"}
+                    </label>
                     <div className="relative">
                       <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                       <input

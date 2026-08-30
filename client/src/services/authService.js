@@ -102,22 +102,31 @@ export async function loginUser(payload) {
     program: parsed.program,
     currentAcademicYear: data.user.currentAcademicYear || null,
     currentSemester: data.user.currentSemester || null,
-    profilePhotoUrl: data.user.profilePhotoUrl || data.user.profile_photo_url || null
+    profilePhotoUrl: data.user.profilePhotoUrl || data.user.profile_photo_url || null,
+    hasChangedPassword: data.user.hasChangedPassword === true
   });
   return data;
 }
 
 export async function changePassword(payload) {
-  return await apiRequest("/auth/change-password", {
+  const data = await apiRequest("/auth/change-password", {
     method: "POST",
     body: JSON.stringify(payload)
   });
+  const current = getCurrentUser();
+  if (current) {
+    current.hasChangedPassword = true;
+    setCurrentUser(current);
+  }
+  return data;
 }
 
 export async function hydrateCurrentUser() {
   const data = await apiRequest("/auth/me");
   const parsed = parseProgramId(data.user.university_program_id || data.user.universityProgramId);
+  const current = getCurrentUser() || {};
   setCurrentUser({
+    ...current,
     id: data.user.id,
     name: data.user.full_name || data.user.fullName || "",
     email: data.user.email,
@@ -128,7 +137,8 @@ export async function hydrateCurrentUser() {
     program: parsed.program,
     currentAcademicYear: data.user.current_academic_year || data.user.currentAcademicYear || null,
     currentSemester: data.user.current_semester || data.user.currentSemester || null,
-    profilePhotoUrl: data.user.profile_photo_url || data.user.profilePhotoUrl || null
+    profilePhotoUrl: data.user.profile_photo_url || data.user.profilePhotoUrl || null,
+    hasChangedPassword: data.user.hasChangedPassword === true
   });
   return data.user;
 }
