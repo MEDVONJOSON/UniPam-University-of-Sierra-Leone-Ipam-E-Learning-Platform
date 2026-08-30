@@ -123,7 +123,11 @@ exports.getUsers = async (req, res) => {
         studentIdNumber: profile.student_id_number || "",
         universityProgramId: profile.university_program_id || "",
         enrollmentYear: profile.enrollment_year || "",
-        academicStanding: profile.academic_standing || ""
+        academicStanding: profile.academic_standing || "",
+        moduleTitle: profile.module_title || profile.assigned_module || "",
+        moduleCode: profile.module_code || "",
+        academicYear: profile.academic_year || profile.current_academic_year || "",
+        semester: profile.semester || profile.current_semester || ""
       };
     });
 
@@ -138,7 +142,9 @@ exports.getUsers = async (req, res) => {
       users = users.filter(u =>
         u.fullName.toLowerCase().includes(q) ||
         u.email.toLowerCase().includes(q) ||
-        u.studentIdNumber.toLowerCase().includes(q)
+        u.studentIdNumber.toLowerCase().includes(q) ||
+        (u.moduleCode && u.moduleCode.toLowerCase().includes(q)) ||
+        (u.moduleTitle && u.moduleTitle.toLowerCase().includes(q))
       );
     }
 
@@ -178,7 +184,11 @@ exports.getUser = async (req, res) => {
         academicStanding: profile.academic_standing || "",
         designation: profile.designation || "",
         bio: profile.bio || "",
-        institutionName: profile.institution_name || ""
+        institutionName: profile.institution_name || "",
+        moduleTitle: profile.module_title || profile.assigned_module || "",
+        moduleCode: profile.module_code || "",
+        academicYear: profile.academic_year || profile.current_academic_year || "",
+        semester: profile.semester || profile.current_semester || ""
       }
     });
   } catch (error) {
@@ -193,7 +203,10 @@ exports.getUser = async (req, res) => {
  */
 exports.createUser = async (req, res) => {
   try {
-    const { email, fullName, role, phoneNumber, faculty, department, password } = req.body;
+    const {
+      email, fullName, role, phoneNumber, faculty, department, password,
+      moduleTitle, moduleCode, academicYear, semester
+    } = req.body;
     if (!email || !fullName || !role) {
       return res.status(400).json({ error: "Email, full name, and role are required." });
     }
@@ -235,10 +248,53 @@ exports.createUser = async (req, res) => {
       department: department || "",
       enrollment_year: new Date().getFullYear().toString(),
       academic_standing: "Good",
-      designation: role === "lecturer" ? "Lecturer" : "",
+      designation: role === "lecturer" ? "Lecturer & Module Coordinator" : "",
+      module_title: moduleTitle || "",
+      assigned_module: moduleTitle || "",
+      module_code: moduleCode || "",
+      academic_year: academicYear || "",
+      current_academic_year: academicYear || "",
+      semester: semester || "Semester 1",
+      current_semester: semester || "Semester 1",
       created_at: new Date().toISOString()
     };
     data.profiles.push(newProfile);
+
+    // If lecturer with a module, ensure course and module exist in repository
+    if (role === "lecturer" && (moduleTitle || moduleCode)) {
+      const courseId = "c-" + Math.random().toString(36).substr(2, 9);
+      const newCourse = {
+        id: courseId,
+        provider_id: "5", // UniPam
+        external_id: moduleCode || "MOD-101",
+        title: moduleTitle || `${fullName}'s Module`,
+        category: faculty || "Information Systems & Technology",
+        skill_level: academicYear || "Undergraduate",
+        duration_label: "1 Semester",
+        has_certificate: true,
+        cost_type: "free",
+        external_url: "https://unipam.edu.sl/",
+        description: `Academic course module coordinated by ${fullName}. Code: ${moduleCode || 'N/A'}.`,
+        is_internal: true,
+        instructor_id: id,
+        instructor_name: fullName,
+        thumbnail_url: null,
+        is_active: true,
+        created_at: new Date().toISOString()
+      };
+      data.courses.push(newCourse);
+
+      if (!data.modules) data.modules = [];
+      data.modules.push({
+        id: "m-" + Math.random().toString(36).substr(2, 9),
+        course_id: courseId,
+        title: moduleTitle || "Module Syllabus & Foundation",
+        module_code: moduleCode || "IPAM-101",
+        order_index: 0,
+        semester: semester || "Semester 1",
+        lecturer_name: fullName
+      });
+    }
 
     // Seed notifications
     data.notifications.push({
@@ -258,7 +314,11 @@ exports.createUser = async (req, res) => {
         email: newUser.email,
         role: newUser.role,
         fullName,
-        generatedPassword: rawPassword
+        generatedPassword: rawPassword,
+        moduleTitle,
+        moduleCode,
+        academicYear,
+        semester
       }
     });
   } catch (error) {
@@ -274,7 +334,10 @@ exports.createUser = async (req, res) => {
 exports.updateUser = async (req, res) => {
   try {
     const { id } = req.params;
-    const { email, fullName, role, phoneNumber, faculty, department, is_active } = req.body;
+    const {
+      email, fullName, role, phoneNumber, faculty, department, is_active,
+      moduleTitle, moduleCode, academicYear, semester
+    } = req.body;
     const data = pool.data;
 
     const userIdx = data.users.findIndex(u => u.id === id);
@@ -290,6 +353,19 @@ exports.updateUser = async (req, res) => {
       if (phoneNumber !== undefined) data.profiles[profileIdx].phone_number = phoneNumber;
       if (faculty !== undefined) data.profiles[profileIdx].faculty = faculty;
       if (department !== undefined) data.profiles[profileIdx].department = department;
+      if (moduleTitle !== undefined) {
+        data.profiles[profileIdx].module_title = moduleTitle;
+        data.profiles[profileIdx].assigned_module = moduleTitle;
+      }
+      if (moduleCode !== undefined) data.profiles[profileIdx].module_code = moduleCode;
+      if (academicYear !== undefined) {
+        data.profiles[profileIdx].academic_year = academicYear;
+        data.profiles[profileIdx].current_academic_year = academicYear;
+      }
+      if (semester !== undefined) {
+        data.profiles[profileIdx].semester = semester;
+        data.profiles[profileIdx].current_semester = semester;
+      }
       data.profiles[profileIdx].updated_at = new Date().toISOString();
     }
 
@@ -306,7 +382,11 @@ exports.updateUser = async (req, res) => {
         fullName: profile.full_name || "",
         phoneNumber: profile.phone_number || "",
         faculty: profile.faculty || "",
-        department: profile.department || ""
+        department: profile.department || "",
+        moduleTitle: profile.module_title || profile.assigned_module || "",
+        moduleCode: profile.module_code || "",
+        academicYear: profile.academic_year || profile.current_academic_year || "",
+        semester: profile.semester || profile.current_semester || ""
       }
     });
   } catch (error) {

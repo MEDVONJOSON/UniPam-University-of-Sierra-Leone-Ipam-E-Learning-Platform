@@ -9,7 +9,8 @@ import {
   LayoutDashboard, Users, BarChart3, Settings, LogOut, ShieldAlert, Search,
   Plus, Loader2, AlertCircle, CheckCircle2, ChevronDown, X,
   UserPlus, Activity, Shield, HardDrive, BookOpen, FileText, MessageSquare,
-  Edit3, Eye, Trash2, TrendingUp, Clock, Mail, Phone, User, Building2
+  Edit3, Eye, Trash2, TrendingUp, Clock, Mail, Phone, User, Building2,
+  Calendar, GraduationCap, Bookmark, Hash, Layers
 } from "lucide-react";
 
 /* ─── Sidebar ──────────────────────────────────────────────────────────────── */
@@ -196,13 +197,15 @@ function UserManagementTab() {
   // Create form
   const [createForm, setCreateForm] = useState({
     fullName: "", email: "", phoneNumber: "", role: "lecturer",
-    faculty: "", department: "", password: ""
+    faculty: "", department: "", password: "",
+    moduleTitle: "", moduleCode: "", academicYear: "Year 1", semester: "Semester 1"
   });
 
   // Edit form
   const [editForm, setEditForm] = useState({
     fullName: "", email: "", phoneNumber: "", role: "",
-    faculty: "", department: "", is_active: true
+    faculty: "", department: "", is_active: true,
+    moduleTitle: "", moduleCode: "", academicYear: "Year 1", semester: "Semester 1"
   });
 
   const loadUsers = useCallback(async () => {
@@ -226,7 +229,11 @@ function UserManagementTab() {
       const result = await createAdminUser(createForm);
       setMessage(`Account created for ${result.fullName}. Generated password: ${result.generatedPassword}`);
       setShowCreateModal(false);
-      setCreateForm({ fullName: "", email: "", phoneNumber: "", role: "lecturer", faculty: "", department: "", password: "" });
+      setCreateForm({
+        fullName: "", email: "", phoneNumber: "", role: "lecturer",
+        faculty: "", department: "", password: "",
+        moduleTitle: "", moduleCode: "", academicYear: "Year 1", semester: "Semester 1"
+      });
       loadUsers();
     } catch (err) { setError(err.message); }
   };
@@ -254,8 +261,17 @@ function UserManagementTab() {
 
   const openEdit = (user) => {
     setEditForm({
-      fullName: user.fullName, email: user.email, phoneNumber: user.phoneNumber,
-      role: user.role, faculty: user.faculty, department: user.department, is_active: user.is_active
+      fullName: user.fullName || "",
+      email: user.email || "",
+      phoneNumber: user.phoneNumber || "",
+      role: user.role || "",
+      faculty: user.faculty || "",
+      department: user.department || "",
+      is_active: user.is_active !== false,
+      moduleTitle: user.moduleTitle || "",
+      moduleCode: user.moduleCode || "",
+      academicYear: user.academicYear || "Year 1",
+      semester: user.semester || "Semester 1"
     });
     setShowEditModal(user);
   };
@@ -294,6 +310,22 @@ function UserManagementTab() {
     "Extra-Mural Studies Department"
   ];
 
+  const academicYears = [
+    "Year 1",
+    "Year 2",
+    "Year 3",
+    "Year 4",
+    "Postgraduate",
+    "Diploma Year 1",
+    "Diploma Year 2"
+  ];
+
+  const semesters = [
+    "Semester 1",
+    "Semester 2",
+    "Year-Round"
+  ];
+
   const inputClass = "block w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-[#0B5E3C] placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 transition-all";
   const labelClass = "text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1 mb-1.5 block";
 
@@ -324,7 +356,7 @@ function UserManagementTab() {
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <input
               type="text"
-              placeholder="Search by name, email, or student ID..."
+              placeholder="Search by name, email, module code, or student ID..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold text-[#0B5E3C] placeholder-slate-400 outline-none focus:ring-4 focus:ring-brand-500/10 transition-all"
@@ -359,7 +391,7 @@ function UserManagementTab() {
             onClick={() => setShowCreateModal(true)}
             className="flex items-center gap-2 px-6 py-3 bg-[#0B5E3C] text-white text-[10px] font-black rounded-xl hover:bg-brand-800 transition-all shadow-lg uppercase tracking-widest"
           >
-            <Plus className="w-4 h-4" /> Add User
+            <Plus className="w-4 h-4" /> Add User / Lecturer
           </button>
         </div>
 
@@ -370,10 +402,11 @@ function UserManagementTab() {
             <table className="w-full text-left">
               <thead>
                 <tr className="border-b border-slate-100 text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                  <th className="pb-3 pl-4">Student ID</th>
+                  <th className="pb-3 pl-4">ID / Code</th>
                   <th className="pb-3">Full Name</th>
                   <th className="pb-3">Email</th>
-                  <th className="pb-3">Faculty</th>
+                  <th className="pb-3">Faculty / Department</th>
+                  <th className="pb-3">Module & Academic Year</th>
                   <th className="pb-3">Role</th>
                   <th className="pb-3">Status</th>
                   <th className="pb-3">Created</th>
@@ -383,10 +416,34 @@ function UserManagementTab() {
               <tbody className="divide-y divide-slate-50">
                 {users.map(user => (
                   <tr key={user.id} className="group hover:bg-slate-50/50 transition-colors">
-                    <td className="py-4 pl-4 text-xs font-bold text-slate-500">{user.studentIdNumber || "—"}</td>
+                    <td className="py-4 pl-4 text-xs font-bold text-slate-500">
+                      {user.studentIdNumber || user.moduleCode || "—"}
+                    </td>
                     <td className="py-4 font-black text-[#0B5E3C] text-sm">{user.fullName || "—"}</td>
                     <td className="py-4 text-xs font-bold text-slate-500">{user.email}</td>
-                    <td className="py-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider max-w-[150px] truncate">{user.faculty || "—"}</td>
+                    <td className="py-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider max-w-[170px]">
+                      <div className="truncate text-[#0B5E3C] font-black">{user.faculty || "—"}</div>
+                      <div className="text-[9px] text-slate-400 truncate">{user.department || ""}</div>
+                    </td>
+                    <td className="py-4 text-[10px] font-bold text-slate-500 max-w-[200px]">
+                      {user.moduleTitle ? (
+                        <div>
+                          <div className="font-black text-[#0B5E3C] truncate">{user.moduleTitle}</div>
+                          <div className="flex items-center gap-1.5 mt-0.5">
+                            {user.moduleCode && (
+                              <span className="bg-brand-50 px-1.5 py-0.5 rounded text-[9px] font-black text-brand-700 uppercase">
+                                {user.moduleCode}
+                              </span>
+                            )}
+                            <span className="text-[9px] text-slate-400 font-bold">
+                              {user.academicYear || "Year 1"} · {user.semester || "Semester 1"}
+                            </span>
+                          </div>
+                        </div>
+                      ) : (
+                        <span className="text-slate-400 text-xs">—</span>
+                      )}
+                    </td>
                     <td className="py-4">
                       <span className={`px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest ${roleColors[user.role] || "bg-slate-100 text-slate-500"}`}>
                         {user.role === "learner" ? "Student" : user.role}
@@ -414,7 +471,7 @@ function UserManagementTab() {
                   </tr>
                 ))}
                 {users.length === 0 && (
-                  <tr><td colSpan="8" className="py-16 text-center text-slate-400 font-bold uppercase tracking-widest text-xs">No users found</td></tr>
+                  <tr><td colSpan="9" className="py-16 text-center text-slate-400 font-bold uppercase tracking-widest text-xs">No users found</td></tr>
                 )}
               </tbody>
             </table>
@@ -429,9 +486,13 @@ function UserManagementTab() {
             <div className="flex items-center justify-between mb-8">
               <div className="flex items-center gap-3">
                 <div className="w-2 h-8 bg-[#0B5E3C] rounded-full" />
-                <h2 className="text-2xl font-black text-[#0B5E3C] uppercase tracking-tight">Create {createForm.role === "lecturer" ? "Lecturer" : "Student"} Account</h2>
+                <h2 className="text-2xl font-black text-[#0B5E3C] uppercase tracking-tight">
+                  Create {createForm.role === "lecturer" ? "Lecturer" : "Student"} Account
+                </h2>
               </div>
-              <button onClick={() => setShowCreateModal(false)} className="p-2 rounded-xl hover:bg-slate-100 transition-colors"><X className="w-5 h-5 text-slate-400" /></button>
+              <button onClick={() => setShowCreateModal(false)} className="p-2 rounded-xl hover:bg-slate-100 transition-colors">
+                <X className="w-5 h-5 text-slate-400" />
+              </button>
             </div>
 
             <form className="space-y-6" onSubmit={handleCreate}>
@@ -521,12 +582,82 @@ function UserManagementTab() {
                 </div>
               </div>
 
+              {/* Module & Academic Assignment */}
+              <div className="bg-slate-50 rounded-2xl p-5 border border-slate-100">
+                <div className="flex items-center gap-2 mb-4">
+                  <Bookmark className="w-4 h-4 text-brand-600" />
+                  <p className="text-[10px] font-black text-brand-600 uppercase tracking-widest">
+                    Academic & Module Assignment
+                  </p>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className={labelClass}>Assigned Module / Course Title</label>
+                    <div className="relative">
+                      <BookOpen className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                      <input
+                        type="text"
+                        placeholder="e.g. Information Systems & DB Architecture"
+                        value={createForm.moduleTitle}
+                        onChange={e => setCreateForm({ ...createForm, moduleTitle: e.target.value })}
+                        className={inputClass}
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className={labelClass}>Module Code / Number</label>
+                    <div className="relative">
+                      <Hash className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                      <input
+                        type="text"
+                        placeholder="e.g. IPAM-IS111 or COMS101"
+                        value={createForm.moduleCode}
+                        onChange={e => setCreateForm({ ...createForm, moduleCode: e.target.value })}
+                        className={inputClass}
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className={labelClass}>Academic Year / Level</label>
+                    <div className="relative">
+                      <GraduationCap className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                      <select
+                        value={createForm.academicYear}
+                        onChange={e => setCreateForm({ ...createForm, academicYear: e.target.value })}
+                        className={`${inputClass} appearance-none`}
+                      >
+                        {academicYears.map(yr => (
+                          <option key={yr} value={yr}>{yr}</option>
+                        ))}
+                      </select>
+                      <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                    </div>
+                  </div>
+                  <div>
+                    <label className={labelClass}>Semester</label>
+                    <div className="relative">
+                      <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                      <select
+                        value={createForm.semester}
+                        onChange={e => setCreateForm({ ...createForm, semester: e.target.value })}
+                        className={`${inputClass} appearance-none`}
+                      >
+                        {semesters.map(sem => (
+                          <option key={sem} value={sem}>{sem}</option>
+                        ))}
+                      </select>
+                      <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               {/* Account Status */}
               <div className="bg-brand-50 rounded-2xl p-5 border border-brand-100">
-                <p className="text-[10px] font-black text-brand-600 uppercase tracking-widest mb-2">Account Status</p>
+                <p className="text-[10px] font-black text-brand-600 uppercase tracking-widest mb-2">Account Status & Access</p>
                 <p className="text-xs text-slate-600 leading-relaxed">
-                  An initial password will be generated and sent to the {createForm.role === "lecturer" ? "lecturer" : "student"} via email.
-                  The {createForm.role === "lecturer" ? "lecturer" : "student"} can change their password upon first login for security.
+                  An initial password will be generated and assigned to the {createForm.role === "lecturer" ? "lecturer" : "student"}.
+                  {createForm.role === "lecturer" && createForm.moduleTitle && " Their assigned module will automatically be registered in the teaching suite."}
                 </p>
               </div>
 
@@ -544,22 +675,28 @@ function UserManagementTab() {
           <div className="bg-white rounded-[2.5rem] shadow-2xl max-w-lg w-full p-10">
             <div className="flex items-center justify-between mb-8">
               <h2 className="text-xl font-black text-[#0B5E3C] uppercase tracking-tight">User Details</h2>
-              <button onClick={() => setShowViewModal(null)} className="p-2 rounded-xl hover:bg-slate-100 transition-colors"><X className="w-5 h-5 text-slate-400" /></button>
+              <button onClick={() => setShowViewModal(null)} className="p-2 rounded-xl hover:bg-slate-100 transition-colors">
+                <X className="w-5 h-5 text-slate-400" />
+              </button>
             </div>
-            <div className="space-y-4">
+            <div className="space-y-3">
               {[
                 ["Full Name", showViewModal.fullName],
                 ["Email", showViewModal.email],
                 ["Role", showViewModal.role === "learner" ? "Student" : showViewModal.role],
-                ["Student ID", showViewModal.studentIdNumber || "N/A"],
+                ["Student / ID Number", showViewModal.studentIdNumber || "N/A"],
                 ["Faculty", showViewModal.faculty || "N/A"],
                 ["Department", showViewModal.department || "N/A"],
+                ["Assigned Module", showViewModal.moduleTitle || "N/A"],
+                ["Module Code", showViewModal.moduleCode || "N/A"],
+                ["Academic Year", showViewModal.academicYear || "N/A"],
+                ["Semester", showViewModal.semester || "N/A"],
                 ["Status", showViewModal.is_active ? "Active" : "Inactive"],
                 ["Created", new Date(showViewModal.created_at).toLocaleDateString()],
               ].map(([label, value]) => (
-                <div key={label} className="flex justify-between items-center py-3 border-b border-slate-50">
+                <div key={label} className="flex justify-between items-center py-2.5 border-b border-slate-50">
                   <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{label}</span>
-                  <span className="text-sm font-bold text-[#0B5E3C]">{value}</span>
+                  <span className="text-xs font-bold text-[#0B5E3C] max-w-[240px] text-right truncate">{value}</span>
                 </div>
               ))}
             </div>
@@ -575,8 +712,10 @@ function UserManagementTab() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
           <div className="bg-white rounded-[2.5rem] shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto p-10">
             <div className="flex items-center justify-between mb-8">
-              <h2 className="text-xl font-black text-[#0B5E3C] uppercase tracking-tight">Edit User</h2>
-              <button onClick={() => setShowEditModal(null)} className="p-2 rounded-xl hover:bg-slate-100 transition-colors"><X className="w-5 h-5 text-slate-400" /></button>
+              <h2 className="text-xl font-black text-[#0B5E3C] uppercase tracking-tight">Edit User Account</h2>
+              <button onClick={() => setShowEditModal(null)} className="p-2 rounded-xl hover:bg-slate-100 transition-colors">
+                <X className="w-5 h-5 text-slate-400" />
+              </button>
             </div>
             <form className="space-y-5" onSubmit={handleEdit}>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -645,6 +784,77 @@ function UserManagementTab() {
                   </div>
                 </div>
               </div>
+
+              {/* Module & Academic Details for Edit */}
+              <div className="bg-slate-50 rounded-2xl p-5 border border-slate-100">
+                <div className="flex items-center gap-2 mb-4">
+                  <Bookmark className="w-4 h-4 text-brand-600" />
+                  <p className="text-[10px] font-black text-brand-600 uppercase tracking-widest">
+                    Academic & Module Assignment
+                  </p>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className={labelClass}>Assigned Module / Course Title</label>
+                    <div className="relative">
+                      <BookOpen className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                      <input
+                        type="text"
+                        placeholder="e.g. Information Systems & DB Architecture"
+                        value={editForm.moduleTitle}
+                        onChange={e => setEditForm({ ...editForm, moduleTitle: e.target.value })}
+                        className={inputClass}
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className={labelClass}>Module Code / Number</label>
+                    <div className="relative">
+                      <Hash className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                      <input
+                        type="text"
+                        placeholder="e.g. IPAM-IS111"
+                        value={editForm.moduleCode}
+                        onChange={e => setEditForm({ ...editForm, moduleCode: e.target.value })}
+                        className={inputClass}
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className={labelClass}>Academic Year / Level</label>
+                    <div className="relative">
+                      <GraduationCap className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                      <select
+                        value={editForm.academicYear}
+                        onChange={e => setEditForm({ ...editForm, academicYear: e.target.value })}
+                        className={`${inputClass} appearance-none`}
+                      >
+                        {academicYears.map(yr => (
+                          <option key={yr} value={yr}>{yr}</option>
+                        ))}
+                      </select>
+                      <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                    </div>
+                  </div>
+                  <div>
+                    <label className={labelClass}>Semester</label>
+                    <div className="relative">
+                      <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                      <select
+                        value={editForm.semester}
+                        onChange={e => setEditForm({ ...editForm, semester: e.target.value })}
+                        className={`${inputClass} appearance-none`}
+                      >
+                        {semesters.map(sem => (
+                          <option key={sem} value={sem}>{sem}</option>
+                        ))}
+                      </select>
+                      <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
               <div className="flex items-center gap-3 bg-slate-50 rounded-xl p-4">
                 <input type="checkbox" id="activeToggle" checked={editForm.is_active}
                   onChange={e => setEditForm({ ...editForm, is_active: e.target.checked })}
