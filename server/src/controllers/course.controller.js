@@ -27,6 +27,26 @@ exports.getAllCourses = async (req, res) => {
   res.json({ data: formattedData });
 };
 
+exports.getMyCourses = async (req, res) => {
+  const courses = await Course.findAll({ instructorId: req.auth.userId });
+
+  const formattedData = courses.map((row) => ({
+    id: row.id,
+    title: row.title,
+    category: row.category,
+    level: row.skill_level,
+    duration: row.duration_label || "",
+    hasCertificate: row.has_certificate,
+    costType: row.cost_type,
+    description: row.description || "",
+    thumbnailUrl: row.thumbnail_url || "",
+    isInternal: row.is_internal,
+    createdAt: row.created_at
+  }));
+
+  res.json({ data: formattedData });
+};
+
 exports.getCourseById = async (req, res) => {
   const course = await Course.findById(req.params.courseId);
   if (!course) {
@@ -57,7 +77,7 @@ exports.getCourseById = async (req, res) => {
 
 exports.createCourse = async (req, res) => {
   const {
-    providerSlug = "idw",
+    providerSlug = "unipam",
     externalId,
     title,
     category,
@@ -85,22 +105,23 @@ exports.createCourse = async (req, res) => {
   }
   const provider = providerResult.rows[0];
 
-  // Logic for instructor
-  const instructorId = req.auth?.role !== 'admin' ? req.auth?.userId : null;
-  const instructorName = req.auth?.role !== 'admin' ? (req.user?.fullName || null) : null;
+  // Lecturer-authored courses are always internal (no external catalog link) and self-owned.
+  const isLecturer = req.auth?.role === "lecturer";
+  const instructorId = isLecturer ? req.auth.userId : null;
+  const instructorName = isLecturer ? (req.auth.email || null) : null;
 
   const newCourse = await Course.create({
     providerId: provider.id,
-    externalId: externalId || `IDW-${Date.now()}`,
+    externalId: externalId || `UNIPAM-${Date.now()}`,
     title,
     category,
     level,
     duration,
     hasCertificate,
     costType,
-    externalUrl: externalUrl || "",
+    externalUrl: isLecturer ? "" : (externalUrl || ""),
     description,
-    isInternal,
+    isInternal: isLecturer ? true : isInternal,
     instructorId,
     instructorName,
     thumbnailUrl

@@ -10,7 +10,7 @@ function ServicePage() {
   return (
     <section className="card">
       <h1>Services</h1>
-      <p className="muted">Core platform services delivered by Intellect Digital World.</p>
+      <p className="muted">Core platform services delivered by UniPam.</p>
       <ul>
         {services.map((item) => (
           <li key={item}>{item}</li>

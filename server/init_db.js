@@ -6,7 +6,7 @@ require('dotenv').config();
 async function runMigrations() {
   const client = new Client({ connectionString: process.env.DATABASE_URL });
   await client.connect();
-  console.log('Connected to idw database.');
+  console.log('Connected to unipam database.');
 
   const migrationsDir = path.join(__dirname, 'db', 'migrations');
   const files = fs.readdirSync(migrationsDir).sort();

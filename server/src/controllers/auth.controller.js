@@ -3,11 +3,12 @@ const jwt = require("jsonwebtoken");
 const User = require("../models/user.model");
 const { env } = require("../config/env");
 
+
 exports.register = async (req, res) => {
-  const { email, password, fullName, role = "learner" } = req.body;
-  
-  if (!email || !password || !fullName) {
-    return res.status(400).json({ error: "Email, password, and fullName are required." });
+  const { email, password, fullName, studentIdNumber, universityProgramId } = req.body;
+
+  if (!email || !password || !fullName || !studentIdNumber) {
+    return res.status(400).json({ error: "Full name, email, and student ID are required." });
   }
 
   try {
@@ -16,8 +17,22 @@ exports.register = async (req, res) => {
       return res.status(409).json({ error: "Email already registered." });
     }
 
+    const existingById = await User.findByStudentId(studentIdNumber);
+    if (existingById) {
+      return res.status(409).json({ error: "Student ID already registered." });
+    }
+
     const passwordHash = await bcrypt.hash(password, 10);
-    const user = await User.create({ email, passwordHash, role, fullName });
+    const user = await User.create({
+      email,
+      passwordHash,
+      role: "learner",
+      fullName,
+      studentIdNumber,
+      universityProgramId: universityProgramId || null,
+      currentAcademicYear: null,
+      currentSemester: null
+    });
 
     const token = jwt.sign(
       { sub: user.id, email: user.email, role: user.role },
@@ -31,7 +46,11 @@ exports.register = async (req, res) => {
         id: user.id,
         email: user.email,
         role: user.role,
-        fullName: user.fullName
+        fullName: user.fullName,
+        studentIdNumber: user.studentIdNumber,
+        universityProgramId: universityProgramId || null,
+        currentAcademicYear: user.currentAcademicYear || null,
+        currentSemester: user.currentSemester || null
       }
     });
   } catch (error) {
@@ -41,40 +60,28 @@ exports.register = async (req, res) => {
 };
 
 exports.login = async (req, res) => {
-  const { email, password } = req.body;
+  const { studentId, email, password } = req.body;
 
-  if (!email || !password) {
-    return res.status(400).json({ error: "Email and password are required." });
-  }
+  // Determine login mode: email (lecturer) or studentId (student)
+  const loginByEmail = !!email;
+  const identifier = loginByEmail ? email : studentId;
 
-  // Temporary Dev Bypass for USL Admin
-  if (email.toLowerCase() === "admin@usl.edu.sl" && password === "registry2026") {
-    const adminId = "00000000-0000-0000-0000-000000000001";
-    const token = jwt.sign(
-      { sub: adminId, email: "admin@usl.edu.sl", role: "admin" },
-      env.jwtSecret,
-      { expiresIn: "7d" }
-    );
-    return res.json({
-      token,
-      user: {
-        id: adminId,
-        email: "admin@usl.edu.sl",
-        role: "admin",
-        fullName: "USL Registry Admin (Dev)"
-      }
-    });
+  if (!identifier || !password) {
+    return res.status(400).json({ error: loginByEmail ? "Email and password are required." : "Student ID and password are required." });
   }
 
   try {
-    const user = await User.findByEmail(email);
+    const user = loginByEmail
+      ? await User.findByEmail(identifier)
+      : await User.findByStudentId(identifier);
+
     if (!user) {
-      return res.status(401).json({ error: "Invalid credentials." });
+      return res.status(401).json({ error: loginByEmail ? "Invalid email or password." : "Invalid Student ID or password." });
     }
 
     const isMatch = await bcrypt.compare(password, user.password_hash);
     if (!isMatch) {
-      return res.status(401).json({ error: "Invalid credentials." });
+      return res.status(401).json({ error: loginByEmail ? "Invalid email or password." : "Invalid Student ID or password." });
     }
 
     const token = jwt.sign(
@@ -89,7 +96,11 @@ exports.login = async (req, res) => {
         id: user.id,
         email: user.email,
         role: user.role,
-        fullName: user.full_name
+        fullName: user.full_name,
+        studentIdNumber: user.student_id_number,
+        universityProgramId: user.university_program_id,
+        currentAcademicYear: user.current_academic_year,
+        currentSemester: user.current_semester
       }
     });
   } catch (error) {
@@ -97,19 +108,8 @@ exports.login = async (req, res) => {
     res.status(500).json({ error: "Login failed." });
   }
 };
-exports.getMe = async (req, res) => {
-  const adminId = "00000000-0000-0000-0000-000000000001";
-  if (req.auth.userId === adminId) {
-    return res.json({
-      user: {
-        id: adminId,
-        email: "admin@usl.edu.sl",
-        role: "admin",
-        fullName: "USL Registry Admin (Dev)"
-      }
-    });
-  }
 
+exports.getMe = async (req, res) => {
   try {
     const user = await User.findById(req.auth.userId);
     if (!user) {
@@ -125,10 +125,6 @@ exports.getMe = async (req, res) => {
 exports.updateProfile = async (req, res) => {
   try {
     const userId = req.auth.userId;
-    if (userId === "00000000-0000-0000-0000-000000000001") {
-      return res.status(400).json({ error: "Dev admin profile cannot be updated." });
-    }
-
     const updatedProfile = await User.updateProfile(userId, req.body);
     res.json({ user: updatedProfile });
   } catch (error) {

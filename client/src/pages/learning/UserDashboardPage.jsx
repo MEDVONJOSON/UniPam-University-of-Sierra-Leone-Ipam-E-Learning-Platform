@@ -1,39 +1,50 @@
 import { useEffect, useState } from "react";
-import { Link, Navigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { getCurrentUser } from "../../services/authService";
 import {
-  getDashboardRecommendations, getDashboardSummary,
-  getEnrollments, updateEnrollmentProgress
+  getDashboardSummary,
+  getEnrollments,
+  getRepositoryMaterials,
+  getDownloadUrl,
+  getMyCourses
 } from "../../services/platformService";
 import {
-  BookOpen, Award, TrendingUp, Loader2, BarChart3, ChevronRight,
-  GraduationCap, Target, AlertCircle, Zap, ExternalLink, 
-  Coins, FileCheck, CreditCard, PlayCircle, MessageCircle, User,
-  Building2, Bell, LibraryBig
+  BookOpen, Award, Loader2, ChevronRight,
+  GraduationCap, PlayCircle, User,
+  Building2, Bell, Zap, ExternalLink, Download,
+  FileText, Video, Link2, File, FileSpreadsheet, Image as ImageIcon, FolderOpen,
+  Camera
 } from "lucide-react";
+import DashboardStat from "../../components/DashboardStat";
+
+const TYPE_CONFIG = {
+  pdf:          { Icon: FileText,       color: "#EF4444", bg: "#FEF2F2", label: "PDF" },
+  video:        { Icon: Video,          color: "#6366F1", bg: "#EEF2FF", label: "Video" },
+  doc:          { Icon: FileText,       color: "#3B82F6", bg: "#EFF6FF", label: "Document" },
+  presentation: { Icon: File,           color: "#F97316", bg: "#FFF7ED", label: "Presentation" },
+  spreadsheet:  { Icon: FileSpreadsheet,color: "#10B981", bg: "#F0FDF4", label: "Spreadsheet" },
+  image:        { Icon: ImageIcon,      color: "#EC4899", bg: "#FDF2F8", label: "Image" },
+  link:         { Icon: Link2,          color: "#0EA5E9", bg: "#F0F9FF", label: "External Link" },
+};
+
+function formatBytes(bytes) {
+  if (!bytes) return null;
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
 
 const INITIAL_SUMMARY = { enrolled_courses: 0, completed_courses: 0, average_progress: 0, rewards: 0, eligible_certs: 0, credits: 0, weekly_progress: 0 };
 
-function DashboardStat({ icon, value, label, linkText, linkTo, color }) {
-  return (
-    <div className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm flex flex-col items-center justify-center text-center group hover:border-blue-200 transition-all">
-      <div className={`text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4`}>{label}</div>
-      <div className="text-5xl font-black text-[#0d2d57] mb-4">{value}</div>
-      {linkText && (
-        <Link to={linkTo} className={`text-[10px] font-black uppercase tracking-widest ${color} hover:underline underline-offset-4`}>
-          {linkText}
-        </Link>
-      )}
-    </div>
-  );
-}
-
 function UserDashboardPage() {
   const user = getCurrentUser();
-  if (!user) return <Navigate to="/user-login" replace />;
+  const isLecturer = user?.role === "lecturer" || user?.role === "admin";
 
   const [summary, setSummary] = useState(INITIAL_SUMMARY);
   const [enrollments, setEnrollments] = useState([]);
+  const [repositoryMaterials, setRepositoryMaterials] = useState([]);
+  const [downloadedMaterials, setDownloadedMaterials] = useState([]);
+  const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -41,11 +52,16 @@ function UserDashboardPage() {
     setLoading(true);
     setError("");
     try {
-      const [summaryData, enrollmentData] = await Promise.all([
-        getDashboardSummary(), getEnrollments()
+      const [summaryData, enrollmentData, repositoryMaterialsData, myCoursesData] = await Promise.all([
+        getDashboardSummary(),
+        !isLecturer ? getEnrollments() : Promise.resolve([]),
+        getRepositoryMaterials(),
+        isLecturer ? getMyCourses() : Promise.resolve([])
       ]);
       setSummary({ ...INITIAL_SUMMARY, ...(summaryData || {}) });
       setEnrollments(enrollmentData || []);
+      setRepositoryMaterials(repositoryMaterialsData || []);
+      setCourses(myCoursesData || []);
     } catch {
       setError("Failed to load dashboard data.");
     } finally {
@@ -53,91 +69,170 @@ function UserDashboardPage() {
     }
   }
 
-  useEffect(() => { loadDashboardData(); }, []);
+  useEffect(() => { loadDashboardData(); }, [isLecturer]);
+
+  useEffect(() => {
+    const key = `downloaded_materials_${user?.id || 'default'}`;
+    try {
+      const items = JSON.parse(localStorage.getItem(key) || "[]");
+      setDownloadedMaterials(items);
+    } catch (_) {
+      setDownloadedMaterials([]);
+    }
+  }, [user?.id]);
 
   if (loading) {
     return (
       <div className="flex items-center justify-center py-32">
-        <Loader2 className="w-10 h-10 text-blue-600 animate-spin" />
+        <Loader2 className="w-10 h-10 text-emerald-600 animate-spin" />
       </div>
     );
   }
 
-  const lessonsThisWeek = enrollments.reduce((acc, curr) => acc + (curr.lessons_completed || 0), 0);
+  // Real registration data from localStorage (set on register/login)
+  const facultyName = user?.facultyName || "";
+  const programName = user?.program || "";
 
   return (
     <div className="space-y-10 pb-20 max-w-7xl mx-auto">
-      
-      {/* Student Profile Overview */}
+
+      {/* ════════════════════════════════════════════════════════════════════════
+          SECTION 1: STUDENT PROFILE OVERVIEW & IDENTITY CARD
+      ════════════════════════════════════════════════════════════════════════ */}
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-         
+
          {/* Identity Card */}
-         <div className="lg:col-span-2 bg-white rounded-[2rem] border border-slate-100 shadow-sm p-8 flex flex-col md:flex-row items-center gap-8 relative overflow-hidden group">
-            <div className="relative flex-shrink-0">
-               <div className="w-32 h-32 rounded-full border-4 border-blue-500 p-1.5 flex items-center justify-center bg-slate-50 transition-transform group-hover:scale-105 duration-500">
-                  <User className="w-16 h-16 text-slate-300" />
-               </div>
-               <div className="absolute -bottom-2 -right-2 bg-blue-600 text-white p-2 rounded-full shadow-lg">
-                  <GraduationCap className="w-4 h-4" />
-               </div>
-            </div>
+         <div className="lg:col-span-2 bg-white rounded-[2rem] border border-slate-200 shadow-sm p-8 flex flex-col md:flex-row items-center gap-8 relative overflow-hidden group">
             
-            <div className="flex-grow z-10 text-center md:text-left">
-               <div className="flex flex-wrap justify-center md:justify-start gap-2 mb-2">
-                  <div className="px-3 py-1 bg-blue-50 text-blue-600 rounded-full text-[10px] font-black uppercase tracking-widest italic">
-                     {summary.institution?.faculty_name || "Assigning Faculty..."}
-                  </div>
-                  {summary.scholarship_status !== 'none' && (
-                    <div className="px-3 py-1 bg-amber-50 text-amber-600 rounded-full text-[10px] font-black uppercase tracking-widest border border-amber-100 flex items-center gap-1">
-                       <Zap className="w-3 h-3" /> Scholarship: {summary.scholarship_status}
-                    </div>
-                  )}
-                  {summary.unread_notifications > 0 && (
-                    <div className="px-3 py-1 bg-red-50 text-red-600 rounded-full text-[10px] font-black uppercase tracking-widest animate-pulse flex items-center gap-1">
-                       <Bell className="w-3 h-3" /> {summary.unread_notifications} New Alerts
-                    </div>
-                  )}
-               </div>
-               <h1 className="text-3xl font-black text-[#0d2d57] mb-1">Hi, {user.name}</h1>
-               <p className="text-slate-400 text-sm font-bold uppercase tracking-tight">
-                  {summary.institution?.department_name || "Department Registry Pending"}
-               </p>
-               <div className="mt-8 flex items-center justify-center md:justify-start gap-6">
-                  <div>
-                     <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest leading-none mb-1">University Transcript ID</p>
-                     <p className="text-sm font-black text-[#0d2d57] tracking-wider uppercase">USL-{user.id?.substring(0, 8).toUpperCase()}</p>
-                  </div>
-                  <div className="w-px h-8 bg-slate-100" />
-                  <div>
-                     <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest leading-none mb-1">Academic Status</p>
-                     <p className="text-sm font-black text-emerald-500 tracking-wider uppercase">In Good Standing</p>
-                  </div>
-               </div>
-            </div>
+            {isLecturer ? (
+              <>
+                <div className="relative flex-shrink-0 flex flex-col items-center gap-3">
+                   <div className="relative">
+                      <div className="w-32 h-32 rounded-full border-4 border-[#0B5E3C] p-1.5 flex items-center justify-center bg-emerald-50 transition-transform group-hover:scale-105 duration-500 overflow-hidden">
+                         {user?.profilePhotoUrl ? (
+                           <img src={user.profilePhotoUrl} alt="Profile" className="w-full h-full rounded-full object-cover" />
+                         ) : (
+                           <User className="w-16 h-16 text-[#0B5E3C]" />
+                         )}
+                      </div>
+                      <div className="absolute -bottom-1 -right-1 bg-[#0B5E3C] text-white p-2.5 rounded-full shadow-lg border-2 border-white">
+                         <Camera className="w-5 h-5 text-amber-400" />
+                      </div>
+                   </div>
+                   <div className="mt-2 px-3 py-1.5 bg-emerald-100/50 text-[#0B5E3C] rounded-full text-[10px] font-black uppercase tracking-widest">
+                     VERIFIED LECTURER
+                   </div>
+                </div>
+
+                <div className="flex-grow z-10 text-center md:text-left">
+                   <div className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-full text-[10px] font-black uppercase tracking-widest mb-3">
+                      <Building2 className="w-3.5 h-3.5" />
+                      {user?.facultyName || "FACULTY OF INFORMATION SYSTEMS & TECHNOLOGY"}
+                   </div>
+                   <h1 className="text-3xl font-black text-[#0B5E3C] mb-1.5 uppercase">
+                      {user?.name || "DR. ERNEST UDEH, PH.D."}
+                   </h1>
+                   <p className="text-slate-500 text-xs font-bold uppercase tracking-tight">
+                      {user?.department || "DEPARTMENT OF INFORMATION SYSTEMS"} · {user?.currentAcademicYear || "2025/2026"} ACADEMIC YEAR
+                   </p>
+
+                   <div className="mt-6 text-left">
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-3">MODULES LECTURING:</p>
+                      <div className="flex flex-wrap gap-2">
+                        {courses && courses.length > 0 ? (
+                           courses.map((c, idx) => (
+                             <span key={c.id} className={`px-3 py-1.5 border rounded-lg text-xs font-bold ${idx % 2 === 0 ? "bg-slate-50 border-slate-200 text-slate-600" : "bg-emerald-50 border-emerald-100 text-emerald-700"}`}>
+                               {c.title}
+                             </span>
+                           ))
+                        ) : (
+                           <>
+                             <span className="px-3 py-1.5 bg-slate-50 border border-slate-200 text-slate-600 rounded-lg text-xs font-bold">Advanced Database Systems</span>
+                             <span className="px-3 py-1.5 bg-slate-50 border border-slate-200 text-slate-600 rounded-lg text-xs font-bold">Information Systems Security</span>
+                             <span className="px-3 py-1.5 bg-emerald-50 border border-emerald-100 text-emerald-700 rounded-lg text-xs font-bold">Cloud Computing</span>
+                           </>
+                        )}
+                      </div>
+                   </div>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="relative flex-shrink-0">
+                   <div className="w-32 h-32 rounded-full border-4 border-[#0B5E3C] p-1.5 flex items-center justify-center bg-slate-50 transition-transform group-hover:scale-105 duration-500 overflow-hidden">
+                      {user?.profilePhotoUrl ? (
+                        <img src={user.profilePhotoUrl} alt="Profile" className="w-full h-full rounded-full object-cover" />
+                      ) : (
+                        <User className="w-16 h-16 text-slate-400" />
+                      )}
+                   </div>
+                   <div className="absolute -bottom-2 -right-2 bg-[#0B5E3C] text-white p-2 rounded-full shadow-lg">
+                      <GraduationCap className="w-4 h-4 text-amber-400" />
+                   </div>
+                </div>
+
+                <div className="flex-grow z-10 text-center md:text-left">
+                   {/* Faculty badge — from registration */}
+                   {facultyName && (
+                     <div className="inline-block px-3 py-1 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-full text-[10px] font-black uppercase tracking-widest mb-3">
+                        {facultyName}
+                     </div>
+                   )}
+                   <h1 className="text-3xl font-black text-[#0B5E3C] mb-1">Hi, {user?.name || "Student"}</h1>
+                   {/* Program — from registration */}
+                   <p className="text-slate-500 text-sm font-bold uppercase tracking-tight">
+                      {programName || "—"}
+                   </p>
+
+                   <div className="mt-6 grid grid-cols-2 gap-x-6 gap-y-3 text-left">
+                      <div>
+                         <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Student ID</p>
+                         <p className="text-sm font-black text-[#0B5E3C] tracking-wider uppercase">{user?.studentIdNumber || "—"}</p>
+                      </div>
+                      <div>
+                         <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Email</p>
+                         <p className="text-xs font-bold text-slate-600 truncate">{user?.email || "—"}</p>
+                      </div>
+                      <div>
+                         <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Academic Year</p>
+                         <p className="text-sm font-black text-[#0B5E3C] tracking-wider uppercase">
+                            {user?.currentAcademicYear ? `Year ${user.currentAcademicYear}` : "—"}
+                         </p>
+                      </div>
+                      <div>
+                         <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">Semester</p>
+                         <p className="text-sm font-black text-[#0B5E3C] tracking-wider uppercase">
+                            {user?.currentSemester ? `Semester ${user.currentSemester}` : "—"}
+                         </p>
+                      </div>
+                   </div>
+                </div>
+              </>
+            )}
 
             <div className="absolute right-0 bottom-0 top-0 w-1/3 hidden md:flex items-center justify-center opacity-5 pointer-events-none group-hover:opacity-10 transition-opacity">
-               <Building2 className="w-32 h-32 text-[#0d2d57] -rotate-12" />
+               <Building2 className="w-32 h-32 text-[#0B5E3C] -rotate-12" />
             </div>
          </div>
 
          {/* Academic Stats */}
          <DashboardStat
-           label="Academic Rewards"
-           value={summary.rewards || 0}
-           linkText="View Ledger"
-           linkTo="/profile"
-           color="text-blue-600"
+           label="Course Materials uploaded"
+           value={repositoryMaterials.length || 0}
+           linkText="Browse Library"
+           linkTo="/app/repository"
+           color="text-[#0B5E3C]"
          />
          <DashboardStat
-           label="Certifications Applied"
-           value={summary.eligible_certs || 0}
-           color="text-slate-400"
+           label="Materials Downloaded"
+           value={downloadedMaterials.length || 0}
+           color="text-[#0B5E3C]"
          />
          <DashboardStat
-           label="Activity this Week"
-           value={summary.weekly_progress || 0}
+           label="Active Modules Available. To Download"
+           value={Math.max(0, repositoryMaterials.length - downloadedMaterials.length)}
            suffix="Modules"
-           color="text-emerald-500"
+           color="text-emerald-700"
          />
       </div>
 
@@ -147,106 +242,116 @@ function UserDashboardPage() {
             <DashboardStat
               label="Degree Credits"
               value={summary.credits || 0}
-              color="text-slate-400"
+              color="text-[#0B5E3C]"
             />
          </div>
       </div>
 
       {/* Navigation Pivot */}
       <div className="flex justify-center -mb-5 relative z-10">
-         <div className="bg-white border border-slate-100 px-10 py-3 rounded-full shadow-xl flex items-center gap-3">
-            <span className="text-xs font-black text-[#0d2d57] uppercase tracking-[0.2em]">Learning Environment</span>
-            <div className="w-2 h-2 bg-blue-600 rounded-full animate-pulse" />
+         <div className="bg-white border border-slate-200 px-10 py-3 rounded-full shadow-lg flex items-center gap-3">
+            <span className="text-xs font-black text-[#0B5E3C] uppercase tracking-[0.2em]">Learning Environment</span>
+            <div className="w-2 h-2 bg-emerald-600 rounded-full animate-pulse" />
          </div>
       </div>
 
       {/* Content Area */}
       <div className="space-y-12">
 
-         {/* Faculty Enrollment Area */}
-         <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm p-8 lg:p-12">
+         {/* ════════════════════════════════════════════════════════════════════
+             SECTION 3: DOWNLOADED LEARNING MATERIALS
+         ════════════════════════════════════════════════════════════════════ */}
+         <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm p-8 lg:p-12">
             <div className="flex items-center justify-between mb-10">
                <div>
-                  <h2 className="text-2xl font-black text-[#0d2d57] uppercase tracking-tight">Active Faculty Enrollments</h2>
-                  <p className="text-slate-400 text-sm font-medium">Continue your academic journey</p>
+                  <h2 className="text-2xl font-black text-[#0B5E3C] uppercase tracking-tight">Downloaded Learning Materials</h2>
+                  <p className="text-slate-500 text-sm font-medium">Access your offline study resources</p>
                </div>
-               <Link to="/course-catalog" className="text-xs font-black text-blue-600 uppercase tracking-widest hover:underline underline-offset-8">Explore Faculties</Link>
+               <Link to="/app/repository" className="text-xs font-black text-emerald-700 uppercase tracking-widest hover:underline underline-offset-8">Browse Repository</Link>
             </div>
 
-            {enrollments.length > 0 ? (
+            {downloadedMaterials.length > 0 ? (
                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  {enrollments.map((item) => (
-                     <div key={item.id} className="group bg-slate-50 border border-slate-100 rounded-[2.5rem] p-8 hover:bg-white hover:shadow-2xl transition-all duration-500">
-                        <div className="flex items-start justify-between mb-8">
-                           <div className="flex items-center gap-4">
-                              <div className="w-12 h-12 bg-white rounded-2xl shadow-sm flex items-center justify-center text-blue-600 font-black group-hover:bg-[#0d2d57] group-hover:text-white transition-colors">
-                                 {item.category === 'Academic' ? <GraduationCap className="w-6 h-6" /> : <BookOpen className="w-6 h-6" />}
+                  {downloadedMaterials.map((item) => {
+                     const typeCfg = TYPE_CONFIG[item.material_type] || TYPE_CONFIG.doc;
+                     const { Icon: TypeIcon, color: typeColor, bg: typeBg } = typeCfg;
+                     return (
+                        <div key={item.id} className="group bg-slate-50/70 border border-slate-200 rounded-[2.5rem] p-8 hover:bg-white hover:border-emerald-300 hover:shadow-2xl transition-all duration-300">
+                           <div className="flex items-start justify-between mb-8">
+                              <div className="flex items-center gap-4">
+                                 <div className="w-12 h-12 rounded-2xl flex items-center justify-center font-black group-hover:scale-105 transition-transform" style={{ backgroundColor: typeBg, color: typeColor }}>
+                                    <TypeIcon className="w-6 h-6" />
+                                 </div>
+                                 <div>
+                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">{item.course_code || 'General'}</p>
+                                    <h3 className="text-lg font-black text-[#0B5E3C] group-hover:text-emerald-800 transition-colors line-clamp-1 uppercase tracking-tight">{item.title}</h3>
+                                 </div>
                               </div>
-                              <div>
-                                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-none mb-1">{item.provider_name}</p>
-                                 <h3 className="text-lg font-black text-[#0d2d57] group-hover:text-blue-700 transition-colors line-clamp-1 uppercase tracking-tight">{item.title}</h3>
+                              <div className="flex-shrink-0">
+                                 <span className="text-[10px] font-black px-4 py-1.5 rounded-full uppercase tracking-tighter shadow-sm bg-emerald-50 text-emerald-800 border border-emerald-100">
+                                    Downloaded
+                                 </span>
                               </div>
                            </div>
-                           <div className="flex-shrink-0">
-                              <span className={`text-[10px] font-black px-4 py-1.5 rounded-full uppercase tracking-tighter shadow-sm ${item.status === 'completed' ? 'bg-emerald-500 text-white' : 'bg-[#0d2d57] text-white'}`}>
-                                 {item.status === 'completed' ? 'Graduated' : 'Enrolled'}
-                              </span>
-                           </div>
-                        </div>
 
-                        <div className="space-y-3">
-                           <div className="flex items-center justify-between text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                              <span>Syllabus Progress</span>
-                              <span className="text-[#0d2d57]">{item.progress_percent}%</span>
+                           <div className="space-y-2 text-xs text-slate-500">
+                              <p className="line-clamp-2">{item.description || 'No description provided.'}</p>
+                              {item.course_title && (
+                                 <div className="flex items-center gap-1.5 truncate text-slate-600 font-medium">
+                                    <BookOpen className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                                    <span className="truncate">{item.course_title}</span>
+                                 </div>
+                              )}
                            </div>
-                           <div className="h-2 w-full bg-slate-200 rounded-full overflow-hidden">
-                              <div
-                                 className={`h-full transition-all duration-1000 ${item.status === 'completed' ? 'bg-emerald-500' : 'bg-blue-600'}`}
-                                 style={{ width: `${item.progress_percent}%` }}
-                              />
-                           </div>
-                        </div>
 
-                        <div className="mt-10 pt-6 border-t border-slate-200/50 flex items-center justify-between">
-                           <div className="flex items-center gap-2 text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                              <PlayCircle className="w-4 h-4" />
-                              {item.lessons_completed || '—'} Modules Finished
+                           <div className="mt-10 pt-6 border-t border-slate-200/60 flex items-center justify-between">
+                              <div className="flex items-center gap-2 text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                                 {item.file_size ? formatBytes(item.file_size) : 'Resource'}
+                              </div>
+                              {item.external_url ? (
+                                 <a href={item.external_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-xs font-black text-[#0B5E3C] hover:text-emerald-700 transition-colors uppercase tracking-widest">
+                                    Open Link <ExternalLink className="w-4 h-4" />
+                                 </a>
+                              ) : (
+                                 <a href={getDownloadUrl(item.course_id, item.id)} download className="flex items-center gap-2 text-xs font-black text-[#0B5E3C] hover:text-emerald-700 transition-colors uppercase tracking-widest">
+                                    Re-download <Download className="w-4 h-4" />
+                                 </a>
+                              )}
                            </div>
-                            <Link to={`/course-player/${item.course_id}`} className="flex items-center gap-2 text-xs font-black text-[#0d2d57] group-hover:text-blue-600 transition-colors uppercase tracking-widest">
-                               Study <ArrowRight className="w-4 h-4" />
-                            </Link>
                         </div>
-                     </div>
-                  ))}
+                     );
+                  })}
                </div>
             ) : (
                <div className="text-center py-20 bg-slate-50 rounded-[2.5rem] border border-dashed border-slate-200">
-                  <BookOpen className="w-12 h-12 text-slate-200 mx-auto mb-4" />
-                  <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">No active enrollments found</p>
-                  <Link to="/course-catalog" className="mt-4 inline-block px-8 py-3 bg-[#0d2d57] text-white text-[10px] font-black uppercase tracking-widest rounded-xl">View Course Catalog</Link>
+                  <FolderOpen className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+                  <p className="text-slate-500 font-bold uppercase tracking-widest text-xs">No learning materials downloaded yet</p>
+                  <Link to="/app/repository" className="mt-4 inline-block px-8 py-3 bg-[#0B5E3C] text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-emerald-800 transition-colors">Go to Repository</Link>
                </div>
             )}
          </div>
 
-         {/* Official Institutional Banner */}
-         <div className="bg-[#0d2d57] rounded-[3.5rem] p-12 lg:p-20 relative overflow-hidden flex flex-col lg:flex-row items-center gap-12 text-center lg:text-left text-white shadow-2xl">
-            <div className="absolute top-0 right-0 w-96 h-96 bg-blue-400/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+         {/* ════════════════════════════════════════════════════════════════════
+             SECTION 5 (LAST): OFFICIAL INSTITUTIONAL DIGITAL EXAMS BANNER
+         ════════════════════════════════════════════════════════════════════ */}
+         <div className="bg-[#0B5E3C] rounded-[3.5rem] p-12 lg:p-20 relative overflow-hidden flex flex-col lg:flex-row items-center gap-12 text-center lg:text-left text-white shadow-2xl">
+            <div className="absolute top-0 right-0 w-96 h-96 bg-brand-400/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
             <div className="relative z-10 flex-grow max-w-2xl">
-               <div className="inline-block px-4 py-1.5 bg-blue-500/20 border border-blue-500/30 rounded-full text-[10px] font-black uppercase tracking-widest mb-6">Digital Transformation</div>
+               <div className="inline-block px-4 py-1.5 bg-white/10 border border-white/20 rounded-full text-[10px] font-black uppercase tracking-widest mb-6">Digital Transformation</div>
                <h2 className="text-3xl lg:text-5xl font-black leading-tight mb-6 uppercase tracking-tight">
-                  Official <br /><span className="text-blue-400 font-black">Digital Exams</span> Portal
+                  Official <br /><span className="text-amber-400 font-black">Digital Exams</span> Portal
                </h2>
-               <p className="text-lg text-blue-100 font-medium leading-relaxed mb-10 opacity-80">
+               <p className="text-lg text-brand-100 font-medium leading-relaxed mb-10 opacity-80">
                   Prepare for your end-of-semester assessments through our proctored digital examination environment. Access past papers and mock exams today.
                </p>
-               <button className="px-12 py-5 bg-blue-600 text-white rounded-2xl font-black uppercase tracking-widest shadow-xl hover:bg-blue-500 transition-all hover:scale-105 active:scale-95">
+               <button className="px-12 py-5 bg-white text-[#0B5E3C] rounded-2xl font-black uppercase tracking-widest shadow-xl hover:bg-slate-50 transition-all hover:scale-105 active:scale-95">
                   Academic Portal
                </button>
             </div>
             <div className="relative z-10 w-full lg:w-1/3 flex justify-center">
                <div className="relative">
                   <div className="w-56 h-56 bg-white/5 backdrop-blur-sm rounded-[3rem] rotate-12 absolute -z-10" />
-                  <Award className="w-40 h-40 text-blue-400 relative z-10 drop-shadow-2xl" />
+                  <Award className="w-40 h-40 text-amber-400 relative z-10 drop-shadow-2xl" />
                </div>
             </div>
          </div>
@@ -255,9 +360,9 @@ function UserDashboardPage() {
 
       {/* Support AI Toggle */}
       <div className="fixed bottom-8 right-8 z-[100]">
-         <button className="w-16 h-16 bg-[#0d2d57] text-white rounded-2xl shadow-2xl hover:bg-blue-900 transition-all hover:scale-110 active:scale-90 flex items-center justify-center group relative border-2 border-blue-900/50">
-            <MessageCircle className="w-8 h-8" />
-            <div className="absolute right-full mr-4 bg-white px-5 py-3 rounded-2xl shadow-2xl border border-slate-100 text-[#0d2d57] font-black text-[10px] uppercase tracking-widest whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none scale-90 group-hover:scale-100 duration-300">
+         <button className="w-16 h-16 bg-[#0B5E3C] text-white rounded-2xl shadow-2xl hover:bg-emerald-800 transition-all hover:scale-110 active:scale-90 flex items-center justify-center group relative border-2 border-emerald-900/50">
+            <GraduationCap className="w-8 h-8 text-amber-400" />
+            <div className="absolute right-full mr-4 bg-white px-5 py-3 rounded-2xl shadow-2xl border border-slate-100 text-[#0B5E3C] font-black text-[10px] uppercase tracking-widest whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none scale-90 group-hover:scale-100 duration-300">
                USL Help Desk AI
             </div>
          </button>

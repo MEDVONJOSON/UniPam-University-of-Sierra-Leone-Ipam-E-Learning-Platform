@@ -1,6 +1,4 @@
-# IDW Backend (Phase 1 Foundation)
-
-This backend is the first implementation slice for IDW Phase 1. It provides:
+This backend powers the UniPam — University of Sierra Leone eLearning platform. It provides:
 - Express server scaffold
 - API route skeletons under `/api/v1`
 - PostgreSQL migration files for core entities

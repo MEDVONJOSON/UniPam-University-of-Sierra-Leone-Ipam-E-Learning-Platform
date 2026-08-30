@@ -3,7 +3,7 @@ import react from "@vitejs/plugin-react";
 import { VitePWA } from "vite-plugin-pwa";
 
 export default defineConfig({
-  base: "/UniPam-University-Of-Sierra-Leone-eCampus-E-leaning-/",
+  base: "/",
   plugins: [
     react(),
     VitePWA({
@@ -33,6 +33,10 @@ export default defineConfig({
     port: 5173,
     proxy: {
       "/api": {
+        target: "http://localhost:4000",
+        changeOrigin: true,
+      },
+      "/uploads": {
         target: "http://localhost:4000",
         changeOrigin: true,
       },

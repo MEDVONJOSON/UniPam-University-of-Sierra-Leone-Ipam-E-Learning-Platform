@@ -1,10 +1,14 @@
 const { pool } = require("../config/db");
 
 class Course {
-  static async findAll({ provider, category, level, query, isInternal }) {
+  static async findAll({ provider, category, level, query, isInternal, instructorId }) {
     const params = [];
     const filters = [];
 
+    if (instructorId) {
+      params.push(instructorId);
+      filters.push(`c.instructor_id = $${params.length}`);
+    }
     if (provider) {
       params.push(String(provider).toLowerCase());
       filters.push(`LOWER(p.slug) = $${params.length}`);

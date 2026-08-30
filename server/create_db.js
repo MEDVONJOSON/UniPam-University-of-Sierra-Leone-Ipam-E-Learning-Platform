@@ -9,14 +9,14 @@ async function createDb() {
     await client.connect();
     console.log('Connected to postgres database.');
     
-    // Check if idw exists
-    const res = await client.query("SELECT 1 FROM pg_database WHERE datname = 'idw'");
+    // Check if unipam exists
+    const res = await client.query("SELECT 1 FROM pg_database WHERE datname = 'unipam'");
     if (res.rowCount === 0) {
-      console.log('Creating database idw...');
-      await client.query('CREATE DATABASE idw');
-      console.log('Database idw created.');
+      console.log('Creating database unipam...');
+      await client.query('CREATE DATABASE unipam');
+      console.log('Database unipam created.');
     } else {
-      console.log('Database idw already exists.');
+      console.log('Database unipam already exists.');
     }
   } catch (err) {
     console.error('Failed to create database:', err.message);

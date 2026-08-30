@@ -8,7 +8,7 @@ router.get("/", asyncHandler(async (req, res) => {
   const db = await healthCheckDb();
   res.json({
     status: "ok",
-    service: "idw-backend",
+    service: "unipam-backend",
     now: db.now
   });
 }));

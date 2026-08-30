@@ -24,7 +24,7 @@ app.use("/uploads", express.static(path.resolve(process.cwd(), "uploads")));
 
 app.get("/", (req, res) => {
   res.json({
-    service: "IDW Backend",
+    service: "UniPam Backend",
     status: "running",
     env: env.nodeEnv,
     envReady: envCheck.ok,
@@ -38,5 +38,5 @@ app.use(errorHandler);
 
 app.listen(env.port, () => {
   // eslint-disable-next-line no-console
-  console.log(`IDW backend listening on http://localhost:${env.port}`);
+  console.log(`UniPam backend listening on http://localhost:${env.port}`);
 });

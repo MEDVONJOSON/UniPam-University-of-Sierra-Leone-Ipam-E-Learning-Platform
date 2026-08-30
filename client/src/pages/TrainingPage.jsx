@@ -1,192 +1,484 @@
-import { Link } from "react-router-dom";
-import { 
-  Code, Brain, Shield, Briefcase, CheckCircle2, ArrowRight, 
-  Compass, Award, GraduationCap, Zap, Globe, MessageSquare, Building2 
+import { useState, useEffect, useMemo } from "react";
+import { Link, useSearchParams } from "react-router-dom";
+import {
+  Compass, Award, GraduationCap, Building2, CheckCircle2, ArrowRight,
+  Calculator, Cpu, Briefcase, Scale, BookMarked, Search, Filter,
+  Clock, Users, MapPin, Sparkles, MessageSquare, ChevronRight
 } from "lucide-react";
+import { universityService } from "../services/universityService";
+
+const FACULTIES_CONFIG = [
+  {
+    id: "f1",
+    name: "Accounting & Finance",
+    slug: "accounting-finance",
+    icon: Calculator,
+    color: "from-emerald-600 to-teal-700",
+    bg: "bg-emerald-50 text-emerald-700",
+    border: "border-emerald-200",
+    activeTab: "bg-emerald-700 text-white shadow-lg",
+    description: "Focuses on accounting, financial management, banking, investment, taxation, auditing and financial economics.",
+    programme_count: 8,
+    dean: "Dr James Kollie"
+  },
+  {
+    id: "f2",
+    name: "Information Systems & Technology",
+    slug: "info-systems-tech",
+    icon: Cpu,
+    color: "from-blue-600 to-indigo-700",
+    bg: "bg-blue-50 text-blue-700",
+    border: "border-blue-200",
+    activeTab: "bg-blue-700 text-white shadow-lg",
+    description: "Responsible for IPAM's computing, information systems, networking, cybersecurity, web development and IT education.",
+    programme_count: 3
+  },
+  {
+    id: "f3",
+    name: "Business Administration & Entrepreneurship",
+    slug: "business-admin-entrepreneurship",
+    icon: Briefcase,
+    color: "from-amber-500 via-yellow-500 to-amber-600",
+    bg: "bg-amber-50 text-amber-800",
+    border: "border-amber-300",
+    activeTab: "bg-amber-600 text-white shadow-lg",
+    description: "Focuses on business management, entrepreneurship, human resources, procurement, logistics, marketing and project management.",
+    programme_count: 13,
+    dean: "Dr Ernest Udeh"
+  },
+  {
+    id: "f4",
+    name: "Leadership & Governance",
+    slug: "leadership-governance",
+    icon: Scale,
+    color: "from-[#85754E] via-[#6B5E3C] to-[#4F462B]",
+    bg: "bg-[#F5F2EB] text-[#5C4F3D]",
+    border: "border-[#D9D1C3]",
+    activeTab: "bg-[#6B5E3C] text-white shadow-lg",
+    description: "Focuses on leadership, governance, public administration, public policy, public-sector management and development.",
+    programme_count: 7
+  },
+  {
+    id: "f5",
+    name: "Extra-Mural Studies",
+    slug: "extra-mural-studies",
+    icon: BookMarked,
+    color: "from-rose-600 to-pink-700",
+    bg: "bg-rose-50 text-rose-700",
+    border: "border-rose-200",
+    activeTab: "bg-rose-700 text-white shadow-lg",
+    description: "Extends university education into provincial communities with professional diplomas and certificate programmes.",
+    programme_count: 8
+  }
+];
 
 function TrainingPage() {
-  const roadmaps = [
-    {
-      icon: <Code className="w-8 h-8" />,
-      color: "from-[#0d2d57] to-blue-600",
-      title: "Software Engineering",
-      desc: "Designed for the African tech ecosystem. Master the full lifecycle of software development.",
-      duration: "6 Months",
-      courses: 12,
-      points: ["Algorithms & Data Structures", "Mobile App Development", "Scalable Backend Systems", "Cloud Computing for Devs", "Final Capstone Project"]
-    },
-    {
-      icon: <Brain className="w-8 h-8" />,
-      color: "from-blue-700 to-indigo-800",
-      title: "Data Analytics",
-      desc: "Powering decision-making in public and private sectors using data-driven insights.",
-      duration: "4 Months",
-      courses: 8,
-      points: ["SQL & Data Querying", "Statistical Analysis", "Tableau & PowerBI", "Big Data Fundamentals", "Business Intelligence"]
-    },
-    {
-      icon: <Shield className="w-8 h-8" />,
-      color: "from-[#0d2d57] to-slate-800",
-      title: "Information Security",
-      desc: "Protecting national and corporate digital assets from evolving cyber threats.",
-      duration: "5 Months",
-      courses: 10,
-      points: ["Network Security", "Cryptography", "Risk Management", "Ethical Hacking", "Governance & Compliance"]
-    },
-    {
-      icon: <Briefcase className="w-8 h-8" />,
-      color: "from-blue-900 to-[#0d2d57]",
-      title: "Public Administration",
-      desc: "Modernizing governance and public service delivery through digital leadership.",
-      duration: "6 Months",
-      courses: 7,
-      points: ["Policy Analysis", "E-Governance", "Strategic Management", "Public Finance", "Ethics in Leadership"]
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialFaculty = searchParams.get("faculty") || "accounting-finance";
+  const initialLevel = searchParams.get("level") || "all";
+
+  const [selectedFacultySlug, setSelectedFacultySlug] = useState(initialFaculty);
+  const [levelFilter, setLevelFilter] = useState(initialLevel);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [faculties, setFaculties] = useState(FACULTIES_CONFIG);
+  const [allProgrammes, setAllProgrammes] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let alive = true;
+    Promise.all([
+      universityService.getIpamFaculties(),
+      universityService.getIpamPrograms()
+    ]).then(([facs, progs]) => {
+      if (alive) {
+        if (facs && facs.length > 0) setFaculties(facs);
+        if (progs && progs.length > 0) setAllProgrammes(progs);
+      }
+    }).catch(() => {
+      // Fallback works automatically
+    }).finally(() => {
+      if (alive) setLoading(false);
+    });
+    return () => { alive = false; };
+  }, []);
+
+  // Update selected faculty when query param changes
+  useEffect(() => {
+    const fac = searchParams.get("faculty");
+    if (fac) setSelectedFacultySlug(fac);
+    const lvl = searchParams.get("level");
+    if (lvl) setLevelFilter(lvl);
+  }, [searchParams]);
+
+  const handleFacultyClick = (slug) => {
+    setSelectedFacultySlug(slug);
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev);
+      next.set("faculty", slug);
+      return next;
+    });
+    const el = document.getElementById("programs-view-section");
+    if (el) el.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  };
+
+  const handleLevelClick = (lvl) => {
+    setLevelFilter(lvl);
+    setSearchParams(prev => {
+      const next = new URLSearchParams(prev);
+      if (lvl === "all") next.delete("level");
+      else next.set("level", lvl);
+      return next;
+    });
+  };
+
+  const activeFaculty = useMemo(() => {
+    return faculties.find(f => f.slug === selectedFacultySlug) || faculties[0];
+  }, [faculties, selectedFacultySlug]);
+
+  const filteredProgrammes = useMemo(() => {
+    let list = allProgrammes.filter(p => {
+      const matchFaculty = p.faculty_slug === selectedFacultySlug || (activeFaculty && p.faculty_id === activeFaculty.id);
+      return matchFaculty;
+    });
+
+    if (levelFilter !== "all") {
+      if (levelFilter === "Degree") {
+        list = list.filter(p => p.level === "Degree");
+      } else if (levelFilter === "Postgraduate") {
+        list = list.filter(p => p.level === "Postgraduate" || p.level === "Postgraduate Diploma");
+      } else if (levelFilter === "Diploma") {
+        list = list.filter(p => p.level === "Diploma");
+      } else if (levelFilter === "Certificate") {
+        list = list.filter(p => p.level === "Certificate");
+      }
     }
-  ];
+
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      list = list.filter(p => 
+        (p.name || "").toLowerCase().includes(q) ||
+        (p.description || "").toLowerCase().includes(q) ||
+        (p.career_areas || []).some(c => c.toLowerCase().includes(q))
+      );
+    }
+
+    return list;
+  }, [allProgrammes, selectedFacultySlug, activeFaculty, levelFilter, searchQuery]);
 
   return (
-    <div className="space-y-24 pb-20">
-      {/* Header with Background Pattern */}
-      <section className="relative text-center pt-20 pb-24 -mx-4 sm:-mx-6 lg:-mx-8 px-6 bg-[#0d2d57] text-white">
+    <div className="space-y-20 pb-24">
+      {/* ── Hero Section ── */}
+      <section className="relative text-center pt-20 pb-24 -mx-4 sm:-mx-6 lg:-mx-8 px-6 bg-[#0B5E3C] text-white overflow-hidden">
         <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]" />
-        <div className="relative z-10 max-w-4xl mx-auto">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-blue-500/20 border border-blue-500/30 text-blue-300 text-[10px] font-black mb-6 uppercase tracking-widest">
-            <Compass className="w-4 h-4" />
-            Strategic Specializations
+        <div className="relative z-10 max-w-4xl mx-auto space-y-6">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 border border-white/20 text-brand-200 text-[10px] font-black uppercase tracking-[0.2em]">
+            <Compass className="w-4 h-4 text-amber-400" />
+            IPAM Academic Specializations & Pathways
           </div>
-          <h1 className="text-4xl sm:text-6xl font-black leading-tight mb-8 uppercase tracking-tight">
-            Academic <span className="text-blue-400">Roadmaps</span>
+          <h1 className="text-4xl sm:text-6xl font-[900] leading-tight uppercase tracking-tight">
+            Academic <span className="text-amber-400">Specializations</span>
           </h1>
-          <p className="text-lg text-blue-100 leading-relaxed mb-12 max-w-2xl mx-auto font-medium">
-            Join a structured academic path designed by the University of Sierra Leone to bridge the skills gap and drive national development.
+          <p className="text-base sm:text-lg text-brand-100 leading-relaxed max-w-2xl mx-auto font-medium">
+            Explore all 39 accredited university programmes across IPAM's 5 specialized faculties.
+            Designed by the University of Sierra Leone to bridge the skills gap and drive national development.
           </p>
-          <div className="flex flex-wrap justify-center gap-6">
-             <div className="bg-white/5 backdrop-blur-md px-8 py-4 rounded-2xl border border-white/10 flex items-center gap-3">
-                <CheckCircle2 className="w-5 h-5 text-blue-400" />
-                <span className="text-xs font-black uppercase tracking-widest">TEC Accredited</span>
-             </div>
-             <div className="bg-white/5 backdrop-blur-md px-8 py-4 rounded-2xl border border-white/10 flex items-center gap-3">
-                <Building2 className="w-5 h-5 text-blue-400" />
-                <span className="text-xs font-black uppercase tracking-widest">Campus Validated</span>
-             </div>
+          <div className="flex flex-wrap justify-center gap-4 pt-2">
+            <div className="bg-white/10 backdrop-blur-md px-6 py-3 rounded-2xl border border-white/20 flex items-center gap-2.5">
+              <CheckCircle2 className="w-4 h-4 text-amber-400" />
+              <span className="text-xs font-black uppercase tracking-widest">TEC Accredited</span>
+            </div>
+            <div className="bg-white/10 backdrop-blur-md px-6 py-3 rounded-2xl border border-white/20 flex items-center gap-2.5">
+              <Building2 className="w-4 h-4 text-amber-400" />
+              <span className="text-xs font-black uppercase tracking-widest">5 Faculties · 39 Programmes</span>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* APEL Section - Official Institutional Content */}
+      {/* ── APEL Recognition Section ── */}
       <section className="container mx-auto px-6">
-         <div className="bg-white rounded-[3rem] border border-slate-100 shadow-2xl overflow-hidden flex flex-col lg:flex-row items-stretch">
-            <div className="lg:w-1/2 p-12 lg:p-20 space-y-10">
-               <div className="flex items-center gap-4">
-                  <div className="w-14 h-14 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center shadow-sm">
-                     <GraduationCap className="w-8 h-8" />
-                  </div>
-                  <h2 className="text-3xl font-black text-[#0d2d57] uppercase tracking-tight leading-none">Experience <br />into Credits</h2>
-               </div>
-               <p className="text-slate-500 leading-relaxed text-lg font-medium italic">
-                  "The University of Sierra Leone recognizes the value of professional experience. Our APEL program allows you to fast-track your degree based on your years in the workforce."
-               </p>
-               <div className="space-y-4">
-                  {[
-                    "Accreditation of Prior Experiential Learning (APEL)",
-                    "Partial exemptions for MBA and Master tracks",
-                    "Official certification of professional years",
-                    "Reduced tuition burden for verified experts"
-                  ].map((text, i) => (
-                    <div key={i} className="flex items-center gap-3">
-                       <CheckCircle2 className="w-4 h-4 text-blue-600" />
-                       <span className="text-[#0d2d57] font-black text-[10px] uppercase tracking-widest">{text}</span>
-                    </div>
-                  ))}
-               </div>
-               <button className="px-10 py-5 bg-[#0d2d57] text-white rounded-2xl font-black uppercase tracking-widest shadow-xl hover:bg-blue-900 transition-all hover:scale-105 active:scale-95">
-                  Check APEL Eligibility
-               </button>
-            </div>
-            <div className="lg:w-1/2 bg-[#0d2d57] relative p-12 flex items-center justify-center">
-               <div className="absolute inset-0 bg-blue-900 opacity-50" />
-               <div className="relative z-10 grid grid-cols-1 md:grid-cols-2 gap-6 w-full max-w-md">
-                  <div className="p-8 bg-white rounded-[2rem] shadow-2xl transform hover:-rotate-1 transition-transform">
-                     <p className="text-4xl font-black text-[#0d2d57]">1827</p>
-                     <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-2">Established Legacy</p>
-                  </div>
-                  <div className="p-8 bg-blue-600 rounded-[2rem] shadow-2xl text-white transform hover:rotate-1 transition-transform">
-                     <p className="text-4xl font-black">100%</p>
-                     <p className="text-[10px] font-black text-blue-100 uppercase tracking-widest mt-2">Official Recognition</p>
-                  </div>
-               </div>
-            </div>
-         </div>
-      </section>
-
-      {/* Roadmap Cards */}
-      <section className="container mx-auto px-6">
-        <div className="text-center mb-16">
-           <h2 className="text-3xl font-black text-[#0d2d57] mb-3 uppercase">Academic Pathways</h2>
-           <p className="text-slate-500 font-medium">Curated journeys through the University of Sierra Leone's faculty programs.</p>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-          {roadmaps.map((item, i) => (
-            <div key={i} className="group bg-white rounded-[3rem] border border-slate-100 shadow-sm hover:shadow-2xl transition-all duration-500 overflow-hidden flex flex-col">
-              {/* Image + Overlay */}
-              <div className="relative h-72 overflow-hidden">
-                 <img src={`https://picsum.photos/seed/${i+88}/800/600`} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" alt={item.title} />
-                 <div className={`absolute inset-0 bg-gradient-to-t ${item.color} opacity-90 group-hover:opacity-80 transition-opacity`} />
-                 <div className="absolute inset-x-0 bottom-0 p-10 text-white">
-                    <div className="flex items-center gap-5">
-                       <div className="w-16 h-16 bg-white/20 rounded-[1.5rem] backdrop-blur-md border border-white/20 flex items-center justify-center">
-                          {item.icon}
-                       </div>
-                       <div>
-                          <h3 className="text-2xl font-black uppercase tracking-tight leading-tight">{item.title}</h3>
-                          <p className="text-blue-200 text-xs font-black uppercase tracking-[0.2em]">{item.duration} Specialization</p>
-                       </div>
-                    </div>
-                 </div>
+        <div className="bg-white rounded-[3rem] border border-slate-200 shadow-xl overflow-hidden flex flex-col lg:flex-row items-stretch">
+          <div className="lg:w-1/2 p-10 lg:p-16 space-y-8">
+            <div className="flex items-center gap-4">
+              <div className="w-14 h-14 bg-emerald-50 text-[#0B5E3C] rounded-2xl flex items-center justify-center shadow-sm">
+                <GraduationCap className="w-8 h-8" />
               </div>
-
-              {/* Content Area */}
-              <div className="p-10 flex-grow flex flex-col">
-                <p className="text-slate-500 font-medium leading-relaxed mb-10 flex-grow italic">"{item.desc}"</p>
-                
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-10">
-                  {item.points.map((point, j) => (
-                    <div key={j} className="flex items-center gap-3 p-3 bg-slate-50 rounded-xl">
-                       <div className="w-1.5 h-1.5 rounded-full bg-blue-600" />
-                       <span className="text-[10px] font-black text-slate-700 uppercase tracking-widest">{point}</span>
-                    </div>
-                  ))}
-                </div>
-
-                <Link
-                  to="/course-catalog"
-                  className="w-full h-16 flex items-center justify-center gap-3 bg-[#0d2d57] text-white text-xs font-black uppercase tracking-widest rounded-2xl transition-all hover:bg-blue-900 shadow-2xl shadow-blue-900/10"
-                >
-                  View Pathway <ArrowRight className="w-5 h-5" />
-                </Link>
+              <div>
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Prior Learning Pathway</span>
+                <h2 className="text-2xl sm:text-3xl font-[900] text-[#0B5E3C] uppercase tracking-tight leading-none">
+                  Experience <br />into Credits
+                </h2>
               </div>
             </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Support CTA */}
-      <section className="container mx-auto px-6 py-12 text-center max-w-4xl">
-         <div className="space-y-8">
-            <h2 className="text-4xl font-black text-[#0d2d57] uppercase tracking-tight">University Career Guidance</h2>
-            <p className="text-slate-500 text-lg leading-relaxed font-medium">
-               The USL Career Services department is here to help you choose the right path for your professional goals. Speak with our student advisors today.
+            <p className="text-slate-600 leading-relaxed text-base font-medium italic">
+              "The University of Sierra Leone recognizes the value of professional experience. Our APEL program allows working professionals to fast-track their degree based on their years in the workforce."
             </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-8">
-               <Link to="/contact" className="px-12 py-5 bg-[#0d2d57] text-white rounded-full font-black uppercase tracking-widest shadow-2xl hover:scale-105 transition-transform">Consult Advisor</Link>
-               <div className="flex items-center gap-4 text-slate-400 font-black uppercase tracking-widest text-[10px]">
-                  <div className="w-12 h-12 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center shadow-sm">
-                     <MessageSquare className="w-5 h-5" />
-                  </div>
-                  <span>Support Center Open</span>
-               </div>
+            <div className="space-y-3">
+              {[
+                "Accreditation of Prior Experiential Learning (APEL)",
+                "Partial exemptions for MBA and Master tracks",
+                "Official certification of professional years",
+                "Reduced tuition burden for verified experts"
+              ].map((text, i) => (
+                <div key={i} className="flex items-center gap-3">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                  <span className="text-[#0B5E3C] font-black text-xs uppercase tracking-wider">{text}</span>
+                </div>
+              ))}
             </div>
-         </div>
+            <Link 
+              to="/contact" 
+              className="inline-flex items-center justify-center px-8 py-4 bg-[#0B5E3C] text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl hover:bg-emerald-800 transition-all hover:scale-105"
+            >
+              Check APEL Eligibility
+            </Link>
+          </div>
+          <div className="lg:w-1/2 bg-[#0B5E3C] relative p-10 flex items-center justify-center">
+            <div className="absolute inset-0 bg-emerald-950 opacity-40" />
+            <div className="relative z-10 grid grid-cols-1 sm:grid-cols-2 gap-6 w-full max-w-md">
+              <div className="p-8 bg-white rounded-[2rem] shadow-2xl">
+                <p className="text-4xl font-[900] text-[#0B5E3C]">1980</p>
+                <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mt-2">Established Legacy</p>
+              </div>
+              <div className="p-8 bg-amber-500 rounded-[2rem] shadow-2xl text-slate-950">
+                <p className="text-4xl font-[900]">100%</p>
+                <p className="text-[10px] font-black uppercase tracking-widest mt-2">TEC Accredited</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Faculty Selector Tabs (Click on Any Faculty to See All Its Programs) ── */}
+      <section id="specialization-explorer" className="container mx-auto px-6 space-y-8 scroll-mt-24">
+        <div className="text-center max-w-3xl mx-auto space-y-3">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-[10px] font-black uppercase tracking-widest">
+            <Sparkles className="w-3.5 h-3.5" /> Interactive Faculty Directory
+          </div>
+          <h2 className="text-3xl sm:text-4xl font-[900] text-[#0B5E3C] uppercase tracking-tight">
+            Explore Programmes by Faculty
+          </h2>
+          <p className="text-slate-500 text-sm font-medium">
+            Select a faculty below to inspect all its undergraduate degrees, master tracks, and diplomas.
+          </p>
+        </div>
+
+        {/* 5 Faculty Navigation Pills */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
+          {FACULTIES_CONFIG.map((fac) => {
+            const isSelected = selectedFacultySlug === fac.slug;
+            const Icon = fac.icon;
+            return (
+              <button
+                key={fac.id}
+                onClick={() => handleFacultyClick(fac.slug)}
+                className={`p-5 rounded-2xl text-left border transition-all duration-300 flex flex-col justify-between group ${
+                  isSelected
+                    ? "bg-[#0B5E3C] text-white border-[#0B5E3C] shadow-xl scale-[1.02]"
+                    : "bg-white text-slate-800 border-slate-200 hover:border-emerald-400 hover:shadow-md"
+                }`}
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                    isSelected ? "bg-white/20 text-amber-400" : fac.bg
+                  }`}>
+                    <Icon className="w-5 h-5" />
+                  </div>
+                  <span className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-md ${
+                    isSelected ? "bg-white/20 text-white" : "bg-slate-100 text-slate-600"
+                  }`}>
+                    {fac.programme_count} Progs
+                  </span>
+                </div>
+                <div>
+                  <h3 className={`text-xs font-black uppercase tracking-tight line-clamp-2 ${
+                    isSelected ? "text-white" : "text-slate-900 group-hover:text-[#0B5E3C]"
+                  }`}>
+                    {fac.name}
+                  </h3>
+                  <p className={`text-[11px] font-medium mt-1 line-clamp-2 ${
+                    isSelected ? "text-brand-100" : "text-slate-500"
+                  }`}>
+                    {fac.description}
+                  </p>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* ── Filter & Search Bar ── */}
+        <div className="bg-slate-50 p-4 rounded-2xl border border-slate-200 flex flex-col md:flex-row items-center justify-between gap-4">
+          {/* Search Input */}
+          <div className="relative w-full md:w-80">
+            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              placeholder={`Search ${activeFaculty?.name || 'programmes'}...`}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 bg-white rounded-xl border border-slate-200 text-xs font-medium text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0B5E3C]/20 focus:border-[#0B5E3C]"
+            />
+          </div>
+
+          {/* Level Filter Buttons */}
+          <div className="flex items-center gap-2 flex-wrap w-full md:w-auto">
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mr-1">Level:</span>
+            {[
+              { id: "all", label: "All Levels" },
+              { id: "Degree", label: "Undergraduate (BSc)" },
+              { id: "Postgraduate", label: "Postgraduate (MSc/MBA/PhD)" },
+              { id: "Diploma", label: "Diplomas" },
+              { id: "Certificate", label: "Certificates" }
+            ].map((lvl) => (
+              <button
+                key={lvl.id}
+                onClick={() => handleLevelClick(lvl.id)}
+                className={`px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider transition-all ${
+                  levelFilter === lvl.id
+                    ? "bg-[#0B5E3C] text-white shadow-sm"
+                    : "bg-white text-slate-600 border border-slate-200 hover:bg-slate-100"
+                }`}
+              >
+                {lvl.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* ── Section Containing All Programs for the Clicked Faculty ── */}
+        <div id="programs-view-section" className="bg-white border border-slate-200 rounded-[2.5rem] p-8 lg:p-12 shadow-xl space-y-8">
+          {/* Header */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-6 border-b border-slate-100">
+            <div className="space-y-1.5">
+              <div className="flex items-center gap-3">
+                <span className="px-3 py-1 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-lg text-[10px] font-black uppercase tracking-widest">
+                  Active Faculty
+                </span>
+                <span className="text-xs font-bold text-slate-500">
+                  Showing {filteredProgrammes.length} of {activeFaculty?.programme_count || filteredProgrammes.length} Programmes
+                </span>
+              </div>
+              <h3 className="text-2xl sm:text-3xl font-[900] text-[#0B5E3C] uppercase tracking-tight">
+                {activeFaculty?.name}
+              </h3>
+              <p className="text-slate-600 text-sm font-medium max-w-2xl">
+                {activeFaculty?.description}
+              </p>
+            </div>
+            <Link
+              to={`/ipam/${selectedFacultySlug}`}
+              className="inline-flex items-center gap-2 px-6 py-3 bg-[#0B5E3C] text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-emerald-800 transition-all shadow-md self-start md:self-center"
+            >
+              Faculty Main Page <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
+
+          {/* Programmes Grid */}
+          {filteredProgrammes.length === 0 ? (
+            <div className="text-center py-16 space-y-3">
+              <p className="text-slate-400 font-bold text-sm">No programmes matched your filter or search.</p>
+              <button
+                onClick={() => { setLevelFilter("all"); setSearchQuery(""); }}
+                className="px-4 py-2 bg-emerald-50 text-[#0B5E3C] rounded-xl text-xs font-black uppercase tracking-wider"
+              >
+                Clear Filters
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredProgrammes.map((prog) => {
+                const isPostgrad = prog.level === "Postgraduate" || prog.level === "Postgraduate Diploma";
+                const isDipCert = prog.level === "Diploma" || prog.level === "Certificate";
+                return (
+                  <div
+                    key={prog.id}
+                    className="bg-slate-50/70 border border-slate-200 rounded-2xl p-6 hover:bg-white hover:border-emerald-400 hover:shadow-xl transition-all duration-300 flex flex-col justify-between group"
+                  >
+                    <div>
+                      <div className="flex items-center justify-between gap-2 mb-3">
+                        <span className={`px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider border ${
+                          isPostgrad 
+                            ? 'bg-purple-50 text-purple-700 border-purple-200' 
+                            : isDipCert 
+                            ? 'bg-amber-50 text-amber-700 border-amber-200'
+                            : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                        }`}>
+                          {prog.level}
+                        </span>
+                        <span className="text-[11px] font-bold text-slate-500 flex items-center gap-1">
+                          <Clock className="w-3.5 h-3.5 text-slate-400" /> {prog.duration}
+                        </span>
+                      </div>
+
+                      <h4 className="text-base font-black text-slate-900 mb-2.5 group-hover:text-[#0B5E3C] transition-colors leading-snug">
+                        {prog.name}
+                      </h4>
+
+                      <p className="text-slate-500 text-xs font-medium leading-relaxed mb-4 line-clamp-3">
+                        {prog.description}
+                      </p>
+
+                      {prog.career_areas && prog.career_areas.length > 0 && (
+                        <div className="mb-4">
+                          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1.5">Career Pathways:</p>
+                          <div className="flex flex-wrap gap-1.5">
+                            {prog.career_areas.slice(0, 3).map((career, cIdx) => (
+                              <span key={cIdx} className="text-[10px] font-medium bg-white text-slate-600 border border-slate-200 px-2 py-0.5 rounded-md">
+                                {career}
+                              </span>
+                            ))}
+                            {prog.career_areas.length > 3 && (
+                              <span className="text-[10px] font-bold text-slate-400 self-center">
+                                +{prog.career_areas.length - 3} more
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="pt-4 border-t border-slate-200/80 flex items-center justify-between mt-3">
+                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                        {prog.mode || "In person"}
+                      </span>
+                      <Link
+                        to={`/ipam/${selectedFacultySlug}/${prog.id}`}
+                        className="inline-flex items-center gap-1.5 text-xs font-black text-[#0B5E3C] group-hover:text-emerald-700 uppercase tracking-wider hover:underline"
+                      >
+                        View Details <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
+                      </Link>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* ── Career Guidance Advisory CTA ── */}
+      <section className="container mx-auto px-6 py-8 text-center max-w-4xl">
+        <div className="bg-slate-50 border border-slate-200 p-10 rounded-[3rem] space-y-6">
+          <h2 className="text-3xl font-[900] text-[#0B5E3C] uppercase tracking-tight">University Career Guidance</h2>
+          <p className="text-slate-600 text-sm sm:text-base leading-relaxed font-medium max-w-2xl mx-auto">
+            Need advice selecting your degree program or specialization? The USL & IPAM Academic Advisory team is available to guide your admissions journey.
+          </p>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2">
+            <Link 
+              to="/contact" 
+              className="px-8 py-4 bg-[#0B5E3C] text-white rounded-full font-black text-xs uppercase tracking-widest shadow-xl hover:bg-emerald-800 transition-all hover:scale-105"
+            >
+              Consult Academic Advisor
+            </Link>
+            <Link 
+              to="/ipam" 
+              className="px-8 py-4 bg-white text-[#0B5E3C] border border-slate-200 rounded-full font-black text-xs uppercase tracking-widest hover:bg-slate-100 transition-all"
+            >
+              All 39 Programmes
+            </Link>
+          </div>
+        </div>
       </section>
     </div>
   );

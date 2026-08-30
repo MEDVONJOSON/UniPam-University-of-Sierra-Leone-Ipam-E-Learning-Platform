@@ -1,7 +1,7 @@
 const testimonials = [
   {
     author: "Learner, Nairobi",
-    text: "IDW helped me combine global courses with a clear roadmap to become job-ready."
+    text: "UniPam helped me combine global courses with a clear roadmap to become job-ready."
   },
   {
     author: "Learner, Accra",
@@ -9,7 +9,7 @@ const testimonials = [
   },
   {
     author: "Instructor Partner",
-    text: "IDW gave our institution a practical digital channel for skill-focused programs."
+    text: "UniPam gave our institution a practical digital channel for skill-focused programs."
   }
 ];
 

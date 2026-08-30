@@ -9,7 +9,7 @@ function TeamPage() {
   return (
     <section>
       <h1>Team</h1>
-      <p className="muted">The multidisciplinary group building IDW.</p>
+      <p className="muted">The multidisciplinary group building UniPam.</p>
       <div className="course-grid">
         {members.map((member) => (
           <article key={member.name} className="card course-card">

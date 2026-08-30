@@ -42,18 +42,18 @@ function AdminLoginPage() {
           <div className="mx-auto h-16 w-16 flex items-center justify-center rounded-2xl bg-red-50 text-red-600 mb-6 shadow-sm border border-red-100">
             <ShieldAlert className="w-8 h-8" />
           </div>
-          <h2 className="text-3xl font-black text-[#0d2d57] uppercase tracking-tight leading-none mb-2">
+          <h2 className="text-3xl font-black text-[#0B5E3C] uppercase tracking-tight leading-none mb-2">
             UniPam Registry
           </h2>
           <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">
-            University of Sierra Leone eCampus
+            University of Sierra Leone eLearning
           </p>
         </div>
 
         <form className="mt-10 space-y-6" onSubmit={onSubmit}>
           <div className="space-y-4">
             <div className="space-y-2">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
+              <label className="text-[10px] font-black text-hover-500 uppercase tracking-widest ml-1">
                 Registry Credentials (Email)
               </label>
               <div className="relative">
@@ -63,7 +63,7 @@ function AdminLoginPage() {
                 <input
                   type="email"
                   required
-                  className="block w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-black text-[#0d2d57] placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-red-500/10 focus:border-red-500 transition-all uppercase"
+                  className="block w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-black text-[#0B5E3C] placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-red-500/10 focus:border-red-500 transition-all uppercase"
                   placeholder="REGISTRY@USL.EDU.SL"
                   value={form.email}
                   onChange={(e) => setForm({ ...form, email: e.target.value })}
@@ -72,7 +72,7 @@ function AdminLoginPage() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-1">
+              <label className="text-[10px] font-black text-hover-500 uppercase tracking-widest ml-1">
                 Access Token / Password
               </label>
               <div className="relative">
@@ -82,7 +82,7 @@ function AdminLoginPage() {
                 <input
                   type="password"
                   required
-                  className="block w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-black text-[#0d2d57] placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-red-500/10 focus:border-red-500 transition-all uppercase"
+                  className="block w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-black text-[#0B5E3C] placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-red-500/10 focus:border-red-500 transition-all uppercase"
                   placeholder="••••••••"
                   value={form.password}
                   onChange={(e) => setForm({ ...form, password: e.target.value })}

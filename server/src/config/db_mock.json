@@ -1,0 +1,1194 @@
+{
+  "users": [
+    {
+      "id": "admin-uuid",
+      "email": "admin@usl.edu.sl",
+      "password_hash": "$2a$10$rsuYLjkS7YU3E2Ih/QXMdOKqpLx23NGaS52mcu1DAhbAvs3hKrbAu",
+      "role": "admin",
+      "is_active": true,
+      "created_at": "2026-08-29T03:56:00.156Z"
+    },
+    {
+      "id": "lecturer-uuid",
+      "email": "lecturer@usl.edu.sl",
+      "password_hash": "$2a$10$X.3iqAKZyPRZmMWaAZTnueBDWBz0aP0DYpJ7im7xUFxRRcNiwlXnO",
+      "role": "lecturer",
+      "is_active": true,
+      "created_at": "2026-08-29T03:56:00.156Z"
+    }
+  ],
+  "profiles": [
+    {
+      "user_id": "admin-uuid",
+      "full_name": "USL Registry Admin",
+      "phone_number": "+232 76 123456",
+      "country_code": "SL",
+      "preferred_language": "English",
+      "education_background": "Masters in Management",
+      "skills_interests": "[\"LMS Management\", \"Curriculum Design\"]",
+      "learning_goals": "Optimize academic processes across USL campuses",
+      "designation": "Academic Registry Director",
+      "institution_name": "University of Sierra Leone",
+      "faculty": "Faculty of Pure & Applied Sciences",
+      "department": "Department of Computer Science",
+      "enrollment_year": "2024",
+      "academic_standing": "Excellent",
+      "created_at": "2026-08-29T03:56:00.156Z"
+    },
+    {
+      "user_id": "lecturer-uuid",
+      "full_name": "Mr Chaytor",
+      "phone_number": "+232 76 654321",
+      "country_code": "SL",
+      "preferred_language": "English",
+      "education_background": "Ph.D. in Information Systems",
+      "skills_interests": "[\"Database Systems\",\"Cloud Computing\",\"Software Engineering\"]",
+      "learning_goals": "Advance research in distributed database systems",
+      "designation": "Senior Lecturer ",
+      "institution_name": "University of Sierra Leone Ipam",
+      "faculty": "Faculty of Information Systems & Technology",
+      "department": "Department of Information Systems",
+      "enrollment_year": "2019",
+      "academic_standing": "Excellent",
+      "created_at": "2026-08-29T03:56:00.156Z",
+      "profile_photo_url": "data:image/webp;base64,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",
+      "website_url": "",
+      "bio": "His is the Head of Innovation and AI at Ipam also our supervisor",
+      "university_program_id": "f2::",
+      "updated_at": "2026-08-30T16:05:55.328Z"
+    }
+  ],
+  "providers": [
+    {
+      "id": "1",
+      "name": "Coursera",
+      "slug": "coursera",
+      "is_active": true
+    },
+    {
+      "id": "2",
+      "name": "IBM SkillsBuild",
+      "slug": "ibm-skillsbuild",
+      "is_active": true
+    },
+    {
+      "id": "3",
+      "name": "Udemy",
+      "slug": "udemy",
+      "is_active": true
+    },
+    {
+      "id": "4",
+      "name": "UniAthena",
+      "slug": "uniathena",
+      "is_active": true
+    },
+    {
+      "id": "5",
+      "name": "UniPam",
+      "slug": "unipam",
+      "is_active": true
+    }
+  ],
+  "courses": [
+    {
+      "id": "c1",
+      "provider_id": "1",
+      "external_id": "COURSE-001",
+      "title": "Web Development Fundamentals",
+      "category": "Software Development",
+      "skill_level": "Beginner",
+      "duration_label": "12h",
+      "has_certificate": true,
+      "cost_type": "free",
+      "external_url": "https://www.coursera.org/",
+      "description": "Build practical web skills from HTML/CSS fundamentals to real React applications.",
+      "is_internal": false,
+      "is_active": true,
+      "thumbnail_url": null,
+      "created_at": "2026-08-29T03:56:00.156Z"
+    },
+    {
+      "id": "c2",
+      "provider_id": "2",
+      "external_id": "COURSE-002",
+      "title": "AI and Data Essentials",
+      "category": "AI and Data",
+      "skill_level": "Intermediate",
+      "duration_label": "18h",
+      "has_certificate": true,
+      "cost_type": "free",
+      "external_url": "https://skillsbuild.org/",
+      "description": "Learn practical AI workflows, generative model basics, and core data structures.",
+      "is_internal": false,
+      "is_active": true,
+      "thumbnail_url": null,
+      "created_at": "2026-08-29T03:56:00.156Z"
+    },
+    {
+      "id": "c3",
+      "provider_id": "3",
+      "external_id": "COURSE-003",
+      "title": "Cybersecurity Foundations",
+      "category": "Cybersecurity",
+      "skill_level": "Beginner",
+      "duration_label": "14h",
+      "has_certificate": true,
+      "cost_type": "paid",
+      "external_url": "https://www.uniathena.com/",
+      "description": "Understand core security threats, risk controls, and professional security operations.",
+      "is_internal": false,
+      "is_active": true,
+      "thumbnail_url": null,
+      "created_at": "2026-08-29T03:56:00.156Z"
+    },
+    {
+      "id": "c4",
+      "provider_id": "4",
+      "external_id": "COURSE-004",
+      "title": "Modern React for Product Teams",
+      "category": "Software Development",
+      "skill_level": "Intermediate",
+      "duration_label": "16h",
+      "has_certificate": true,
+      "cost_type": "paid",
+      "external_url": "https://www.udemy.com/",
+      "description": "Build highly scalable, type-safe React applications using custom hook state-management.",
+      "is_internal": false,
+      "is_active": true,
+      "thumbnail_url": null,
+      "created_at": "2026-08-29T03:56:00.156Z"
+    },
+    {
+      "id": "c5",
+      "provider_id": "5",
+      "external_id": "COURSE-005",
+      "title": "Digital Entrepreneurship Sprint",
+      "category": "Entrepreneurship",
+      "skill_level": "Beginner",
+      "duration_label": "10h",
+      "has_certificate": true,
+      "cost_type": "free",
+      "external_url": "https://unipam.edu.sl/",
+      "description": "Launch and validate digital products across emerging markets with lean startup execution methods.",
+      "is_internal": true,
+      "is_active": true,
+      "thumbnail_url": null,
+      "created_at": "2026-08-29T03:56:00.156Z"
+    }
+  ],
+  "enrollments": [],
+  "certificate_assets": [],
+  "course_materials": [
+    {
+      "id": "mat-init-1",
+      "course_id": "c1",
+      "module_id": "m1",
+      "title": "Introduction to Core Principles - Syllabus",
+      "description": "Overview of the core principles, objectives, and week-by-week syllabus outline.",
+      "week_label": "Week 1",
+      "material_type": "pdf",
+      "material_category": "reading_material",
+      "file_url": "/uploads/materials/syllabus.pdf",
+      "uploaded_by": "lecturer-uuid",
+      "original_filename": "syllabus.pdf",
+      "file_size_bytes": 1024000,
+      "semester": "Semester 1",
+      "academic_year": 1,
+      "lecture_note_number": 1,
+      "is_published": true,
+      "created_at": "2026-08-29T03:56:00.157Z"
+    },
+    {
+      "id": "mat-init-2",
+      "course_id": "c1",
+      "module_id": "m2",
+      "title": "Quantitative Methods I Lecture Slides",
+      "description": "Presentation slides covering basic algebra, equations, and mathematical applications in business.",
+      "week_label": "Week 2",
+      "material_type": "presentation",
+      "material_category": "lecture_notes",
+      "file_url": "/uploads/materials/quant_slides.pdf",
+      "uploaded_by": "lecturer-uuid",
+      "original_filename": "quant_slides.pptx",
+      "file_size_bytes": 3450000,
+      "semester": "Semester 1",
+      "academic_year": 1,
+      "lecture_note_number": 2,
+      "is_published": true,
+      "created_at": "2026-08-29T03:56:00.157Z"
+    },
+    {
+      "id": "mat-init-3",
+      "course_id": "c1",
+      "module_id": "m3",
+      "title": "Academic Communication Skills Handbook",
+      "description": "Handbook containing standard rules of essay writing, structuring papers, and citation formats.",
+      "week_label": "Week 1",
+      "material_type": "pdf",
+      "material_category": "reading_material",
+      "file_url": "/uploads/materials/comm_handbook.pdf",
+      "uploaded_by": "lecturer-uuid",
+      "original_filename": "comm_handbook.pdf",
+      "file_size_bytes": 2048000,
+      "semester": "Semester 1",
+      "academic_year": 1,
+      "lecture_note_number": 1,
+      "is_published": true,
+      "created_at": "2026-08-29T03:56:00.157Z"
+    },
+    {
+      "id": "mat-init-4",
+      "course_id": "c1",
+      "module_id": "m4",
+      "title": "Fundamentals of Practice Lab Manual",
+      "description": "Laboratory manual explaining system operation, tool usage, and introductory hands-on practice guidelines.",
+      "week_label": "Week 3",
+      "material_type": "doc",
+      "material_category": "assignment",
+      "file_url": "/uploads/materials/lab_manual.docx",
+      "uploaded_by": "lecturer-uuid",
+      "original_filename": "lab_manual.docx",
+      "file_size_bytes": 1540000,
+      "semester": "Semester 1",
+      "academic_year": 1,
+      "lecture_note_number": 3,
+      "is_published": true,
+      "created_at": "2026-08-29T03:56:00.157Z"
+    }
+  ],
+  "assessments": [],
+  "assessment_questions": [],
+  "assessment_attempts": [],
+  "learning_events": [],
+  "transactions": [
+    {
+      "id": "t1",
+      "user_id": "admin-uuid",
+      "type": "credit",
+      "amount": 250,
+      "created_at": "2026-08-29T03:56:00.157Z"
+    }
+  ],
+  "scholarships": [
+    {
+      "id": "s1",
+      "user_id": "admin-uuid",
+      "status": "approved",
+      "applied_at": "2026-08-29T03:56:00.157Z"
+    }
+  ],
+  "notifications": [
+    {
+      "id": "n1",
+      "user_id": "admin-uuid",
+      "title": "Welcome to UniPam",
+      "message": "Congratulations on setting up your premium student account on UniPam!",
+      "created_at": "2026-08-29T03:56:00.157Z",
+      "read_at": null
+    }
+  ],
+  "messages": [
+    {
+      "id": "msg-init-1",
+      "from_user_id": "lecturer-uuid",
+      "from_name": "Dr. Ernest Udeh",
+      "from_role": "lecturer",
+      "to_user_id": "all",
+      "to_name": "All Students",
+      "course_id": "c1",
+      "course_title": "Information Systems & Modern Database Architecture",
+      "subject": "Mid-Semester Assignment Available in Learning Materials",
+      "message": "Dear students, the latest lecture slides and coursework questions have been uploaded to Manage Learning Materials. Please review them before next week's session.",
+      "category": "announcement",
+      "created_at": "2026-08-29T01:56:00.157Z",
+      "read_at": null
+    }
+  ],
+  "ipam_faculties": [
+    {
+      "id": "f1",
+      "name": "Accounting & Finance",
+      "slug": "accounting-finance",
+      "description": "Financial Accounting, Auditing, Taxation, Banking, Investment, Financial Services & Financial Economics.",
+      "programme_count": 8,
+      "dean": "Dr James Kollie"
+    },
+    {
+      "id": "f2",
+      "name": "Information Systems & Technology",
+      "slug": "info-systems-tech",
+      "description": "Database Systems, Software Engineering, Networks, Cybersecurity, Web/Mobile Development & Data Analytics.",
+      "programme_count": 3
+    },
+    {
+      "id": "f3",
+      "name": "Business Administration & Entrepreneurship",
+      "slug": "business-admin-entrepreneurship",
+      "description": "Business Management, Entrepreneurship, Innovation, Human Resources, Procurement, Logistics, Marketing & Projects.",
+      "programme_count": 13,
+      "dean": "Dr Ernest Udeh"
+    },
+    {
+      "id": "f4",
+      "name": "Leadership & Governance",
+      "slug": "leadership-governance",
+      "description": "Public Sector Leadership, Policy Studies, Public Administration, Development Management & Governance.",
+      "programme_count": 7
+    },
+    {
+      "id": "f5",
+      "name": "Extra-Mural Studies",
+      "slug": "extra-mural-studies",
+      "description": "Professional diploma and certificate education extending learning into provincial and local communities across Sierra Leone.",
+      "programme_count": 8
+    }
+  ],
+  "ipam_departments": [
+    {
+      "id": "d1",
+      "faculty_id": "f1",
+      "name": "Department of Accountancy"
+    },
+    {
+      "id": "d2",
+      "faculty_id": "f1",
+      "name": "Department of Financial Services"
+    },
+    {
+      "id": "d3",
+      "faculty_id": "f1",
+      "name": "Department of Banking and Finance"
+    },
+    {
+      "id": "d4",
+      "faculty_id": "f2",
+      "name": "Department of Information Systems"
+    },
+    {
+      "id": "d5",
+      "faculty_id": "f2",
+      "name": "Department of Information Technology"
+    },
+    {
+      "id": "d6",
+      "faculty_id": "f3",
+      "name": "Business Administration",
+      "hod": "Joshua Wright"
+    },
+    {
+      "id": "d7",
+      "faculty_id": "f3",
+      "name": "Marketing and Sales"
+    },
+    {
+      "id": "d8",
+      "faculty_id": "f3",
+      "name": "Procurement, Logistics & Supply Chain"
+    },
+    {
+      "id": "d9",
+      "faculty_id": "f4",
+      "name": "Department of Public Administration"
+    },
+    {
+      "id": "d10",
+      "faculty_id": "f5",
+      "name": "Extra-Mural Studies Department"
+    }
+  ],
+  "ipam_programmes": [
+    {
+      "id": "p1",
+      "faculty_id": "f1",
+      "department_id": "d2",
+      "name": "BSc (Hons) Financial Economics",
+      "level": "Degree",
+      "duration": "4 years",
+      "mode": "In person",
+      "status": "Active",
+      "description": "Combines economics and finance, developing analytical and quantitative skills for analysing financial markets, economic policy and financial decisions.",
+      "career_areas": [
+        "Financial economist",
+        "Economic analyst",
+        "Investment/portfolio analyst",
+        "Risk-management specialist",
+        "Banking and finance officer",
+        "Policy analyst",
+        "Economic consultant",
+        "Financial-planning/advisory roles"
+      ],
+      "entry_requirements": "Five GCE O-Level/WASSCE credits, including C6 or better in English, C5 or better in Mathematics, C5 or better in Cost Accounting, Financial Accounting or Economics. Not more than two sittings."
+    },
+    {
+      "id": "p2",
+      "faculty_id": "f1",
+      "department_id": "d1",
+      "name": "BSc Applied Accounting",
+      "level": "Degree",
+      "duration": "4 years",
+      "mode": "In person",
+      "status": "Active",
+      "description": "A practical accounting degree covering financial reporting, management accounting, audit, and tax applications in real-world business contexts.",
+      "career_areas": [
+        "Accountant",
+        "Audit trainee",
+        "Financial controller",
+        "Bookkeeper",
+        "Tax associate"
+      ]
+    },
+    {
+      "id": "p3",
+      "faculty_id": "f1",
+      "department_id": "d1",
+      "name": "BSc Auditing, Taxation and Internal Controls",
+      "level": "Degree",
+      "duration": "4 years",
+      "mode": "In person",
+      "status": "Active",
+      "description": "Specialized training in auditing, taxation, internal controls, financial integrity and regulatory compliance.",
+      "career_areas": [
+        "Internal/external auditor",
+        "Tax officer/consultant",
+        "Internal-control officer",
+        "Compliance officer",
+        "Risk-management officer",
+        "Accounts/audit officer",
+        "Public-sector financial inspector"
+      ],
+      "entry_requirements": "Five O-Level/WASSCE credits, including C6 English, C5 Mathematics and C5 in Cost Accounting, Financial Accounting or Economics, within two sittings."
+    },
+    {
+      "id": "p4",
+      "faculty_id": "f1",
+      "department_id": "d3",
+      "name": "BSc Banking and Finance",
+      "level": "Degree",
+      "duration": "4 years",
+      "mode": "In person",
+      "status": "Active",
+      "description": "Comprehensive education in banking operations, financial management, financial institutions and global/local financial markets.",
+      "career_areas": [
+        "Banking officer",
+        "Credit analyst",
+        "Financial analyst",
+        "Investment/portfolio assistant",
+        "Risk officer",
+        "Insurance officer",
+        "Treasury/financial-services officer",
+        "Central-bank/regulatory roles"
+      ],
+      "entry_requirements": "Five credits, including C6 English and Mathematics plus C6 in Cost Accounting, Financial Accounting or Economics, within two sittings."
+    },
+    {
+      "id": "p5",
+      "faculty_id": "f1",
+      "department_id": "d2",
+      "name": "BSc Financial Services",
+      "level": "Degree",
+      "duration": "4 years",
+      "mode": "In person",
+      "status": "Active",
+      "description": "Covers financial services industry operations, investment products, client advisory, and regulatory frameworks.",
+      "career_areas": [
+        "Financial services officer",
+        "Investment adviser",
+        "Insurance broker",
+        "Client relationship manager",
+        "Regulatory compliance officer"
+      ],
+      "entry_requirements": "Five O-Level/WASSCE credits, with C6 or better in English and Mathematics plus C6 or better in Cost Accounting, Financial Accounting or Economics, within two sittings."
+    },
+    {
+      "id": "p6",
+      "faculty_id": "f1",
+      "department_id": "d3",
+      "name": "Executive Masters in Banking and Finance",
+      "level": "Postgraduate",
+      "duration": "2 years",
+      "mode": "In person",
+      "status": "Active",
+      "description": "An advanced executive programme for professionals seeking senior leadership in banking and financial services, covering strategy, risk, and financial innovation.",
+      "career_areas": [
+        "Senior banking officer",
+        "Branch manager",
+        "Treasury manager",
+        "Risk director",
+        "Financial institution executive"
+      ]
+    },
+    {
+      "id": "p7",
+      "faculty_id": "f1",
+      "department_id": "d2",
+      "name": "Master in Financial Economics",
+      "level": "Postgraduate",
+      "duration": "2 years",
+      "mode": "In person",
+      "status": "Active",
+      "description": "Advanced finance/economics analysis, financial-market analysis, economic-policy evaluation and data-driven financial decision-making.",
+      "career_areas": [
+        "Financial economist",
+        "Economic policy analyst",
+        "Research analyst",
+        "Central bank officer",
+        "Investment strategist"
+      ]
+    },
+    {
+      "id": "p8",
+      "faculty_id": "f1",
+      "department_id": "d1",
+      "name": "Masters of Finance and Accounting (MFA)",
+      "level": "Postgraduate",
+      "duration": "2 years",
+      "mode": "In person",
+      "status": "Active",
+      "description": "Advanced finance, accounting and financial-management knowledge, including analysis of complex financial information and strategic financial decision-making.",
+      "career_areas": [
+        "Finance director",
+        "Senior accountant",
+        "CFO",
+        "Financial controller",
+        "Investment manager"
+      ]
+    },
+    {
+      "id": "p9",
+      "faculty_id": "f2",
+      "department_id": "d5",
+      "name": "BSc Computer Networking",
+      "level": "Degree",
+      "duration": "4 years",
+      "mode": "In person",
+      "status": "Active",
+      "description": "Computer networks, telecommunications systems, network administration, routing/switching and network security.",
+      "career_areas": [
+        "Network Administrator",
+        "Network Engineer",
+        "Systems Administrator",
+        "IT Infrastructure Officer",
+        "Network Security Assistant",
+        "Data Communications Technician",
+        "Cloud/Network Operations Assistant",
+        "ICT Graduate Trainee"
+      ]
+    },
+    {
+      "id": "p10",
+      "faculty_id": "f2",
+      "department_id": "d4",
+      "name": "BSc Information Systems",
+      "level": "Degree",
+      "duration": "4 years",
+      "mode": "In person",
+      "status": "Active",
+      "description": "Combines computing, business processes and data analytics to teach students how to design, implement and manage information systems supporting organisational processes and decision-making.",
+      "career_areas": [
+        "Information Systems Analyst",
+        "Business Systems Consultant",
+        "Database Administrator",
+        "IT Project Coordinator/Manager",
+        "Business Intelligence Analyst",
+        "Enterprise Systems Specialist",
+        "Network/Security Administrator",
+        "IT Consultant",
+        "IT entrepreneur"
+      ],
+      "entry_requirements": "Five O-Level/WASSCE credits, including C6 English and C5 Mathematics plus any three subjects. Applicants are also subjected to a faculty entrance examination."
+    },
+    {
+      "id": "p11",
+      "faculty_id": "f2",
+      "department_id": "d5",
+      "name": "BSc Information Technology",
+      "level": "Degree",
+      "duration": "4 years",
+      "mode": "In person",
+      "status": "Active",
+      "description": "Covers professional IT areas such as software development, networking, databases, cybersecurity, web/mobile development and IT project management.",
+      "career_areas": [
+        "IT Support/System Administrator",
+        "Software Developer",
+        "Network Administrator/Engineer",
+        "Database Administrator",
+        "Cybersecurity Analyst",
+        "Web/Mobile Developer",
+        "IT Project Manager",
+        "Business/Data Analyst",
+        "Technology entrepreneur"
+      ],
+      "entry_requirements": "Five credits, C6 English, C5 Mathematics plus any three subjects, with faculty entrance examination.",
+      "tuition": {
+        "Year 1": "Le 12,465",
+        "Year 2": "Le 9,399",
+        "Year 3": "Le 9,399",
+        "Final Year": "Le 9,025"
+      }
+    },
+    {
+      "id": "p12",
+      "faculty_id": "f3",
+      "department_id": "d6",
+      "name": "BSc Business Administration",
+      "level": "Degree",
+      "duration": "4 years",
+      "mode": "In person",
+      "status": "Active",
+      "description": "General business management and administration, covering organisational behaviour, operations, finance, and business strategy.",
+      "career_areas": [
+        "Business administrator",
+        "Operations officer",
+        "Office manager",
+        "Management trainee",
+        "Business development associate"
+      ],
+      "entry_requirements": "Five O-Level/WASSCE credits, C5 or better in English and Mathematics plus credits in three other subjects, not more than two sittings."
+    },
+    {
+      "id": "p13",
+      "faculty_id": "f3",
+      "department_id": "d6",
+      "name": "BSc Entrepreneurship and Innovation",
+      "level": "Degree",
+      "duration": "4 years",
+      "mode": "In person",
+      "status": "Active",
+      "description": "Development of entrepreneurial mindset and innovation skills for creating, funding and managing high-growth business ventures.",
+      "career_areas": [
+        "Entrepreneur",
+        "Startup founder",
+        "Business development officer",
+        "Innovation manager",
+        "Product manager"
+      ],
+      "entry_requirements": "Five credits, C6 English and Mathematics plus three other credits, within two sittings."
+    },
+    {
+      "id": "p14",
+      "faculty_id": "f3",
+      "department_id": "d6",
+      "name": "BSc Human Resource Management",
+      "level": "Degree",
+      "duration": "4 years",
+      "mode": "In person",
+      "status": "Active",
+      "description": "Recruitment, talent management, labour relations, performance appraisal and strategic human-resource management.",
+      "career_areas": [
+        "HR Officer/Manager",
+        "Talent Acquisition Specialist",
+        "Training & Development Officer",
+        "Compensation Analyst",
+        "Employee Relations Officer",
+        "HR Consultant",
+        "Organisational Development Officer",
+        "HR Analytics specialist"
+      ],
+      "tuition": {
+        "Year 1": "Le 9,134",
+        "Year 2": "Le 6,430",
+        "Year 3": "Le 6,430",
+        "Final Year": "Le 6,084"
+      }
+    },
+    {
+      "id": "p15",
+      "faculty_id": "f3",
+      "department_id": "d8",
+      "name": "BSc Procurement, Logistics and Supply Chain Management",
+      "level": "Degree",
+      "duration": "4 years",
+      "mode": "In person",
+      "status": "Active",
+      "description": "Strategic procurement, supply-chain management, inventory logistics, warehouse operations and public/private contracting.",
+      "career_areas": [
+        "Procurement officer",
+        "Supply-chain analyst/manager",
+        "Logistics coordinator",
+        "Warehouse manager",
+        "Contract officer",
+        "Operations officer",
+        "Risk/quality officer",
+        "Supply-chain consultant"
+      ],
+      "entry_requirements": "Five credits, English and Mathematics plus three other subjects.",
+      "tuition": {
+        "Year 1": "Le 9,134",
+        "Year 2": "Le 6,430",
+        "Year 3": "Le 6,430",
+        "Final Year": "Le 6,084"
+      }
+    },
+    {
+      "id": "p16",
+      "faculty_id": "f3",
+      "department_id": "d6",
+      "name": "BSc Project Management",
+      "level": "Degree",
+      "duration": "4 years",
+      "mode": "In person",
+      "status": "Active",
+      "description": "Project lifecycle management, planning, scheduling, risk mitigation, budgeting, monitoring and resource allocation.",
+      "career_areas": [
+        "Project Manager/Coordinator",
+        "Project Analyst",
+        "Operations Officer",
+        "Risk Officer",
+        "Procurement/Contract Officer",
+        "M&E Officer",
+        "Business Development Officer",
+        "NGO Development Project Officer"
+      ],
+      "entry_requirements": "Five credits, C6 English and Mathematics plus three other credits, within two sittings."
+    },
+    {
+      "id": "p17",
+      "faculty_id": "f3",
+      "department_id": "d7",
+      "name": "BSc Sales and Marketing",
+      "level": "Degree",
+      "duration": "4 years",
+      "mode": "In person",
+      "status": "Active",
+      "description": "Sales strategy, consumer behaviour, digital marketing, brand management, customer relations and market analytics.",
+      "career_areas": [
+        "Sales executive",
+        "Marketing officer",
+        "Brand manager",
+        "Digital marketing specialist",
+        "Market researcher",
+        "Business development officer"
+      ],
+      "entry_requirements": "Five O-Level/WASSCE credits, C6 English and Mathematics plus three other C6 credits, within two sittings."
+    },
+    {
+      "id": "p18",
+      "faculty_id": "f3",
+      "department_id": "d6",
+      "name": "MSc Entrepreneurship and Innovation",
+      "level": "Postgraduate",
+      "duration": "2 years",
+      "mode": "In person",
+      "status": "Active",
+      "description": "Advanced postgraduate training in creating, financing, scaling and leading innovative and sustainable enterprises.",
+      "career_areas": [
+        "Startup founder",
+        "Business-development manager",
+        "Innovation manager",
+        "Social-enterprise leader",
+        "Product/project manager",
+        "Investment analyst",
+        "Digital entrepreneur",
+        "Strategy consultant"
+      ]
+    },
+    {
+      "id": "p19",
+      "faculty_id": "f3",
+      "department_id": "d8",
+      "name": "MSc Procurement, Logistics and Supply Chain Management",
+      "level": "Postgraduate",
+      "duration": "2 years",
+      "mode": "In person",
+      "status": "Active",
+      "description": "Advanced strategic supply-chain design, international procurement, logistics optimization and supply chain analytics.",
+      "career_areas": [
+        "Supply Chain Manager",
+        "Procurement Manager",
+        "Logistics Manager",
+        "Inventory/Warehouse Manager",
+        "Operations Manager",
+        "Consultant",
+        "NGO/International Organisation programme roles"
+      ]
+    },
+    {
+      "id": "p20",
+      "faculty_id": "f3",
+      "department_id": "d6",
+      "name": "Masters in Business Administration (MBA)",
+      "level": "Postgraduate",
+      "duration": "2 years",
+      "mode": "In person",
+      "status": "Active",
+      "description": "Flagship MBA program imparting executive leadership, corporate strategy, financial management, operations and data-driven executive decision-making.",
+      "career_areas": [
+        "CEO/Managing Director",
+        "Business Development Manager",
+        "Operations/Project Manager",
+        "Financial/Investment Manager",
+        "Marketing Manager",
+        "HR Manager",
+        "Strategy/Policy Analyst",
+        "Entrepreneur",
+        "Consultant"
+      ]
+    },
+    {
+      "id": "p21",
+      "faculty_id": "f3",
+      "department_id": "d6",
+      "name": "Masters in Project Management",
+      "level": "Postgraduate",
+      "duration": "2 years",
+      "mode": "In person",
+      "status": "Active",
+      "description": "Advanced postgraduate qualification in complex project delivery, agile methodologies, strategic portfolio management and stakeholder governance.",
+      "career_areas": [
+        "Project Manager",
+        "Programme Manager",
+        "Project Analyst",
+        "M&E Officer",
+        "Procurement/contract roles",
+        "Consultancy"
+      ]
+    },
+    {
+      "id": "p22",
+      "faculty_id": "f3",
+      "department_id": "d6",
+      "name": "Online Master in Business Administration",
+      "level": "Postgraduate",
+      "duration": "2 years",
+      "mode": "Fully online",
+      "status": "Active",
+      "description": "Flexible online MBA designed for working executives, regional leaders, and entrepreneurs across Africa and globally.",
+      "career_areas": [
+        "Senior manager",
+        "Entrepreneur",
+        "Business consultant",
+        "Operations director",
+        "Strategy executive"
+      ]
+    },
+    {
+      "id": "p23",
+      "faculty_id": "f3",
+      "department_id": "d6",
+      "name": "PhD in Management Sciences",
+      "level": "Postgraduate",
+      "duration": "2 years",
+      "mode": "In person",
+      "status": "Active",
+      "description": "Rigorous doctoral research in management sciences, corporate governance, organizational theory and public/private enterprise leadership.",
+      "career_areas": [
+        "University lecturer/professor",
+        "Management researcher",
+        "Senior executive",
+        "Strategic consultant",
+        "Policy adviser",
+        "Corporate-governance specialist",
+        "Organisational-development consultant"
+      ]
+    },
+    {
+      "id": "p24",
+      "faculty_id": "f3",
+      "department_id": "d8",
+      "name": "Postgraduate Diploma in Procurement (PGDP)",
+      "level": "Postgraduate Diploma",
+      "duration": "2 years",
+      "mode": "In person",
+      "status": "Active",
+      "description": "Professional postgraduate diploma focusing on public procurement laws, supply-chain compliance, vendor management and contract negotiation.",
+      "career_areas": [
+        "Procurement Officer/Manager",
+        "Contract/Vendor Manager",
+        "Supply Chain Analyst",
+        "Logistics/Inventory Manager",
+        "Procurement Consultant",
+        "Compliance Officer",
+        "Operations Manager"
+      ]
+    },
+    {
+      "id": "p25",
+      "faculty_id": "f4",
+      "department_id": "d9",
+      "name": "BSc Leadership & Sustainable Development",
+      "level": "Degree",
+      "duration": "4 years",
+      "mode": "In person",
+      "status": "Active",
+      "description": "Develops ethical, visionary and socially responsible leaders with deep knowledge of governance, sustainable development and public leadership.",
+      "career_areas": [
+        "Development officer",
+        "NGO programme officer",
+        "Sustainability manager",
+        "Policy analyst",
+        "Community development officer"
+      ]
+    },
+    {
+      "id": "p26",
+      "faculty_id": "f4",
+      "department_id": "d9",
+      "name": "BSc Public Policy",
+      "level": "Degree",
+      "duration": "4 years",
+      "mode": "In person",
+      "status": "Active",
+      "description": "Equips students with analytical tools to formulate, evaluate, and implement impactful public policies in Sierra Leone and West Africa.",
+      "career_areas": [
+        "Policy Analyst",
+        "Government Relations Officer",
+        "Research Officer",
+        "Legislative Assistant",
+        "NGO Program Officer",
+        "Public Affairs Consultant"
+      ]
+    },
+    {
+      "id": "p27",
+      "faculty_id": "f4",
+      "department_id": "d9",
+      "name": "BSc Public Sector Management",
+      "level": "Degree",
+      "duration": "4 years",
+      "mode": "In person",
+      "status": "Active",
+      "description": "Public administration, civil service management, policy implementation, public financial governance and local government leadership.",
+      "career_areas": [
+        "Public-sector administrator",
+        "Policy officer",
+        "Local-government officer",
+        "Public-finance/budget officer",
+        "M&E officer",
+        "Regulatory/compliance officer",
+        "NGO/development officer"
+      ],
+      "entry_requirements": "Five credits, C5 English, C6 Mathematics and C5 in three relevant liberal-arts subjects such as History, Government, CRK or Economics."
+    },
+    {
+      "id": "p28",
+      "faculty_id": "f4",
+      "department_id": "d9",
+      "name": "Master in Development Management (MDM)",
+      "level": "Postgraduate",
+      "duration": "2 years",
+      "mode": "In person",
+      "status": "Active",
+      "description": "Focuses on strategic planning, implementing, financing and evaluating socio-economic development projects and national programmes.",
+      "career_areas": [
+        "Development project manager",
+        "Policy analyst",
+        "M&E specialist",
+        "Community-development practitioner",
+        "NGO programme manager",
+        "Sustainability/CSR officer",
+        "Development consultant"
+      ]
+    },
+    {
+      "id": "p29",
+      "faculty_id": "f4",
+      "department_id": "d9",
+      "name": "Master in Governance and Leadership (MGL)",
+      "level": "Postgraduate",
+      "duration": "2 years",
+      "mode": "In person",
+      "status": "Active",
+      "description": "Directed toward advanced governance, leadership development, anti-corruption frameworks, and institutional leadership for senior public and private sector officials.",
+      "career_areas": [
+        "Senior government official",
+        "Policy director",
+        "Governance consultant",
+        "Leadership trainer",
+        "Executive manager"
+      ]
+    },
+    {
+      "id": "p30",
+      "faculty_id": "f4",
+      "department_id": "d9",
+      "name": "Master in Public Administration (MPA)",
+      "level": "Postgraduate",
+      "duration": "2 years",
+      "mode": "In person",
+      "status": "Active",
+      "description": "Premier postgraduate training in executive public-sector management, administrative reform, public financial management and state governance.",
+      "career_areas": [
+        "Public-sector manager",
+        "Policy analyst",
+        "Local-government officer",
+        "Public HR manager",
+        "Planning/M&E officer",
+        "Public-financial-management officer",
+        "Regulator/compliance officer",
+        "NGO programme manager"
+      ]
+    },
+    {
+      "id": "p31",
+      "faculty_id": "f4",
+      "department_id": "d9",
+      "name": "Masters of Research and Public Policy (MRPP)",
+      "level": "Postgraduate",
+      "duration": "2 years",
+      "mode": "In person",
+      "status": "Active",
+      "description": "Advanced collaborative postgraduate degree focusing on rigorous research methodologies, policy analysis and evidence-based decision-making in Africa.",
+      "career_areas": [
+        "Policy analyst",
+        "Researcher",
+        "Government planning officer",
+        "M&E specialist",
+        "NGO programme manager",
+        "Governance consultant",
+        "Policy-communication officer",
+        "Academic/research roles"
+      ]
+    },
+    {
+      "id": "p32",
+      "faculty_id": "f5",
+      "department_id": "d10",
+      "name": "Certificate in Business and Finance",
+      "level": "Certificate",
+      "duration": "1 year",
+      "mode": "In person",
+      "status": "Active",
+      "description": "A one-year foundational certificate introducing business, finance, accounting, and commerce fundamentals for workforce entry or progressive study.",
+      "career_areas": [
+        "Junior business assistant",
+        "Finance clerk",
+        "Customer service representative",
+        "Administrative trainee"
+      ],
+      "entry_requirements": "Four GCE O-Level/WASSCE credits, with C6 or better in English or Mathematics plus three other subjects."
+    },
+    {
+      "id": "p33",
+      "faculty_id": "f5",
+      "department_id": "d10",
+      "name": "Diploma in Applied Accounting",
+      "level": "Diploma",
+      "duration": "2 years",
+      "mode": "In person",
+      "status": "Active",
+      "description": "A professional diploma providing applied skills in financial accounting, bookkeeping, payroll, and reporting for commercial and public sector roles.",
+      "career_areas": [
+        "Accounts clerk",
+        "Bookkeeper",
+        "Accounts assistant",
+        "Finance assistant",
+        "Accounts officer"
+      ],
+      "entry_requirements": "Four GCE O-Level/WASSCE credits, with C6 or better in English or Mathematics plus three other subjects."
+    },
+    {
+      "id": "p34",
+      "faculty_id": "f5",
+      "department_id": "d10",
+      "name": "Diploma in Banking and Finance",
+      "level": "Diploma",
+      "duration": "2 years",
+      "mode": "In person",
+      "status": "Active",
+      "description": "A professional diploma in banking operations, financial services, credit analysis, and customer relationship management.",
+      "career_areas": [
+        "Bank teller",
+        "Customer service officer",
+        "Finance assistant",
+        "Credit officer trainee",
+        "Bank operations clerk"
+      ],
+      "entry_requirements": "Four GCE O-Level/WASSCE credits, with C6 or better in English or Mathematics plus three other subjects."
+    },
+    {
+      "id": "p35",
+      "faculty_id": "f5",
+      "department_id": "d10",
+      "name": "Diploma in Business Administration",
+      "level": "Diploma",
+      "duration": "2 years",
+      "mode": "In person",
+      "status": "Active",
+      "description": "A professional diploma in business principles, office administration, supervision, and organizational management for early career professionals.",
+      "career_areas": [
+        "Office administrator",
+        "Administrative assistant",
+        "Office manager trainee",
+        "Business support officer",
+        "Executive assistant"
+      ],
+      "entry_requirements": "Four GCE O-Level/WASSCE credits, with C6 or better in English or Mathematics plus three other subjects."
+    },
+    {
+      "id": "p36",
+      "faculty_id": "f5",
+      "department_id": "d10",
+      "name": "Diploma in Financial Services",
+      "level": "Diploma",
+      "duration": "2 years",
+      "mode": "In person",
+      "status": "Active",
+      "description": "A professional diploma in the financial services sector, covering insurance, microfinance, investments, and client advisory basics.",
+      "career_areas": [
+        "Financial services assistant",
+        "Insurance clerk",
+        "Investment assistant",
+        "Client services officer"
+      ],
+      "entry_requirements": "Four GCE O-Level/WASSCE credits, with C6 or better in English or Mathematics plus three other subjects."
+    },
+    {
+      "id": "p37",
+      "faculty_id": "f5",
+      "department_id": "d10",
+      "name": "Diploma in Information Technology",
+      "level": "Diploma",
+      "duration": "2 years",
+      "mode": "In person",
+      "status": "Active",
+      "description": "A professional diploma in core IT skills including computer hardware, software applications, networking basics, web tools, and digital literacy.",
+      "career_areas": [
+        "IT support technician",
+        "Help desk assistant",
+        "Data entry operator",
+        "Systems clerk",
+        "ICT trainee"
+      ],
+      "entry_requirements": "Four GCE O-Level/WASSCE credits, with C6 or better in English or Mathematics plus three other subjects."
+    },
+    {
+      "id": "p38",
+      "faculty_id": "f5",
+      "department_id": "d10",
+      "name": "Diploma in Procurement and Supply",
+      "level": "Diploma",
+      "duration": "2 years",
+      "mode": "In person",
+      "status": "Active",
+      "description": "A professional diploma in procurement principles, purchasing, inventory control, and supply chain administration for public and private institutions.",
+      "career_areas": [
+        "Procurement clerk",
+        "Stores officer",
+        "Supply chain assistant",
+        "Purchasing assistant",
+        "Logistics trainee"
+      ],
+      "entry_requirements": "Four GCE O-Level/WASSCE credits, with C6 or better in English or Mathematics plus three other subjects."
+    },
+    {
+      "id": "p39",
+      "faculty_id": "f5",
+      "department_id": "d10",
+      "name": "Diploma in Public Sector Management",
+      "level": "Diploma",
+      "duration": "2 years",
+      "mode": "In person",
+      "status": "Active",
+      "description": "A professional diploma in government administration, public service ethics, civil service procedures, and local administrative management.",
+      "career_areas": [
+        "Civil service officer",
+        "Administrative officer",
+        "Government clerk",
+        "Local government officer",
+        "Registry officer"
+      ],
+      "entry_requirements": "Four GCE O-Level/WASSCE credits, with C6 or better in English or Mathematics plus three other subjects."
+    }
+  ]
+}

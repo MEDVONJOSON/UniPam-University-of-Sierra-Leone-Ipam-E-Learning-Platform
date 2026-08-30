@@ -12,6 +12,17 @@ class User {
     return result.rows[0];
   }
 
+  static async findByStudentId(studentId) {
+    const result = await pool.query(
+      `SELECT u.id, u.email, u.password_hash, u.role, p.*
+       FROM users u
+       LEFT JOIN profiles p ON p.user_id = u.id
+       WHERE p.student_id_number = $1`,
+      [studentId.trim()]
+    );
+    return result.rows[0];
+  }
+
   static async findById(id) {
     const result = await pool.query(
       `SELECT u.id, u.email, u.role, p.* 
@@ -29,8 +40,12 @@ class User {
       educationBackground, skillsInterests, learningGoals,
       profilePhotoUrl, designation, websiteUrl, bio, institutionName,
       faculty, department, enrollmentYear, academicStanding,
-      facultyId, departmentId
+      facultyId, departmentId, studentIdNumber, universityProgramId,
+      currentAcademicYear, currentSemester
     } = data;
+
+    const academicYearInt = (currentAcademicYear !== undefined && currentAcademicYear !== null && currentAcademicYear !== "") ? parseInt(currentAcademicYear, 10) : null;
+    const semesterInt = (currentSemester !== undefined && currentSemester !== null && currentSemester !== "") ? parseInt(currentSemester, 10) : null;
 
     const result = await pool.query(
       `UPDATE profiles SET
@@ -52,6 +67,10 @@ class User {
         academic_standing = COALESCE($17, academic_standing),
         faculty_id = COALESCE($18, faculty_id),
         department_id = COALESCE($19, department_id),
+        student_id_number = COALESCE($20, student_id_number),
+        university_program_id = COALESCE($21, university_program_id),
+        current_academic_year = COALESCE($22, current_academic_year),
+        current_semester = COALESCE($23, current_semester),
         updated_at = NOW()
       WHERE user_id = $1
       RETURNING *`,
@@ -60,13 +79,14 @@ class User {
         educationBackground, JSON.stringify(skillsInterests || []), learningGoals,
         profilePhotoUrl, designation, websiteUrl, bio, institutionName,
         faculty, department, enrollmentYear, academicStanding,
-        facultyId, departmentId
+        facultyId, departmentId, studentIdNumber, universityProgramId,
+        academicYearInt, semesterInt
       ]
     );
     return result.rows[0];
   }
 
-  static async create({ email, passwordHash, role, fullName }) {
+  static async create({ email, passwordHash, role, fullName, studentIdNumber, universityProgramId, currentAcademicYear, currentSemester }) {
     const client = await pool.connect();
     try {
       await client.query("BEGIN");
@@ -79,12 +99,12 @@ class User {
       const user = userResult.rows[0];
       
       await client.query(
-        "INSERT INTO profiles (user_id, full_name) VALUES ($1, $2)",
-        [user.id, fullName]
+        "INSERT INTO profiles (user_id, full_name, student_id_number, university_program_id, current_academic_year, current_semester) VALUES ($1, $2, $3, $4, $5, $6)",
+        [user.id, fullName, studentIdNumber || null, universityProgramId || null, currentAcademicYear || null, currentSemester || null]
       );
       
       await client.query("COMMIT");
-      return { ...user, fullName };
+      return { ...user, fullName, studentIdNumber };
     } catch (error) {
       await client.query("ROLLBACK");
       throw error;

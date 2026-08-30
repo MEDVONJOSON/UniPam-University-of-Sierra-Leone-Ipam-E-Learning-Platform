@@ -1,9 +1,6 @@
-# IDW Frontend (React Migration)
+This folder contains the React frontend for UniPam — University of Sierra Leone eLearning.
 
-This folder contains the React migration app for Intellect Digital World.
-
-## Current Migration Status
-- Migrated to React routes and app shell.
+## Current Status
 - Implemented working React pages:
   - Home
   - About
@@ -13,7 +10,6 @@ This folder contains the React migration app for Intellect Digital World.
   - Testimonial
   - Contact
   - Feature
-  - Price
   - Detail
   - Quote
   - Applications
@@ -27,18 +23,16 @@ This folder contains the React migration app for Intellect Digital World.
   - Course Player
   - Certificate Wallet
 - Integrated these pages with backend APIs (`/auth`, `/courses`, `/enrollments`, `/dashboard`).
-- Migrated all previously placeholder legacy routes into concrete React pages.
 
 ## Run
-1. `cd frontend`
-2. `npm install`
-3. `npm run dev`
-4. Open `http://localhost:5173`
+1. `npm install`
+2. `npm run dev`
+3. Open `http://localhost:5173`
 
 ## Backend Integration
 Vite proxy is configured for `/api` to `http://localhost:4000`.
 
-## Next Migration Tasks
+## Next Tasks
 1. Add admin partner management and reporting pages.
 2. Implement profile editing endpoint and UI updates.
 3. Tighten auth flows (refresh token flow, stricter admin provisioning).

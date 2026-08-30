@@ -1,8 +1,8 @@
 {
-  "name": "idw-backend",
+  "name": "unipam-backend",
   "version": "0.1.0",
   "private": true,
-  "description": "Phase 1 backend foundation for Intellect Digital World",
+  "description": "UniPam University of Sierra Leone eLearning backend",
   "main": "src/server.js",
   "scripts": {
     "dev": "node src/server.js",
