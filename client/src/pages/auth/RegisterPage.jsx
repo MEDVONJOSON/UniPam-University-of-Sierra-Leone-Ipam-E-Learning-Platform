@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { registerUser } from "../../services/authService";
 import {
   User, Mail, UserPlus, AlertCircle, Loader2,
-  GraduationCap, Library, BookOpen, BadgeCheck, CheckCircle2
+  GraduationCap, Library, BookOpen, BadgeCheck, CheckCircle2, Clock
 } from "lucide-react";
 
 // ── IPAM Faculties & their Programs ──────────────────────────────────────────
@@ -95,6 +95,7 @@ function RegisterPage() {
   const [selectedFaculty, setSelectedFaculty] = useState(null);
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [registeredData, setRegisteredData] = useState(null);
   const navigate = useNavigate();
 
   const programs = selectedFaculty ? selectedFaculty.programs : [];
@@ -116,19 +117,80 @@ function RegisterPage() {
     setSubmitting(true);
     setError("");
     try {
-      // Use Student ID as the default password for first login
-      await registerUser({
+      // Default password is set to Student ID
+      const res = await registerUser({
         ...form,
-        password: form.studentIdNumber,
+        password: form.studentIdNumber.trim(),
         universityProgramId: `${selectedFaculty.id}::${form.selectedProgram}`
       });
-      navigate("/app/dashboard");
+
+      if (res.pendingApproval || !res.token) {
+        setRegisteredData(res);
+      } else {
+        navigate("/app/dashboard");
+      }
     } catch (err) {
       setError(err.message || "Enrollment failed. Please check your details and try again.");
     } finally {
       setSubmitting(false);
     }
   };
+
+  if (registeredData) {
+    return (
+      <div className="flex items-center justify-center py-16 px-4 bg-slate-50 min-h-screen">
+        <div className="max-w-xl w-full bg-white p-10 md:p-14 rounded-[3rem] shadow-2xl border border-slate-100 relative overflow-hidden text-center">
+          <div className="absolute top-0 left-0 w-full h-2 bg-[#0B5E3C]" />
+          
+          <div className="mx-auto h-20 w-20 flex items-center justify-center rounded-3xl bg-amber-50 text-amber-600 mb-6 shadow-inner border-2 border-amber-200">
+            <Clock className="w-10 h-10" />
+          </div>
+
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-amber-100 text-amber-800 rounded-full text-[10px] font-black uppercase tracking-widest mb-4">
+            Pending Registry Approval
+          </div>
+
+          <h1 className="text-3xl font-black text-[#0B5E3C] tracking-tight">
+            Registration Submitted!
+          </h1>
+          <p className="mt-3 text-sm text-slate-500 font-bold leading-relaxed max-w-md mx-auto">
+            Your student registration for <strong>{registeredData.user?.fullName}</strong> has been submitted to the University Registry for approval.
+          </p>
+
+          <div className="bg-slate-50 rounded-2xl p-6 border border-slate-100 my-8 text-left space-y-3">
+            <div className="flex justify-between items-center py-2 border-b border-slate-200/60">
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Student ID Number</span>
+              <span className="text-sm font-black text-[#0B5E3C]">{registeredData.user?.studentIdNumber}</span>
+            </div>
+            <div className="flex justify-between items-center py-2 border-b border-slate-200/60">
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Default Login Password</span>
+              <span className="text-sm font-black text-brand-700 bg-brand-50 px-2 py-0.5 rounded-lg">{registeredData.user?.defaultPassword || registeredData.user?.studentIdNumber}</span>
+            </div>
+            <div className="flex justify-between items-center py-2">
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Status</span>
+              <span className="text-xs font-black text-amber-700 bg-amber-100 px-2.5 py-1 rounded-full uppercase tracking-wider">Awaiting Admin Approval</span>
+            </div>
+          </div>
+
+          <div className="bg-brand-50 rounded-2xl p-5 border border-brand-100 text-left mb-8">
+            <p className="text-[10px] font-black text-brand-700 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
+              <BadgeCheck className="w-4 h-4" /> Next Steps:
+            </p>
+            <p className="text-xs text-slate-600 leading-relaxed">
+              Once the administrator approves your account, log in using your <strong>Student ID</strong> and default password. You can then change your password anytime in your profile.
+            </p>
+          </div>
+
+          <Link
+            to="/login"
+            className="w-full h-16 flex items-center justify-center bg-[#0B5E3C] text-white text-xs font-black rounded-2xl transition-all hover:bg-[#094a2f] shadow-xl uppercase tracking-[0.2em]"
+          >
+            Proceed to Portal Login
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   const inputClass =
     "block w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-2xl text-sm font-semibold text-[#0B5E3C] placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-[#0B5E3C]/10 focus:border-[#0B5E3C] transition-all";

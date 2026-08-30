@@ -51,20 +51,31 @@ export async function registerUser(payload) {
       universityProgramId: payload.universityProgramId || null
     })
   });
-  setToken(data.token);
-  const parsed = parseProgramId(data.user.universityProgramId);
-  setCurrentUser({
-    id: data.user.id,
-    name: data.user.fullName || "",
-    email: data.user.email,
-    role: data.user.role,
-    studentIdNumber: data.user.studentIdNumber || "",
-    universityProgramId: data.user.universityProgramId || null,
-    facultyName: parsed.facultyName,
-    program: parsed.program,
-    currentAcademicYear: data.user.currentAcademicYear || null,
-    currentSemester: data.user.currentSemester || null
-  });
+
+  // If registration requires admin approval, return immediately without session
+  if (data.pendingApproval) {
+    return data;
+  }
+
+  if (data.token) {
+    setToken(data.token);
+  }
+
+  if (data.user) {
+    const parsed = parseProgramId(data.user.universityProgramId);
+    setCurrentUser({
+      id: data.user.id,
+      name: data.user.fullName || "",
+      email: data.user.email,
+      role: data.user.role,
+      studentIdNumber: data.user.studentIdNumber || "",
+      universityProgramId: data.user.universityProgramId || null,
+      facultyName: parsed.facultyName,
+      program: parsed.program,
+      currentAcademicYear: data.user.currentAcademicYear || null,
+      currentSemester: data.user.currentSemester || null
+    });
+  }
   return data;
 }
 
@@ -96,6 +107,12 @@ export async function loginUser(payload) {
   return data;
 }
 
+export async function changePassword(payload) {
+  return await apiRequest("/auth/change-password", {
+    method: "POST",
+    body: JSON.stringify(payload)
+  });
+}
 
 export async function hydrateCurrentUser() {
   const data = await apiRequest("/auth/me");

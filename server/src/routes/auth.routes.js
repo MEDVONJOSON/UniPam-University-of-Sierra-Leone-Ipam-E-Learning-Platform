@@ -7,6 +7,7 @@ const router = express.Router();
 
 router.post("/register", asyncHandler(authController.register));
 router.post("/login", asyncHandler(authController.login));
+router.post("/change-password", authRequired, asyncHandler(authController.changePassword));
 router.get("/me", authRequired, asyncHandler(authController.getMe));
 router.patch("/me", authRequired, asyncHandler(authController.updateProfile));
 

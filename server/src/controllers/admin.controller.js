@@ -106,15 +106,18 @@ exports.getRecentActivity = async (req, res) => {
  */
 exports.getUsers = async (req, res) => {
   try {
-    const { search, role } = req.query;
+    const { search, role, status } = req.query;
     const data = pool.data;
     let users = data.users.map(u => {
       const profile = data.profiles.find(p => p.user_id === u.id) || {};
+      const approvalStatus = u.approval_status || (u.is_active === false ? "pending" : "approved");
       return {
         id: u.id,
         email: u.email,
         role: u.role,
         is_active: u.is_active !== false,
+        approval_status: approvalStatus,
+        approvalStatus: approvalStatus,
         created_at: u.created_at,
         fullName: profile.full_name || "",
         phoneNumber: profile.phone_number || "",
@@ -134,6 +137,11 @@ exports.getUsers = async (req, res) => {
     // Filter by role
     if (role && role !== "all") {
       users = users.filter(u => u.role === role);
+    }
+
+    // Filter by approval status if requested
+    if (status && status !== "all") {
+      users = users.filter(u => u.approval_status === status);
     }
 
     // Search filter
@@ -167,12 +175,15 @@ exports.getUser = async (req, res) => {
     if (!user) return res.status(404).json({ error: "User not found." });
 
     const profile = data.profiles.find(p => p.user_id === user.id) || {};
+    const approvalStatus = user.approval_status || (user.is_active === false ? "pending" : "approved");
     res.json({
       data: {
         id: user.id,
         email: user.email,
         role: user.role,
         is_active: user.is_active !== false,
+        approval_status: approvalStatus,
+        approvalStatus: approvalStatus,
         created_at: user.created_at,
         fullName: profile.full_name || "",
         phoneNumber: profile.phone_number || "",
@@ -518,5 +529,87 @@ exports.getReports = async (req, res) => {
   } catch (error) {
     console.error("Admin Reports Error:", error);
     res.status(500).json({ error: "Failed to fetch system reports." });
+  }
+};
+
+/**
+ * PATCH /admin/users/:id/approve
+ * Approves a student/user account, sets is_active = true, and sets/confirms default password.
+ */
+exports.approveUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { defaultPassword } = req.body;
+    const data = pool.data;
+    const userIdx = data.users.findIndex(u => u.id === id);
+    if (userIdx === -1) return res.status(404).json({ error: "User not found." });
+
+    data.users[userIdx].is_active = true;
+    data.users[userIdx].approval_status = "approved";
+
+    const profile = data.profiles.find(p => p.user_id === id) || {};
+
+    // If defaultPassword provided, update their password hash
+    const pass = (defaultPassword && defaultPassword.trim()) || profile.student_id_number || "usl2025";
+    data.users[userIdx].password_hash = await bcrypt.hash(pass, 10);
+    data.users[userIdx].updated_at = new Date().toISOString();
+
+    // Push notification to user
+    if (!data.notifications) data.notifications = [];
+    data.notifications.push({
+      id: "n-" + Math.random().toString(36).substr(2, 9),
+      user_id: id,
+      title: "Account Approved by Registry",
+      message: `Your student account has been approved by the University Registry! You can now sign in using your Student ID and your default password.`,
+      type: "success",
+      link: "/login",
+      created_at: new Date().toISOString(),
+      read_at: null
+    });
+
+    pool.save();
+
+    res.json({
+      data: {
+        id,
+        is_active: true,
+        approval_status: "approved",
+        defaultPassword: pass,
+        message: "User approved successfully. The student can now log in using their Student ID."
+      }
+    });
+  } catch (error) {
+    console.error("Admin Approve User Error:", error);
+    res.status(500).json({ error: "Failed to approve user." });
+  }
+};
+
+/**
+ * PATCH /admin/users/:id/reject
+ * Rejects a user registration.
+ */
+exports.rejectUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const data = pool.data;
+    const userIdx = data.users.findIndex(u => u.id === id);
+    if (userIdx === -1) return res.status(404).json({ error: "User not found." });
+
+    data.users[userIdx].is_active = false;
+    data.users[userIdx].approval_status = "rejected";
+    data.users[userIdx].updated_at = new Date().toISOString();
+    pool.save();
+
+    res.json({
+      data: {
+        id,
+        is_active: false,
+        approval_status: "rejected",
+        message: "User registration rejected."
+      }
+    });
+  } catch (error) {
+    console.error("Admin Reject User Error:", error);
+    res.status(500).json({ error: "Failed to reject user." });
   }
 };

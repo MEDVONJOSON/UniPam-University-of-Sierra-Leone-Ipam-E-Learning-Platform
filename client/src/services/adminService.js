@@ -47,6 +47,21 @@ export async function deleteAdminUser(id) {
   return data.data;
 }
 
+export async function approveAdminUser(id, payload = {}) {
+  const data = await apiRequest(`/admin/users/${id}/approve`, {
+    method: "PATCH",
+    body: JSON.stringify(payload)
+  });
+  return data.data;
+}
+
+export async function rejectAdminUser(id) {
+  const data = await apiRequest(`/admin/users/${id}/reject`, {
+    method: "PATCH"
+  });
+  return data.data;
+}
+
 export async function getSystemReports() {
   const data = await apiRequest("/admin/reports");
   return data.data;

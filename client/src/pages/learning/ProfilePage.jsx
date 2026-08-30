@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { getCurrentUser, hydrateCurrentUser, logoutUser, updateProfile } from "../../services/authService";
+import { getCurrentUser, hydrateCurrentUser, logoutUser, updateProfile, changePassword } from "../../services/authService";
 import {
   User, Mail, GraduationCap,
   Loader2, AlertCircle, Camera, Save, UserCheck,
-  CheckCircle2, Target, Sparkles, LogOut
+  CheckCircle2, Target, Sparkles, LogOut, Lock, Key, ShieldCheck
 } from "lucide-react";
 
 function ProfileSection({ title, children }) {
@@ -156,6 +156,47 @@ function ProfilePage() {
       setError(err.message);
     } finally {
       setSaving(false);
+    }
+  };
+
+  const [passForm, setPassForm] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: ""
+  });
+  const [passSaving, setPassSaving] = useState(false);
+  const [passError, setPassError] = useState("");
+  const [passMessage, setPassMessage] = useState("");
+
+  const handlePasswordChange = async (e) => {
+    e.preventDefault();
+    setPassError("");
+    setPassMessage("");
+    if (!passForm.newPassword) {
+      setPassError("New password is required.");
+      return;
+    }
+    if (passForm.newPassword.length < 6) {
+      setPassError("New password must be at least 6 characters long.");
+      return;
+    }
+    if (passForm.newPassword !== passForm.confirmPassword) {
+      setPassError("New password and confirm password do not match.");
+      return;
+    }
+
+    setPassSaving(true);
+    try {
+      const res = await changePassword({
+        currentPassword: passForm.currentPassword,
+        newPassword: passForm.newPassword
+      });
+      setPassMessage(res.message || "Password updated successfully!");
+      setPassForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
+    } catch (err) {
+      setPassError(err.message || "Failed to update password.");
+    } finally {
+      setPassSaving(false);
     }
   };
 
@@ -350,6 +391,91 @@ function ProfilePage() {
                  </div>
               </ProfileSection>
             )}
+
+            {/* Password & Security Management */}
+            <ProfileSection title="SECURITY & PASSWORD MANAGEMENT">
+              <form onSubmit={handlePasswordChange} className="space-y-6">
+                <div className="bg-emerald-50/50 p-4 rounded-2xl border border-emerald-100 flex items-start gap-3">
+                  <ShieldCheck className="w-5 h-5 text-[#0B5E3C] flex-shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-[10px] font-black text-[#0B5E3C] uppercase tracking-widest">Update Default Login Password</p>
+                    <p className="text-xs text-slate-600 mt-1 leading-relaxed">
+                      If you are logging in with your initial default password (your Student ID), change your password below to secure your student portal account.
+                    </p>
+                  </div>
+                </div>
+
+                {passError && (
+                  <div className="flex items-center gap-3 p-4 text-xs font-black text-red-600 bg-red-50 rounded-2xl border border-red-100">
+                    <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                    <p>{passError}</p>
+                  </div>
+                )}
+                {passMessage && (
+                  <div className="flex items-center gap-3 p-4 text-xs font-black text-emerald-700 bg-emerald-50 rounded-2xl border border-emerald-100">
+                    <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
+                    <p>{passMessage}</p>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-hover-500 uppercase tracking-widest leading-none block ml-1">Current / Default Password</label>
+                    <div className="relative">
+                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                      <input
+                        type="password"
+                        placeholder="••••••••"
+                        value={passForm.currentPassword}
+                        onChange={e => setPassForm({ ...passForm, currentPassword: e.target.value })}
+                        className="block w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-black text-[#0B5E3C] focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 transition-all placeholder-slate-300 outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-hover-500 uppercase tracking-widest leading-none block ml-1">New Password *</label>
+                    <div className="relative">
+                      <Key className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                      <input
+                        type="password"
+                        required
+                        placeholder="Min 6 characters"
+                        value={passForm.newPassword}
+                        onChange={e => setPassForm({ ...passForm, newPassword: e.target.value })}
+                        className="block w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-black text-[#0B5E3C] focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 transition-all placeholder-slate-300 outline-none"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-[10px] font-black text-hover-500 uppercase tracking-widest leading-none block ml-1">Confirm New Password *</label>
+                    <div className="relative">
+                      <Key className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                      <input
+                        type="password"
+                        required
+                        placeholder="Re-type new password"
+                        value={passForm.confirmPassword}
+                        onChange={e => setPassForm({ ...passForm, confirmPassword: e.target.value })}
+                        className="block w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-black text-[#0B5E3C] focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 transition-all placeholder-slate-300 outline-none"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex justify-end pt-2">
+                  <button
+                    type="submit"
+                    disabled={passSaving}
+                    className="px-8 py-3.5 bg-[#0B5E3C] hover:bg-brand-800 text-white rounded-xl font-black text-[10px] uppercase tracking-widest shadow-md transition-all flex items-center gap-2 disabled:opacity-50"
+                  >
+                    {passSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Lock className="w-4 h-4" />}
+                    {passSaving ? "Updating Password..." : "Update Password"}
+                  </button>
+                </div>
+              </form>
+            </ProfileSection>
 
             {/* Action Bar */}
             <div className="flex items-center justify-between pt-12">

@@ -19,6 +19,8 @@ router.get("/users", asyncHandler(adminController.getUsers));
 router.get("/users/:id", asyncHandler(adminController.getUser));
 router.post("/users", asyncHandler(adminController.createUser));
 router.patch("/users/:id", asyncHandler(adminController.updateUser));
+router.patch("/users/:id/approve", asyncHandler(adminController.approveUser));
+router.patch("/users/:id/reject", asyncHandler(adminController.rejectUser));
 router.delete("/users/:id", asyncHandler(adminController.deleteUser));
 
 // System reports

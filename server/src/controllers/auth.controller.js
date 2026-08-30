@@ -7,7 +7,7 @@ const { env } = require("../config/env");
 exports.register = async (req, res) => {
   const { email, password, fullName, studentIdNumber, universityProgramId } = req.body;
 
-  if (!email || !password || !fullName || !studentIdNumber) {
+  if (!email || !fullName || !studentIdNumber) {
     return res.status(400).json({ error: "Full name, email, and student ID are required." });
   }
 
@@ -22,26 +22,26 @@ exports.register = async (req, res) => {
       return res.status(409).json({ error: "Student ID already registered." });
     }
 
-    const passwordHash = await bcrypt.hash(password, 10);
+    // Default password is the student ID number
+    const defaultPassword = (password && password.trim()) || studentIdNumber.trim();
+    const passwordHash = await bcrypt.hash(defaultPassword, 10);
+
     const user = await User.create({
       email,
       passwordHash,
       role: "learner",
       fullName,
-      studentIdNumber,
+      studentIdNumber: studentIdNumber.trim(),
       universityProgramId: universityProgramId || null,
-      currentAcademicYear: null,
-      currentSemester: null
+      currentAcademicYear: "Year 1",
+      currentSemester: "Semester 1",
+      approvalStatus: "pending",
+      isActive: false
     });
 
-    const token = jwt.sign(
-      { sub: user.id, email: user.email, role: user.role },
-      env.jwtSecret,
-      { expiresIn: "7d" }
-    );
-
     res.status(201).json({
-      token,
+      pendingApproval: true,
+      message: `Registration submitted successfully! Your account is pending Registry Admin approval. Once approved by the administrator, you can log in using your Student ID (${studentIdNumber}) and your default password.`,
       user: {
         id: user.id,
         email: user.email,
@@ -49,8 +49,8 @@ exports.register = async (req, res) => {
         fullName: user.fullName,
         studentIdNumber: user.studentIdNumber,
         universityProgramId: universityProgramId || null,
-        currentAcademicYear: user.currentAcademicYear || null,
-        currentSemester: user.currentSemester || null
+        approvalStatus: "pending",
+        defaultPassword: defaultPassword
       }
     });
   } catch (error) {
@@ -77,6 +77,19 @@ exports.login = async (req, res) => {
 
     if (!user) {
       return res.status(401).json({ error: loginByEmail ? "Invalid email or password." : "Invalid Student ID or password." });
+    }
+
+    // Check account approval & active status
+    if (user.approval_status === "pending" || user.approvalStatus === "pending" || user.is_active === false) {
+      return res.status(403).json({
+        error: "Your student account is pending Administrator approval. Please wait for the University Registry to approve your registration before logging in."
+      });
+    }
+
+    if (user.approval_status === "rejected" || user.approvalStatus === "rejected") {
+      return res.status(403).json({
+        error: "Your account registration was not approved. Please contact the University Registry Office."
+      });
     }
 
     const isMatch = await bcrypt.compare(password, user.password_hash);
@@ -130,5 +143,41 @@ exports.updateProfile = async (req, res) => {
   } catch (error) {
     console.error("UpdateProfile error:", error);
     res.status(500).json({ error: "Failed to update profile." });
+  }
+};
+
+exports.changePassword = async (req, res) => {
+  const { currentPassword, newPassword } = req.body;
+  const userId = req.auth.userId;
+
+  if (!newPassword || newPassword.length < 6) {
+    return res.status(400).json({ error: "New password must be at least 6 characters long." });
+  }
+
+  try {
+    const { pool } = require("../config/db");
+    const user = pool.data.users.find(u => u.id === userId);
+    if (!user) {
+      return res.status(404).json({ error: "User not found." });
+    }
+
+    // Verify current password if provided
+    if (currentPassword) {
+      const isMatch = await bcrypt.compare(currentPassword, user.password_hash);
+      if (!isMatch) {
+        return res.status(400).json({ error: "Current password does not match." });
+      }
+    }
+
+    user.password_hash = await bcrypt.hash(newPassword, 10);
+    user.updated_at = new Date().toISOString();
+    pool.save();
+
+    res.json({
+      message: "Password updated successfully! Please use your new password for all future logins."
+    });
+  } catch (error) {
+    console.error("Change password error:", error);
+    res.status(500).json({ error: "Failed to update password." });
   }
 };

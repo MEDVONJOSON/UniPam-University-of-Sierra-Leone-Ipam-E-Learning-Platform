@@ -3,14 +3,15 @@ import { Link, Navigate, useNavigate } from "react-router-dom";
 import { getCurrentUser, logoutUser } from "../../services/authService";
 import {
   getAdminStats, getRecentActivity, getAdminUsers,
-  createAdminUser, updateAdminUser, deleteAdminUser, getSystemReports
+  createAdminUser, updateAdminUser, deleteAdminUser, getSystemReports,
+  approveAdminUser, rejectAdminUser
 } from "../../services/adminService";
 import {
   LayoutDashboard, Users, BarChart3, Settings, LogOut, ShieldAlert, Search,
   Plus, Loader2, AlertCircle, CheckCircle2, ChevronDown, X,
   UserPlus, Activity, Shield, HardDrive, BookOpen, FileText, MessageSquare,
   Edit3, Eye, Trash2, TrendingUp, Clock, Mail, Phone, User, Building2,
-  Calendar, GraduationCap, Bookmark, Hash, Layers
+  Calendar, GraduationCap, Bookmark, Hash, Layers, Check, XCircle, Key, ShieldCheck, Lock
 } from "lucide-react";
 
 /* ─── Sidebar ──────────────────────────────────────────────────────────────── */
@@ -185,6 +186,7 @@ function UserManagementTab() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
 
@@ -193,6 +195,8 @@ function UserManagementTab() {
   const [showViewModal, setShowViewModal] = useState(null);
   const [showEditModal, setShowEditModal] = useState(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(null);
+  const [showApproveModal, setShowApproveModal] = useState(null);
+  const [approvePassword, setApprovePassword] = useState("");
 
   // Create form
   const [createForm, setCreateForm] = useState({
@@ -211,14 +215,14 @@ function UserManagementTab() {
   const loadUsers = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await getAdminUsers({ search, role: roleFilter });
+      const data = await getAdminUsers({ search, role: roleFilter, status: statusFilter !== "all" ? statusFilter : undefined });
       setUsers(data);
     } catch (e) {
       setError("Failed to load users.");
     } finally {
       setLoading(false);
     }
-  }, [search, roleFilter]);
+  }, [search, roleFilter, statusFilter]);
 
   useEffect(() => { loadUsers(); }, [loadUsers]);
 
@@ -259,6 +263,36 @@ function UserManagementTab() {
     } catch (err) { setError(err.message); }
   };
 
+  const openApprove = (user) => {
+    setApprovePassword(user.studentIdNumber || user.email?.split("@")[0] || "usl2025");
+    setShowApproveModal(user);
+  };
+
+  const handleApproveConfirm = async () => {
+    if (!showApproveModal) return;
+    setError(""); setMessage("");
+    try {
+      const result = await approveAdminUser(showApproveModal.id, { defaultPassword: approvePassword });
+      setMessage(`Account approved for ${showApproveModal.fullName || showApproveModal.email}! Default password set to: ${result.defaultPassword}`);
+      setShowApproveModal(null);
+      loadUsers();
+    } catch (err) {
+      setError(err.message || "Failed to approve account.");
+    }
+  };
+
+  const handleReject = async (user) => {
+    if (!window.confirm(`Are you sure you want to reject registration for ${user.fullName || user.email}?`)) return;
+    setError(""); setMessage("");
+    try {
+      await rejectAdminUser(user.id);
+      setMessage(`Registration rejected for ${user.fullName || user.email}.`);
+      loadUsers();
+    } catch (err) {
+      setError(err.message || "Failed to reject account.");
+    }
+  };
+
   const openEdit = (user) => {
     setEditForm({
       fullName: user.fullName || "",
@@ -281,6 +315,8 @@ function UserManagementTab() {
     lecturer: "bg-hover-100 text-hover-700",
     learner: "bg-brand-100 text-brand-700"
   };
+
+  const pendingCount = users.filter(u => u.approval_status === "pending" || u.is_active === false).length;
 
   const filterBtns = [
     { label: "All Users", value: "all" },
@@ -362,7 +398,7 @@ function UserManagementTab() {
               className="w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-bold text-[#0B5E3C] placeholder-slate-400 outline-none focus:ring-4 focus:ring-brand-500/10 transition-all"
             />
           </div>
-          <div className="flex gap-2 flex-wrap">
+          <div className="flex gap-2 flex-wrap items-center">
             {filterBtns.map(btn => (
               <button
                 key={btn.value}
@@ -376,6 +412,26 @@ function UserManagementTab() {
                 {btn.label}
               </button>
             ))}
+
+            {/* Pending Approval Filter Toggle */}
+            <button
+              onClick={() => setStatusFilter(statusFilter === "pending" ? "all" : "pending")}
+              className={`px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-1.5 ${
+                statusFilter === "pending"
+                  ? "bg-amber-600 text-white shadow-lg shadow-amber-600/30"
+                  : "bg-amber-50 text-amber-800 hover:bg-amber-100 border border-amber-200"
+              }`}
+            >
+              <Clock className="w-3.5 h-3.5" />
+              Pending Approval
+              {pendingCount > 0 && (
+                <span className={`px-1.5 py-0.2 rounded-full text-[9px] font-black ${
+                  statusFilter === "pending" ? "bg-white text-amber-700" : "bg-amber-600 text-white"
+                }`}>
+                  {pendingCount}
+                </span>
+              )}
+            </button>
           </div>
         </div>
       </div>
@@ -406,7 +462,7 @@ function UserManagementTab() {
                   <th className="pb-3">Full Name</th>
                   <th className="pb-3">Email</th>
                   <th className="pb-3">Faculty / Department</th>
-                  <th className="pb-3">Module & Academic Year</th>
+                  <th className="pb-3">Module & Year</th>
                   <th className="pb-3">Role</th>
                   <th className="pb-3">Status</th>
                   <th className="pb-3">Created</th>
@@ -414,62 +470,96 @@ function UserManagementTab() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-50">
-                {users.map(user => (
-                  <tr key={user.id} className="group hover:bg-slate-50/50 transition-colors">
-                    <td className="py-4 pl-4 text-xs font-bold text-slate-500">
-                      {user.studentIdNumber || user.moduleCode || "—"}
-                    </td>
-                    <td className="py-4 font-black text-[#0B5E3C] text-sm">{user.fullName || "—"}</td>
-                    <td className="py-4 text-xs font-bold text-slate-500">{user.email}</td>
-                    <td className="py-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider max-w-[170px]">
-                      <div className="truncate text-[#0B5E3C] font-black">{user.faculty || "—"}</div>
-                      <div className="text-[9px] text-slate-400 truncate">{user.department || ""}</div>
-                    </td>
-                    <td className="py-4 text-[10px] font-bold text-slate-500 max-w-[200px]">
-                      {user.moduleTitle ? (
-                        <div>
-                          <div className="font-black text-[#0B5E3C] truncate">{user.moduleTitle}</div>
-                          <div className="flex items-center gap-1.5 mt-0.5">
-                            {user.moduleCode && (
-                              <span className="bg-brand-50 px-1.5 py-0.5 rounded text-[9px] font-black text-brand-700 uppercase">
-                                {user.moduleCode}
+                {users.map(user => {
+                  const isPending = user.approval_status === "pending" || user.is_active === false;
+                  return (
+                    <tr key={user.id} className="group hover:bg-slate-50/50 transition-colors">
+                      <td className="py-4 pl-4 text-xs font-bold text-slate-500">
+                        {user.studentIdNumber || user.moduleCode || "—"}
+                      </td>
+                      <td className="py-4 font-black text-[#0B5E3C] text-sm">{user.fullName || "—"}</td>
+                      <td className="py-4 text-xs font-bold text-slate-500">{user.email}</td>
+                      <td className="py-4 text-[10px] font-bold text-slate-500 uppercase tracking-wider max-w-[170px]">
+                        <div className="truncate text-[#0B5E3C] font-black">{user.faculty || "—"}</div>
+                        <div className="text-[9px] text-slate-400 truncate">{user.department || ""}</div>
+                      </td>
+                      <td className="py-4 text-[10px] font-bold text-slate-500 max-w-[200px]">
+                        {user.moduleTitle ? (
+                          <div>
+                            <div className="font-black text-[#0B5E3C] truncate">{user.moduleTitle}</div>
+                            <div className="flex items-center gap-1.5 mt-0.5">
+                              {user.moduleCode && (
+                                <span className="bg-brand-50 px-1.5 py-0.5 rounded text-[9px] font-black text-brand-700 uppercase">
+                                  {user.moduleCode}
+                                </span>
+                              )}
+                              <span className="text-[9px] text-slate-400 font-bold">
+                                {user.academicYear || "Year 1"} · {user.semester || "Semester 1"}
                               </span>
-                            )}
-                            <span className="text-[9px] text-slate-400 font-bold">
-                              {user.academicYear || "Year 1"} · {user.semester || "Semester 1"}
-                            </span>
+                            </div>
                           </div>
+                        ) : (
+                          <span className="text-slate-400 text-xs">—</span>
+                        )}
+                      </td>
+                      <td className="py-4">
+                        <span className={`px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest ${roleColors[user.role] || "bg-slate-100 text-slate-500"}`}>
+                          {user.role === "learner" ? "Student" : user.role}
+                        </span>
+                      </td>
+                      <td className="py-4">
+                        {isPending ? (
+                          <span className="px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest bg-amber-100 text-amber-800 border border-amber-200 flex items-center gap-1 w-fit">
+                            <Clock className="w-3 h-3" /> Pending
+                          </span>
+                        ) : user.approval_status === "rejected" ? (
+                          <span className="px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest bg-red-100 text-red-600">
+                            Rejected
+                          </span>
+                        ) : (
+                          <span className="px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest bg-emerald-100 text-emerald-700 flex items-center gap-1 w-fit">
+                            <Check className="w-3 h-3" /> Active
+                          </span>
+                        )}
+                      </td>
+                      <td className="py-4 text-[10px] text-slate-400 font-bold">{new Date(user.created_at).toLocaleDateString()}</td>
+                      <td className="py-4 text-right pr-4">
+                        <div className="flex items-center justify-end gap-1.5">
+                          {isPending ? (
+                            <div className="flex items-center gap-1">
+                              <button
+                                onClick={() => openApprove(user)}
+                                className="flex items-center gap-1 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-[10px] font-black uppercase tracking-wider shadow-sm transition-all"
+                                title="Approve Student"
+                              >
+                                <ShieldCheck className="w-3.5 h-3.5" /> Approve
+                              </button>
+                              <button
+                                onClick={() => handleReject(user)}
+                                className="p-1.5 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg transition-colors"
+                                title="Reject"
+                              >
+                                <XCircle className="w-4 h-4" />
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <button onClick={() => openEdit(user)} className="p-2 rounded-lg hover:bg-hover-100 text-hover-600 transition-colors" title="Edit">
+                                <Edit3 className="w-4 h-4" />
+                              </button>
+                              <button onClick={() => setShowViewModal(user)} className="p-2 rounded-lg hover:bg-brand-100 text-brand-600 transition-colors" title="View">
+                                <Eye className="w-4 h-4" />
+                              </button>
+                              <button onClick={() => setShowDeleteConfirm(user)} className="p-2 rounded-lg hover:bg-red-100 text-red-500 transition-colors" title="Delete">
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            </div>
+                          )}
                         </div>
-                      ) : (
-                        <span className="text-slate-400 text-xs">—</span>
-                      )}
-                    </td>
-                    <td className="py-4">
-                      <span className={`px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest ${roleColors[user.role] || "bg-slate-100 text-slate-500"}`}>
-                        {user.role === "learner" ? "Student" : user.role}
-                      </span>
-                    </td>
-                    <td className="py-4">
-                      <span className={`px-2.5 py-1 rounded-lg text-[9px] font-black uppercase tracking-widest ${user.is_active ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-600"}`}>
-                        {user.is_active ? "Active" : "Inactive"}
-                      </span>
-                    </td>
-                    <td className="py-4 text-[10px] text-slate-400 font-bold">{new Date(user.created_at).toLocaleDateString()}</td>
-                    <td className="py-4 text-right pr-4">
-                      <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                        <button onClick={() => openEdit(user)} className="p-2 rounded-lg hover:bg-hover-100 text-hover-600 transition-colors" title="Edit">
-                          <Edit3 className="w-4 h-4" />
-                        </button>
-                        <button onClick={() => setShowViewModal(user)} className="p-2 rounded-lg hover:bg-brand-100 text-brand-600 transition-colors" title="View">
-                          <Eye className="w-4 h-4" />
-                        </button>
-                        <button onClick={() => setShowDeleteConfirm(user)} className="p-2 rounded-lg hover:bg-red-100 text-red-500 transition-colors" title="Delete">
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                      </td>
+                    </tr>
+                  );
+                })}
                 {users.length === 0 && (
                   <tr><td colSpan="9" className="py-16 text-center text-slate-400 font-bold uppercase tracking-widest text-xs">No users found</td></tr>
                 )}
@@ -478,6 +568,81 @@ function UserManagementTab() {
           </div>
         )}
       </div>
+
+      {/* ── Approve Student Modal ────────────────────────────────────────── */}
+      {showApproveModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
+          <div className="bg-white rounded-[2.5rem] shadow-2xl max-w-lg w-full p-10">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="w-2 h-8 bg-emerald-600 rounded-full" />
+                <h2 className="text-xl font-black text-[#0B5E3C] uppercase tracking-tight">Approve Student Account</h2>
+              </div>
+              <button onClick={() => setShowApproveModal(null)} className="p-2 rounded-xl hover:bg-slate-100 transition-colors">
+                <X className="w-5 h-5 text-slate-400" />
+              </button>
+            </div>
+
+            <div className="space-y-4 mb-6">
+              <div className="bg-slate-50 rounded-2xl p-5 border border-slate-100 space-y-2.5">
+                <div className="flex justify-between items-center text-xs">
+                  <span className="font-bold text-slate-400 uppercase tracking-wider">Student Name:</span>
+                  <span className="font-black text-[#0B5E3C]">{showApproveModal.fullName || "—"}</span>
+                </div>
+                <div className="flex justify-between items-center text-xs">
+                  <span className="font-bold text-slate-400 uppercase tracking-wider">Email Address:</span>
+                  <span className="font-bold text-slate-600">{showApproveModal.email}</span>
+                </div>
+                <div className="flex justify-between items-center text-xs">
+                  <span className="font-bold text-slate-400 uppercase tracking-wider">Student ID:</span>
+                  <span className="font-black text-[#0B5E3C] bg-emerald-50 px-2 py-0.5 rounded text-emerald-800">
+                    {showApproveModal.studentIdNumber || "N/A"}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center text-xs">
+                  <span className="font-bold text-slate-400 uppercase tracking-wider">Faculty:</span>
+                  <span className="font-bold text-slate-600 truncate max-w-[200px]">{showApproveModal.faculty || "—"}</span>
+                </div>
+              </div>
+
+              <div>
+                <label className={labelClass}>Assign / Confirm Default Password *</label>
+                <div className="relative">
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                  <input
+                    type="text"
+                    required
+                    value={approvePassword}
+                    onChange={e => setApprovePassword(e.target.value)}
+                    className={inputClass}
+                    placeholder="e.g. Student ID Number"
+                  />
+                </div>
+                <p className="text-[10px] text-slate-400 font-semibold mt-2 ml-1">
+                  The student will log in using their <strong>Student ID</strong> and this default password.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setShowApproveModal(null)}
+                className="flex-1 py-3.5 bg-slate-100 text-slate-600 rounded-2xl font-black text-xs uppercase tracking-widest hover:bg-slate-200 transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleApproveConfirm}
+                className="flex-1 py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-lg transition-all flex items-center justify-center gap-2"
+              >
+                <Check className="w-4 h-4" /> Confirm &amp; Approve
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ── Create User Modal ───────────────────────────────────────────── */}
       {showCreateModal && (
