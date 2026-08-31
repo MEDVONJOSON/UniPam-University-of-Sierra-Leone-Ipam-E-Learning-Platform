@@ -1,77 +1,96 @@
-const { pool } = require("../config/db");
+const { prisma } = require("../config/db");
 
 class LMS {
   // --- Modules ---
   static async findModulesByCourseId(courseId) {
-    const result = await pool.query(
-      "SELECT * FROM modules WHERE course_id = $1 ORDER BY order_index ASC",
-      [courseId]
-    );
-    return result.rows;
+    return await prisma.lmsModule.findMany({
+      where: { course_id: courseId },
+      orderBy: { order_index: "asc" }
+    });
   }
 
   static async createModule(courseId, title, orderIndex = 0) {
-    const result = await pool.query(
-      "INSERT INTO modules (course_id, title, order_index) VALUES ($1, $2, $3) RETURNING *",
-      [courseId, title, orderIndex]
-    );
-    return result.rows[0];
+    return await prisma.lmsModule.create({
+      data: {
+        course_id: courseId,
+        title,
+        order_index: orderIndex
+      }
+    });
   }
 
   // --- Lessons ---
   static async findLessonsByModuleId(moduleId) {
-    const result = await pool.query(
-      "SELECT * FROM lessons WHERE module_id = $1 ORDER BY order_index ASC",
-      [moduleId]
-    );
-    return result.rows;
+    return await prisma.lmsLesson.findMany({
+      where: { module_id: moduleId },
+      orderBy: { order_index: "asc" }
+    });
   }
 
   static async findLessonById(lessonId) {
-    const result = await pool.query("SELECT * FROM lessons WHERE id = $1", [lessonId]);
-    return result.rows[0];
+    return await prisma.lmsLesson.findUnique({
+      where: { id: lessonId }
+    });
   }
 
   static async createLesson(moduleId, data) {
     const { title, contentType, videoUrl, articleContent, orderIndex, durationMinutes } = data;
-    const result = await pool.query(
-      `INSERT INTO lessons (module_id, title, content_type, video_url, article_content, order_index, duration_minutes)
-       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
-      [moduleId, title, contentType, videoUrl, articleContent, orderIndex, durationMinutes]
-    );
-    return result.rows[0];
+    return await prisma.lmsLesson.create({
+      data: {
+        module_id: moduleId,
+        title,
+        content_type: contentType,
+        video_url: videoUrl,
+        article_content: articleContent,
+        order_index: orderIndex,
+        duration_minutes: durationMinutes ? parseInt(durationMinutes, 10) : null
+      }
+    });
   }
 
   // --- Materials ---
   static async findMaterialsByLessonId(lessonId) {
-    const result = await pool.query("SELECT * FROM materials WHERE lesson_id = $1", [lessonId]);
-    return result.rows;
+    return await prisma.lmsMaterial.findMany({
+      where: { lesson_id: lessonId }
+    });
   }
 
   static async createMaterial(data) {
     const { lessonId, courseId, title, fileUrl, fileType } = data;
-    const result = await pool.query(
-      "INSERT INTO materials (lesson_id, course_id, title, file_url, file_type) VALUES ($1, $2, $3, $4, $5) RETURNING *",
-      [lessonId, courseId, title, fileUrl, fileType]
-    );
-    return result.rows[0];
+    return await prisma.lmsMaterial.create({
+      data: {
+        lesson_id: lessonId,
+        course_id: courseId,
+        title,
+        file_url: fileUrl,
+        file_type: fileType
+      }
+    });
   }
 
   // --- Assignments ---
   static async findAssignmentsByCourseId(courseId) {
-    const result = await pool.query("SELECT * FROM assignments WHERE course_id = $1", [courseId]);
-    return result.rows;
+    return await prisma.assignment.findMany({
+      where: { course_id: courseId }
+    });
   }
 
   // --- Quizzes ---
   static async findQuizzesByLessonId(lessonId) {
-    const result = await pool.query("SELECT * FROM quizzes WHERE lesson_id = $1", [lessonId]);
-    return result.rows;
+    return await prisma.quiz.findMany({
+      where: { lesson_id: lessonId }
+    });
   }
 
   static async findQuizQuestions(quizId) {
-    const result = await pool.query("SELECT * FROM quiz_questions WHERE quiz_id = $1 ORDER BY order_index ASC", [quizId]);
-    return result.rows;
+    const list = await prisma.quizQuestion.findMany({
+      where: { quiz_id: quizId },
+      orderBy: { order_index: "asc" }
+    });
+    return list.map(q => ({
+      ...q,
+      options: JSON.parse(q.options || "[]")
+    }));
   }
 }
 

@@ -1,133 +1,164 @@
-const { pool } = require("../config/db");
+const { prisma } = require("../config/db");
 
 class Material {
-  // ─── Lecturer / admin queries ───────────────────────────────────────────────
-
   static async findByCourseId(courseId) {
-    const result = await pool.query(
-      `SELECT cm.*,
-              mo.title AS module_title,
-              mo.sort_order AS module_sort_order,
-              u.email AS uploader_email,
-              p.full_name AS uploader_name
-       FROM course_materials cm
-       LEFT JOIN course_modules mo ON mo.id = cm.module_id
-       LEFT JOIN users u ON u.id = cm.uploaded_by
-       LEFT JOIN profiles p ON p.user_id = cm.uploaded_by
-       WHERE cm.course_id = $1
-       ORDER BY mo.sort_order ASC NULLS LAST, cm.created_at ASC`,
-      [courseId]
-    );
-    return result.rows;
-  }
+    const list = await prisma.courseMaterial.findMany({
+      where: { course_id: courseId },
+      include: {
+        module: { select: { title: true, sort_order: true } }
+      },
+      orderBy: [
+        { module: { sort_order: 'asc' } },
+        { created_at: 'asc' }
+      ]
+    });
 
-  // ─── Student query — only published materials for enrolled courses ────────
+    const uploaderIds = [...new Set(list.map(cm => cm.uploaded_by).filter(Boolean))];
+    const uploaders = await prisma.user.findMany({
+      where: { id: { in: uploaderIds } },
+      select: { id: true, email: true, profile: { select: { full_name: true } } }
+    });
+    const uploaderMap = Object.fromEntries(uploaders.map(u => [u.id, { email: u.email, name: u.profile?.full_name }]));
+
+    return list.map(cm => ({
+      ...cm,
+      file_size_bytes: cm.file_size_bytes ? Number(cm.file_size_bytes) : null,
+      module_title: cm.module?.title || null,
+      module_sort_order: cm.module?.sort_order || null,
+      uploader_email: cm.uploaded_by ? uploaderMap[cm.uploaded_by]?.email || null : null,
+      uploader_name: cm.uploaded_by ? uploaderMap[cm.uploaded_by]?.name || null : null
+    }));
+  }
 
   static async findPublishedByCourseId(courseId, userId) {
-    // Verify enrollment first
-    const enroll = await pool.query(
-      `SELECT id FROM enrollments WHERE user_id = $1 AND course_id = $2 LIMIT 1`,
-      [userId, courseId]
-    );
-    if (enroll.rowCount === 0) return null; // signals "not enrolled"
+    const enrollment = await prisma.enrollment.findUnique({
+      where: { user_id_course_id: { user_id: userId, course_id: courseId } }
+    });
+    if (!enrollment) return null;
 
-    const result = await pool.query(
-      `SELECT cm.*,
-              mo.title AS module_title,
-              mo.sort_order AS module_sort_order,
-              p.full_name AS uploader_name,
-              CASE WHEN sm.material_id IS NOT NULL THEN true ELSE false END AS is_saved
-       FROM course_materials cm
-       LEFT JOIN course_modules mo ON mo.id = cm.module_id
-       LEFT JOIN profiles p ON p.user_id = cm.uploaded_by
-       LEFT JOIN saved_materials sm ON sm.material_id = cm.id AND sm.user_id = $2
-       WHERE cm.course_id = $1 AND cm.is_published = TRUE
-       ORDER BY mo.sort_order ASC NULLS LAST, cm.created_at ASC`,
-      [courseId, userId]
-    );
-    return result.rows;
+    const list = await prisma.courseMaterial.findMany({
+      where: { course_id: courseId, is_published: true },
+      include: {
+        module: { select: { title: true, sort_order: true } },
+        saved_materials: { where: { user_id: userId } }
+      },
+      orderBy: [
+        { module: { sort_order: 'asc' } },
+        { created_at: 'asc' }
+      ]
+    });
+
+    const uploaderIds = [...new Set(list.map(cm => cm.uploaded_by).filter(Boolean))];
+    const profiles = await prisma.profile.findMany({
+      where: { user_id: { in: uploaderIds } },
+      select: { user_id: true, full_name: true }
+    });
+    const profileMap = Object.fromEntries(profiles.map(p => [p.user_id, p.full_name]));
+
+    return list.map(cm => ({
+      ...cm,
+      file_size_bytes: cm.file_size_bytes ? Number(cm.file_size_bytes) : null,
+      module_title: cm.module?.title || null,
+      module_sort_order: cm.module?.sort_order || null,
+      uploader_name: cm.uploaded_by ? profileMap[cm.uploaded_by] || null : null,
+      is_saved: cm.saved_materials.length > 0
+    }));
   }
-
-  // ─── All materials across all enrolled courses (rich search) ─────────────
 
   static async findAllForEnrolledCourses(userId, {
     search, category, courseId,
     semester, academicYear, materialType, weekLabel, lecturer
   } = {}) {
-    const params = [userId];
-    let extra = "";
+    const enrollments = await prisma.enrollment.findMany({
+      where: { user_id: userId },
+      select: { course_id: true }
+    });
+    const enrolledCourseIds = enrollments.map(e => e.course_id);
+    if (enrolledCourseIds.length === 0) return [];
 
-    if (search) {
-      params.push(`%${search.toLowerCase()}%`);
-      const p = params.length;
-      extra += ` AND (
-        LOWER(cm.title)            LIKE $${p} OR
-        LOWER(cm.description)      LIKE $${p} OR
-        LOWER(c.title)             LIKE $${p} OR
-        LOWER(mo.title)            LIKE $${p} OR
-        LOWER(cm.week_label)       LIKE $${p} OR
-        LOWER(cm.original_filename)LIKE $${p} OR
-        LOWER(p.full_name)         LIKE $${p}
-      )`;
+    const where = {
+      course_id: { in: enrolledCourseIds },
+      is_published: true
+    };
+
+    if (courseId) {
+      where.course_id = courseId;
     }
     if (category) {
-      params.push(category);
-      extra += ` AND cm.material_category = $${params.length}`;
-    }
-    if (courseId) {
-      params.push(courseId);
-      extra += ` AND cm.course_id = $${params.length}`;
+      where.material_category = category;
     }
     if (semester) {
-      params.push(`%${semester.toLowerCase()}%`);
-      extra += ` AND LOWER(cm.semester) LIKE $${params.length}`;
+      where.semester = { contains: semester, mode: 'insensitive' };
     }
     if (academicYear) {
-      params.push(academicYear);
-      extra += ` AND cm.academic_year = $${params.length}`;
+      where.academic_year = academicYear;
     }
     if (materialType) {
-      params.push(materialType);
-      extra += ` AND cm.material_type = $${params.length}`;
+      where.material_type = materialType;
     }
     if (weekLabel) {
-      params.push(`%${weekLabel.toLowerCase()}%`);
-      extra += ` AND LOWER(cm.week_label) LIKE $${params.length}`;
-    }
-    if (lecturer) {
-      params.push(`%${lecturer.toLowerCase()}%`);
-      extra += ` AND LOWER(p.full_name) LIKE $${params.length}`;
+      where.week_label = { contains: weekLabel, mode: 'insensitive' };
     }
 
-    const result = await pool.query(
-      `SELECT cm.*,
-              c.title AS course_title,
-              mo.title AS module_title,
-              p.full_name AS uploader_name,
-              CASE WHEN sm.material_id IS NOT NULL THEN true ELSE false END AS is_saved
-       FROM course_materials cm
-       JOIN enrollments e ON e.course_id = cm.course_id AND e.user_id = $1
-       JOIN courses c ON c.id = cm.course_id
-       LEFT JOIN course_modules mo ON mo.id = cm.module_id
-       LEFT JOIN profiles p ON p.user_id = cm.uploaded_by
-       LEFT JOIN saved_materials sm ON sm.material_id = cm.id AND sm.user_id = $1
-       WHERE cm.is_published = TRUE ${extra}
-       ORDER BY cm.created_at DESC
-       LIMIT 500`,
-      params
-    );
-    return result.rows;
+    const list = await prisma.courseMaterial.findMany({
+      where,
+      include: {
+        course: { select: { title: true } },
+        module: { select: { title: true } },
+        saved_materials: { where: { user_id: userId } }
+      },
+      orderBy: { created_at: 'desc' },
+      take: 500
+    });
+
+    const uploaderIds = [...new Set(list.map(cm => cm.uploaded_by).filter(Boolean))];
+    const profiles = await prisma.profile.findMany({
+      where: { user_id: { in: uploaderIds } },
+      select: { user_id: true, full_name: true }
+    });
+    const profileMap = Object.fromEntries(profiles.map(p => [p.user_id, p.full_name]));
+
+    let result = list.map(cm => ({
+      ...cm,
+      file_size_bytes: cm.file_size_bytes ? Number(cm.file_size_bytes) : null,
+      course_title: cm.course.title,
+      module_title: cm.module?.title || null,
+      uploader_name: cm.uploaded_by ? profileMap[cm.uploaded_by] || null : null,
+      is_saved: cm.saved_materials.length > 0
+    }));
+
+    if (search) {
+      const q = search.toLowerCase();
+      result = result.filter(cm => 
+        (cm.title || "").toLowerCase().includes(q) ||
+        (cm.description || "").toLowerCase().includes(q) ||
+        (cm.course_title || "").toLowerCase().includes(q) ||
+        (cm.module_title || "").toLowerCase().includes(q) ||
+        (cm.week_label || "").toLowerCase().includes(q) ||
+        (cm.original_filename || "").toLowerCase().includes(q) ||
+        (cm.uploader_name || "").toLowerCase().includes(q)
+      );
+    }
+
+    if (lecturer) {
+      const l = lecturer.toLowerCase();
+      result = result.filter(cm => (cm.uploader_name || "").toLowerCase().includes(l));
+    }
+
+    return result;
   }
 
   static async findById(id) {
-    const result = await pool.query(
-      `SELECT cm.*, c.title AS course_title
-       FROM course_materials cm
-       JOIN courses c ON c.id = cm.course_id
-       WHERE cm.id = $1`,
-      [id]
-    );
-    return result.rows[0];
+    const cm = await prisma.courseMaterial.findUnique({
+      where: { id },
+      include: { course: { select: { title: true } } }
+    });
+    if (!cm) return null;
+    return {
+      ...cm,
+      file_size_bytes: cm.file_size_bytes ? Number(cm.file_size_bytes) : null,
+      course_title: cm.course.title
+    };
   }
 
   static async create({
@@ -136,98 +167,116 @@ class Material {
     originalFilename, fileSizeBytes, semester, academicYear,
     lectureNoteNumber, isPublished
   }) {
-    const result = await pool.query(
-      `INSERT INTO course_materials
-         (course_id, module_id, title, description, week_label,
-          material_type, material_category, file_url, uploaded_by,
-          original_filename, file_size_bytes, semester, academic_year,
-          lecture_note_number, is_published)
-       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
-       RETURNING *`,
-      [
-        courseId, moduleId || null, title, description || "", weekLabel || "",
-        materialType, materialCategory || "lecture_notes", fileUrl, uploadedBy,
-        originalFilename || null, fileSizeBytes || null,
-        semester || null, academicYear || null,
-        lectureNoteNumber || null,
-        isPublished !== false
-      ]
-    );
-    return result.rows[0];
+    const cm = await prisma.courseMaterial.create({
+      data: {
+        course_id: courseId,
+        module_id: moduleId || null,
+        title,
+        description: description || "",
+        week_label: weekLabel || "",
+        material_type: materialType,
+        material_category: materialCategory || "lecture_notes",
+        file_url: fileUrl,
+        uploaded_by: uploadedBy,
+        original_filename: originalFilename || null,
+        file_size_bytes: fileSizeBytes ? BigInt(fileSizeBytes) : null,
+        semester: semester || null,
+        academic_year: academicYear || null,
+        lecture_note_number: lectureNoteNumber || null,
+        is_published: isPublished !== false
+      }
+    });
+    
+    return {
+      ...cm,
+      file_size_bytes: cm.file_size_bytes ? Number(cm.file_size_bytes) : null
+    };
   }
 
   static async update(id, fields) {
+    const data = {};
     const allowed = ["title", "description", "week_label", "module_id",
                      "material_category", "semester", "academic_year",
                      "lecture_note_number", "is_published"];
-    const setClauses = [];
-    const values = [];
-    let idx = 1;
-
+                     
     for (const [key, val] of Object.entries(fields)) {
       const col = key.replace(/([A-Z])/g, "_$1").toLowerCase();
       if (allowed.includes(col)) {
-        setClauses.push(`${col} = $${idx++}`);
-        values.push(val);
+        data[col] = val;
       }
     }
-    if (setClauses.length === 0) return null;
-    values.push(id);
-    const result = await pool.query(
-      `UPDATE course_materials SET ${setClauses.join(", ")} WHERE id = $${idx} RETURNING *`,
-      values
-    );
-    return result.rows[0];
+
+    const cm = await prisma.courseMaterial.update({
+      where: { id },
+      data
+    });
+    
+    return {
+      ...cm,
+      file_size_bytes: cm.file_size_bytes ? Number(cm.file_size_bytes) : null
+    };
   }
 
   static async incrementDownloadCount(id) {
-    await pool.query(
-      "UPDATE course_materials SET download_count = download_count + 1 WHERE id = $1",
-      [id]
-    );
+    await prisma.courseMaterial.update({
+      where: { id },
+      data: { download_count: { increment: 1 } }
+    });
   }
 
   static async delete(id) {
-    const result = await pool.query(
-      "DELETE FROM course_materials WHERE id = $1 RETURNING *",
-      [id]
-    );
-    return result.rows[0];
+    const cm = await prisma.courseMaterial.delete({
+      where: { id }
+    });
+    return {
+      ...cm,
+      file_size_bytes: cm.file_size_bytes ? Number(cm.file_size_bytes) : null
+    };
   }
 
-  // ─── Saved / Bookmark ────────────────────────────────────────────────────
-
   static async saveMaterial(userId, materialId) {
-    await pool.query(
-      `INSERT INTO saved_materials (user_id, material_id) VALUES ($1, $2) ON CONFLICT DO NOTHING`,
-      [userId, materialId]
-    );
+    await prisma.savedMaterial.upsert({
+      where: { user_id_material_id: { user_id: userId, material_id: materialId } },
+      create: { user_id: userId, material_id: materialId },
+      update: {}
+    });
   }
 
   static async unsaveMaterial(userId, materialId) {
-    await pool.query(
-      "DELETE FROM saved_materials WHERE user_id = $1 AND material_id = $2",
-      [userId, materialId]
-    );
+    await prisma.savedMaterial.delete({
+      where: { user_id_material_id: { user_id: userId, material_id: materialId } }
+    });
   }
 
   static async getSavedMaterials(userId) {
-    const result = await pool.query(
-      `SELECT cm.*,
-              c.title AS course_title,
-              mo.title AS module_title,
-              p.full_name AS uploader_name,
-              true AS is_saved
-       FROM saved_materials sm
-       JOIN course_materials cm ON cm.id = sm.material_id
-       JOIN courses c ON c.id = cm.course_id
-       LEFT JOIN course_modules mo ON mo.id = cm.module_id
-       LEFT JOIN profiles p ON p.user_id = cm.uploaded_by
-       WHERE sm.user_id = $1 AND cm.is_published = TRUE
-       ORDER BY sm.saved_at DESC`,
-      [userId]
-    );
-    return result.rows;
+    const saved = await prisma.savedMaterial.findMany({
+      where: { user_id: userId, material: { is_published: true } },
+      include: {
+        material: {
+          include: {
+            course: { select: { title: true } },
+            module: { select: { title: true } }
+          }
+        }
+      },
+      orderBy: { saved_at: 'desc' }
+    });
+
+    const uploaderIds = [...new Set(saved.map(sm => sm.material.uploaded_by).filter(Boolean))];
+    const profiles = await prisma.profile.findMany({
+      where: { user_id: { in: uploaderIds } },
+      select: { user_id: true, full_name: true }
+    });
+    const profileMap = Object.fromEntries(profiles.map(p => [p.user_id, p.full_name]));
+
+    return saved.map(sm => ({
+      ...sm.material,
+      course_title: sm.material.course.title,
+      module_title: sm.material.module?.title || null,
+      uploader_name: sm.material.uploaded_by ? profileMap[sm.material.uploaded_by] || null : null,
+      is_saved: true,
+      file_size_bytes: sm.material.file_size_bytes ? Number(sm.material.file_size_bytes) : null
+    }));
   }
 }
 

@@ -1,15 +1,24 @@
-const { pool } = require("../config/db");
+const { prisma } = require("../config/db");
 
 exports.listMessages = async (req, res) => {
-  const userId = req.auth.userId;
-  const result = await pool.query(
-    `SELECT * FROM messages
-     WHERE from_user_id = $1 OR to_user_id = $1 OR to_user_id = 'all'
-     ORDER BY created_at DESC
-     LIMIT 100`,
-    [userId]
-  );
-  res.json({ data: result.rows || [] });
+  try {
+    const userId = req.auth.userId;
+    const list = await prisma.message.findMany({
+      where: {
+        OR: [
+          { from_user_id: userId },
+          { to_user_id: userId },
+          { to_user_id: "all" }
+        ]
+      },
+      orderBy: { created_at: "desc" },
+      take: 100
+    });
+    res.json({ data: list || [] });
+  } catch (error) {
+    console.error("List messages error:", error);
+    res.status(500).json({ error: "Failed to list messages." });
+  }
 };
 
 exports.sendMessage = async (req, res) => {
@@ -32,68 +41,80 @@ exports.sendMessage = async (req, res) => {
   const senderRole = user.role || "student";
   const senderName = user.name || user.email?.split("@")[0] || "University User";
 
-  // 1. Insert message
-  const result = await pool.query(
-    `INSERT INTO messages (from_user_id, from_name, from_role, to_user_id, to_name, course_id, course_title, subject, message, category, created_at)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW())
-     RETURNING *`,
-    [userId, senderName, senderRole, to_user_id, to_name, course_id, course_title, subject, message, category]
-  );
-
-  const createdMsg = result.rows[0] || {
-    id: "msg-" + Math.random().toString(36).substr(2, 9),
-    from_user_id: userId,
-    from_name: senderName,
-    from_role: senderRole,
-    to_user_id,
-    to_name,
-    course_id,
-    course_title,
-    subject,
-    message,
-    category,
-    created_at: new Date().toISOString()
-  };
-
-  // 2. Dispatch Live Notification to Recipient's Notification Bell
   try {
-    const notifTitle = senderRole === "lecturer"
-      ? `Lecturer Notification: ${senderName}`
-      : `Student Inquiry from: ${senderName}`;
-    const notifMessage = `[${course_title}] ${subject}: ${message.length > 90 ? message.substring(0, 90) + "..." : message}`;
-    const notifLink = senderRole === "lecturer" ? "/app/dashboard" : "/app/teach";
-
-    // If sent to a specific user
-    if (to_user_id && to_user_id !== "all" && to_user_id !== "all_students") {
-      await pool.query(
-        `INSERT INTO notifications (user_id, title, message, type, link)
-         VALUES ($1, $2, $3, $4, $5)`,
-        [to_user_id, notifTitle, notifMessage, "message", notifLink]
-      );
-    } else {
-      // If broadcast to all students/enrolled students, create notification for users
-      const usersRes = await pool.query(`SELECT id, role FROM users`);
-      const targetUsers = usersRes.rows.filter(u => senderRole === "lecturer" ? (u.role !== "lecturer" && u.id !== userId) : (u.role === "lecturer" || u.role === "admin"));
-      for (const target of targetUsers) {
-        await pool.query(
-          `INSERT INTO notifications (user_id, title, message, type, link)
-           VALUES ($1, $2, $3, $4, $5)`,
-          [target.id, notifTitle, notifMessage, "message", notifLink]
-        );
+    // 1. Insert message
+    const createdMsg = await prisma.message.create({
+      data: {
+        from_user_id: userId,
+        from_name: senderName,
+        from_role: senderRole,
+        to_user_id,
+        to_name,
+        course_id,
+        course_title,
+        subject,
+        message,
+        category
       }
-    }
-  } catch (notifErr) {
-    console.warn("Notification dispatch notice:", notifErr.message);
-  }
+    });
 
-  res.status(201).json({ data: createdMsg });
+    // 2. Dispatch Live Notification to Recipient's Notification Bell
+    try {
+      const notifTitle = senderRole === "lecturer"
+        ? `Lecturer Notification: ${senderName}`
+        : `Student Inquiry from: ${senderName}`;
+      const notifMessage = `[${course_title}] ${subject}: ${message.length > 90 ? message.substring(0, 90) + "..." : message}`;
+      const notifLink = senderRole === "lecturer" ? "/app/dashboard" : "/app/teach";
+
+      // If sent to a specific user
+      if (to_user_id && to_user_id !== "all" && to_user_id !== "all_students") {
+        await prisma.notification.create({
+          data: {
+            user_id: to_user_id,
+            title: notifTitle,
+            message: notifMessage,
+            type: "message",
+            link: notifLink
+          }
+        });
+      } else {
+        // If broadcast to all students/enrolled students, create notification for users
+        const allUsers = await prisma.user.findMany({
+          select: { id: true, role: true }
+        });
+        const targetUsers = allUsers.filter(u => senderRole === "lecturer" ? (u.role !== "lecturer" && u.id !== userId) : (u.role === "lecturer" || u.role === "admin"));
+        
+        await prisma.notification.createMany({
+          data: targetUsers.map(target => ({
+            user_id: target.id,
+            title: notifTitle,
+            message: notifMessage,
+            type: "message",
+            link: notifLink
+          }))
+        });
+      }
+    } catch (notifErr) {
+      console.warn("Notification dispatch notice:", notifErr.message);
+    }
+
+    res.status(201).json({ data: createdMsg });
+  } catch (error) {
+    console.error("Send message error:", error);
+    res.status(500).json({ error: "Failed to send message." });
+  }
 };
 
 exports.markMessageRead = async (req, res) => {
-  const { id } = req.params;
-  await pool.query(
-    `UPDATE messages SET read_at = NOW() WHERE id = $1`,
-    [id]
-  );
-  res.json({ data: { success: true } });
+  try {
+    const { id } = req.params;
+    await prisma.message.update({
+      where: { id },
+      data: { read_at: new Date() }
+    });
+    res.json({ data: { success: true } });
+  } catch (error) {
+    console.error("Mark message read error:", error);
+    res.status(500).json({ error: "Failed to mark message read." });
+  }
 };

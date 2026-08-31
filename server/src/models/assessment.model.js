@@ -1,70 +1,103 @@
-const { pool } = require("../config/db");
+const { prisma } = require("../config/db");
 
 class Assessment {
   static async create({ courseId, title, description, opensAt, closesAt, durationMinutes, createdBy }) {
-    const result = await pool.query(
-      `INSERT INTO assessments (course_id, title, description, opens_at, closes_at, duration_minutes, created_by)
-       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
-      [courseId, title, description, opensAt, closesAt, durationMinutes, createdBy]
-    );
-    return result.rows[0];
+    return await prisma.assessment.create({
+      data: {
+        course_id: courseId,
+        title,
+        description,
+        opens_at: opensAt ? new Date(opensAt) : null,
+        closes_at: closesAt ? new Date(closesAt) : null,
+        duration_minutes: durationMinutes ? parseInt(durationMinutes, 10) : null,
+        created_by: createdBy
+      }
+    });
   }
 
   static async findByCourseId(courseId) {
-    const result = await pool.query("SELECT * FROM assessments WHERE course_id = $1", [courseId]);
-    return result.rows;
+    return await prisma.assessment.findMany({
+      where: { course_id: courseId },
+      orderBy: { created_at: "desc" }
+    });
   }
 
   static async findById(id) {
-    const result = await pool.query("SELECT * FROM assessments WHERE id = $1", [id]);
-    return result.rows[0];
+    return await prisma.assessment.findUnique({
+      where: { id }
+    });
   }
 
   static async delete(id) {
-    const result = await pool.query("DELETE FROM assessments WHERE id = $1 RETURNING *", [id]);
-    return result.rows[0];
+    return await prisma.assessment.delete({
+      where: { id }
+    });
   }
 
   static async addQuestion({ assessmentId, questionText, options, correctIndex, points, orderIndex }) {
-    const result = await pool.query(
-      `INSERT INTO assessment_questions (assessment_id, question_text, options, correct_index, points, order_index)
-       VALUES ($1, $2, $3, $4, $5, $6) RETURNING *`,
-      [assessmentId, questionText, JSON.stringify(options), correctIndex, points, orderIndex]
-    );
-    return result.rows[0];
+    return await prisma.assessmentQuestion.create({
+      data: {
+        assessment_id: assessmentId,
+        question_text: questionText,
+        options: JSON.stringify(options || []),
+        correct_index: parseInt(correctIndex, 10),
+        points: parseInt(points, 10),
+        order_index: parseInt(orderIndex, 10)
+      }
+    });
   }
 
   static async findQuestionsByAssessmentId(assessmentId) {
-    const result = await pool.query(
-      "SELECT * FROM assessment_questions WHERE assessment_id = $1",
-      [assessmentId]
-    );
-    return result.rows;
+    const list = await prisma.assessmentQuestion.findMany({
+      where: { assessment_id: assessmentId },
+      orderBy: { order_index: "asc" }
+    });
+    return list.map(q => ({
+      ...q,
+      options: JSON.parse(q.options || "[]")
+    }));
   }
 
   static async findAttempt(assessmentId, userId) {
-    const result = await pool.query(
-      "SELECT * FROM assessment_attempts WHERE assessment_id = $1 AND user_id = $2",
-      [assessmentId, userId]
-    );
-    return result.rows[0];
+    const attempt = await prisma.assessmentAttempt.findUnique({
+      where: {
+        assessment_id_user_id: {
+          assessment_id: assessmentId,
+          user_id: userId
+        }
+      }
+    });
+    if (!attempt) return null;
+    return {
+      ...attempt,
+      answers: JSON.parse(attempt.answers || "[]")
+    };
   }
 
   static async findAttemptsByAssessmentId(assessmentId) {
-    const result = await pool.query(
-      "SELECT * FROM assessment_attempts WHERE assessment_id = $1",
-      [assessmentId]
-    );
-    return result.rows;
+    const list = await prisma.assessmentAttempt.findMany({
+      where: { assessment_id: assessmentId }
+    });
+    return list.map(attempt => ({
+      ...attempt,
+      answers: JSON.parse(attempt.answers || "[]")
+    }));
   }
 
   static async createAttempt({ assessmentId, userId, answers, score, maxScore }) {
-    const result = await pool.query(
-      `INSERT INTO assessment_attempts (assessment_id, user_id, answers, score, max_score)
-       VALUES ($1, $2, $3, $4, $5) RETURNING *`,
-      [assessmentId, userId, JSON.stringify(answers), score, maxScore]
-    );
-    return result.rows[0];
+    const attempt = await prisma.assessmentAttempt.create({
+      data: {
+        assessment_id: assessmentId,
+        user_id: userId,
+        answers: JSON.stringify(answers || []),
+        score: parseInt(score, 10),
+        max_score: parseInt(maxScore, 10)
+      }
+    });
+    return {
+      ...attempt,
+      answers: JSON.parse(attempt.answers || "[]")
+    };
   }
 }
 

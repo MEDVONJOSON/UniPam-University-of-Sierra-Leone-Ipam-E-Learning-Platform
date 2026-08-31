@@ -21,6 +21,7 @@ router.post("/users", asyncHandler(adminController.createUser));
 router.patch("/users/:id", asyncHandler(adminController.updateUser));
 router.patch("/users/:id/approve", asyncHandler(adminController.approveUser));
 router.patch("/users/:id/reject", asyncHandler(adminController.rejectUser));
+router.post("/users/:id/reset-password", asyncHandler(adminController.resetPassword));
 router.delete("/users/:id", asyncHandler(adminController.deleteUser));
 
 // System reports

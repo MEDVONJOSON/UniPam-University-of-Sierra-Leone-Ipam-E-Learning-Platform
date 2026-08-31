@@ -1,39 +1,51 @@
-const { pool } = require("../config/db");
+const { prisma } = require("../config/db");
 
 exports.listNotifications = async (req, res) => {
-  const result = await pool.query(
-    `SELECT * FROM notifications
-     WHERE user_id = $1
-     ORDER BY created_at DESC
-     LIMIT 50`,
-    [req.auth.userId]
-  );
-  const unreadCount = result.rows.filter(n => !n.read_at).length;
-  res.json({
-    data: {
-      notifications: result.rows,
-      unreadCount
-    }
-  });
+  try {
+    const userId = req.auth.userId;
+    const notifications = await prisma.notification.findMany({
+      where: { user_id: userId },
+      orderBy: { created_at: "desc" },
+      take: 50
+    });
+    const unreadCount = notifications.filter(n => !n.read_at).length;
+    res.json({
+      data: {
+        notifications,
+        unreadCount
+      }
+    });
+  } catch (error) {
+    console.error("List notifications error:", error);
+    res.status(500).json({ error: "Failed to list notifications." });
+  }
 };
 
 exports.markRead = async (req, res) => {
-  const { id } = req.params;
-  await pool.query(
-    `UPDATE notifications
-     SET read_at = NOW()
-     WHERE id = $1 AND user_id = $2`,
-    [id, req.auth.userId]
-  );
-  res.json({ data: { success: true } });
+  try {
+    const { id } = req.params;
+    const userId = req.auth.userId;
+    await prisma.notification.updateMany({
+      where: { id, user_id: userId },
+      data: { read_at: new Date() }
+    });
+    res.json({ data: { success: true } });
+  } catch (error) {
+    console.error("Mark notification read error:", error);
+    res.status(500).json({ error: "Failed to mark notification read." });
+  }
 };
 
 exports.markAllRead = async (req, res) => {
-  await pool.query(
-    `UPDATE notifications
-     SET read_at = NOW()
-     WHERE user_id = $1 AND read_at IS NULL`,
-    [req.auth.userId]
-  );
-  res.json({ data: { success: true } });
+  try {
+    const userId = req.auth.userId;
+    await prisma.notification.updateMany({
+      where: { user_id: userId, read_at: null },
+      data: { read_at: new Date() }
+    });
+    res.json({ data: { success: true } });
+  } catch (error) {
+    console.error("Mark all notifications read error:", error);
+    res.status(500).json({ error: "Failed to mark notifications read." });
+  }
 };

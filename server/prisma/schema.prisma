@@ -1,0 +1,589 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  learner
+  lecturer
+  admin
+}
+
+model User {
+  id                   String              @id @default(uuid()) @db.Uuid
+  email                String              @unique
+  password_hash        String
+  role                 Role                @default(learner)
+  is_active            Boolean             @default(true)
+  approval_status      String              @default("pending") // pending, approved, rejected
+  has_changed_password Boolean             @default(false)
+  created_at           DateTime            @default(now())
+  updated_at           DateTime            @updatedAt
+
+  profile              Profile?
+  enrollments          Enrollment[]
+  certificates         CertificateAsset[]
+  learning_events      LearningEvent[]
+  reviews              Review[]
+  notifications        Notification[]
+  transactions         Transaction[]
+  scholarships         Scholarship[]
+  discussions          Discussion[]
+  audit_logs           AuditLog[]
+  submissions          Submission[]
+  quiz_results         QuizResult[]
+  sent_messages        Message[]           @relation("SentMessages")
+  assessments          Assessment[]
+  assessment_attempts  AssessmentAttempt[]
+  saved_materials      SavedMaterial[]
+}
+
+model Profile {
+  user_id                String             @id @db.Uuid
+  full_name              String
+  student_id_number      String?            @unique
+  phone_number           String?
+  country_code           String?            @default("SL")
+  preferred_language     String?            @default("English")
+  education_background   String?
+  skills_interests       String             @default("[]") // JSON stringified array
+  learning_goals         String?
+  profile_photo_url      String?
+  designation            String?
+  website_url            String?
+  bio                    String?
+  institution_name       String?            @default("University of Sierra Leone")
+  faculty                String?
+  department             String?
+  enrollment_year        String?
+  academic_standing      String?            @default("Good")
+  current_academic_year  Int?
+  current_semester       Int?
+  
+  faculty_id             String?            @db.Uuid
+  department_id          String?            @db.Uuid
+  university_program_id  String?            
+
+  user                  User                @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  faculty_rel           Faculty?            @relation(fields: [faculty_id], references: [id], onDelete: SetNull)
+  department_rel         Department?        @relation(fields: [department_id], references: [id], onDelete: SetNull)
+}
+
+model Faculty {
+  id          String       @id @default(uuid()) @db.Uuid
+  name        String       @unique
+  slug        String       @unique
+  dean_name   String?
+  description String?
+  created_at  DateTime     @default(now())
+
+  departments Department[]
+  profiles    Profile[]
+}
+
+model Department {
+  id                  String              @id @default(uuid()) @db.Uuid
+  faculty_id          String              @db.Uuid
+  name                String
+  slug                String
+  head_of_department  String?
+  created_at          DateTime            @default(now())
+
+  faculty             Faculty             @relation(fields: [faculty_id], references: [id], onDelete: Cascade)
+  university_programs UniversityProgram[]
+  profiles            Profile[]
+
+  @@unique([faculty_id, slug])
+}
+
+model UniversityProgram {
+  id               String             @id @default(uuid()) @db.Uuid
+  department_id    String             @db.Uuid
+  name             String
+  degree_level     String
+  duration_years   Int                @default(4)
+  created_at       DateTime           @default(now())
+
+  department       Department         @relation(fields: [department_id], references: [id], onDelete: Cascade)
+  modules          UniversityModule[]
+}
+
+model UniversityModule {
+  id            String            @id @default(uuid()) @db.Uuid
+  program_id    String            @db.Uuid
+  module_code   String
+  module_name   String
+  academic_year Int
+  semester      Int
+  credits       Int               @default(3)
+  created_at    DateTime          @default(now())
+
+  program       UniversityProgram @relation(fields: [program_id], references: [id], onDelete: Cascade)
+
+  @@unique([program_id, module_code])
+}
+
+model Provider {
+  id          String   @id @default(uuid()) @db.Uuid
+  name        String   @unique
+  slug        String   @unique
+  is_active   Boolean  @default(true)
+  created_at  DateTime @default(now())
+
+  courses     Course[]
+}
+
+model Course {
+  id              String             @id @default(uuid()) @db.Uuid
+  provider_id     String             @db.Uuid
+  external_id     String?
+  title           String
+  category        String
+  skill_level     String
+  duration_label  String?
+  has_certificate Boolean            @default(false)
+  cost_type       String             @default("free") // free, paid
+  external_url    String
+  description     String?
+  thumbnail_url   String?
+  is_internal     Boolean            @default(false)
+  instructor_id   String?            @db.Uuid
+  instructor_name String?
+  is_active       Boolean            @default(true)
+  created_at      DateTime           @default(now())
+
+  provider        Provider           @relation(fields: [provider_id], references: [id])
+  enrollments     Enrollment[]
+  certificates    CertificateAsset[]
+  learning_events LearningEvent[]
+  reviews         Review[]
+  live_sessions   LiveSession[]
+  discussions     Discussion[]
+  scholarships    Scholarship[]
+  lms_modules     LmsModule[]
+  lms_materials   LmsMaterial[]
+  assignments     Assignment[]
+  course_modules  CourseModule[]
+  course_materials CourseMaterial[]
+  assessments     Assessment[]
+
+  @@unique([provider_id, external_id])
+}
+
+model Enrollment {
+  id                String    @id @default(uuid()) @db.Uuid
+  user_id           String    @db.Uuid
+  course_id         String    @db.Uuid
+  status            String    @default("enrolled")
+  progress_percent  Decimal   @default(0) @db.Decimal(5, 2)
+  lessons_completed Int       @default(0)
+  enrolled_at       DateTime  @default(now())
+  completed_at      DateTime?
+
+  user              User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  course            Course    @relation(fields: [course_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, course_id])
+}
+
+model CertificateAsset {
+  id                        String   @id @default(uuid()) @db.Uuid
+  user_id                   String   @db.Uuid
+  course_id                 String?  @db.Uuid
+  title                     String
+  storage_key               String
+  file_name                 String
+  mime_type                 String
+  external_verification_url String?
+  is_public                 Boolean  @default(false)
+  created_at                DateTime @default(now())
+
+  user                      User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  course                    Course?  @relation(fields: [course_id], references: [id], onDelete: SetNull)
+}
+
+model LearningEvent {
+  id            String   @id @default(uuid()) @db.Uuid
+  user_id       String   @db.Uuid
+  course_id     String?  @db.Uuid
+  event_type    String
+  event_payload String   @default("{}") // JSON stringified payload
+  created_at    DateTime @default(now())
+
+  user          User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  course        Course?  @relation(fields: [course_id], references: [id], onDelete: SetNull)
+}
+
+model Category {
+  id          String   @id @default(uuid()) @db.Uuid
+  name        String   @unique
+  slug        String   @unique
+  description String?
+  parent_id   String?  @db.Uuid
+  created_at  DateTime @default(now())
+
+  parent      Category? @relation("CategoryHierarchy", fields: [parent_id], references: [id], onDelete: SetNull)
+  children    Category[] @relation("CategoryHierarchy")
+  resources   LibraryResource[]
+}
+
+model Tag {
+  id          String      @id @default(uuid()) @db.Uuid
+  name        String      @unique
+  slug        String      @unique
+  course_tags CourseTag[]
+}
+
+model CourseTag {
+  course_id String @db.Uuid
+  tag_id    String @db.Uuid
+
+  tag       Tag    @relation(fields: [tag_id], references: [id], onDelete: Cascade)
+
+  @@id([course_id, tag_id])
+}
+
+model Review {
+  id                  String   @id @default(uuid()) @db.Uuid
+  course_id           String   @db.Uuid
+  user_id             String   @db.Uuid
+  rating              Int
+  comment             String?
+  is_verified_learner Boolean  @default(true)
+  created_at          DateTime @default(now())
+
+  course              Course   @relation(fields: [course_id], references: [id], onDelete: Cascade)
+  user                User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([course_id, user_id])
+}
+
+model Notification {
+  id         String    @id @default(uuid()) @db.Uuid
+  user_id    String    @db.Uuid
+  title      String
+  message    String
+  type       String    @default("info")
+  link       String?
+  read_at    DateTime?
+  created_at DateTime  @default(now())
+
+  user       User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}
+
+model Transaction {
+  id             String   @id @default(uuid()) @db.Uuid
+  user_id        String   @db.Uuid
+  amount         Decimal  @db.Decimal(15, 2)
+  currency       String   @default("SLE")
+  type           String
+  status         String   @default("completed")
+  description    String?
+  reference_type String?
+  reference_id   String?
+  created_at     DateTime @default(now())
+
+  user           User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}
+
+model Scholarship {
+  id             String    @id @default(uuid()) @db.Uuid
+  user_id        String    @db.Uuid
+  course_id      String?   @db.Uuid
+  status         String    @default("pending")
+  reason         String?
+  applied_at     DateTime  @default(now())
+  reviewed_at    DateTime?
+  reviewer_notes String?
+
+  user           User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  course         Course?   @relation(fields: [course_id], references: [id], onDelete: Cascade)
+}
+
+model LiveSession {
+  id            String   @id @default(uuid()) @db.Uuid
+  course_id     String   @db.Uuid
+  lesson_id     String?  @db.Uuid
+  title         String
+  description   String?
+  start_at      DateTime
+  end_at        DateTime
+  meeting_link  String
+  provider      String   @default("zoom")
+  is_recorded   Boolean  @default(false)
+  recording_url String?
+  created_at    DateTime @default(now())
+
+  course        Course   @relation(fields: [course_id], references: [id], onDelete: Cascade)
+}
+
+model LibraryResource {
+  id               String   @id @default(uuid()) @db.Uuid
+  title            String
+  description      String?
+  category_id      String?  @db.Uuid
+  file_url         String
+  file_type        String?
+  is_global        Boolean  @default(true)
+  author           String?
+  publisher        String?
+  publication_year Int?
+  created_at       DateTime @default(now())
+
+  category         Category? @relation(fields: [category_id], references: [id], onDelete: SetNull)
+}
+
+model Discussion {
+  id         String   @id @default(uuid()) @db.Uuid
+  course_id  String   @db.Uuid
+  lesson_id  String?  @db.Uuid
+  user_id    String   @db.Uuid
+  parent_id  String?  @db.Uuid
+  content    String
+  is_pinned  Boolean  @default(false)
+  created_at DateTime @default(now())
+
+  course     Course   @relation(fields: [course_id], references: [id], onDelete: Cascade)
+  user       User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  parent     Discussion? @relation("DiscussionHierarchy", fields: [parent_id], references: [id], onDelete: Cascade)
+  replies    Discussion[] @relation("DiscussionHierarchy")
+}
+
+model AuditLog {
+  id            String   @id @default(uuid()) @db.Uuid
+  user_id       String?  @db.Uuid
+  action        String
+  resource_type String
+  resource_id   String?
+  payload       String?  // JSON string
+  ip_address    String?
+  user_agent    String?
+  created_at    DateTime @default(now())
+
+  user          User?    @relation(fields: [user_id], references: [id], onDelete: SetNull)
+}
+
+model LmsModule {
+  id          String      @id @default(uuid()) @db.Uuid
+  course_id   String      @db.Uuid
+  title       String
+  order_index Int         @default(0)
+  is_active   Boolean     @default(true)
+  created_at  DateTime    @default(now())
+
+  course      Course      @relation(fields: [course_id], references: [id], onDelete: Cascade)
+  lessons     LmsLesson[]
+}
+
+model LmsLesson {
+  id               String        @id @default(uuid()) @db.Uuid
+  module_id        String        @db.Uuid
+  title            String
+  content_type     String        @default("video")
+  video_url        String?
+  article_content  String?
+  order_index      Int           @default(0)
+  duration_minutes Int?
+  is_active        Boolean       @default(true)
+  created_at       DateTime      @default(now())
+
+  module           LmsModule     @relation(fields: [module_id], references: [id], onDelete: Cascade)
+  materials        LmsMaterial[]
+  assignments      Assignment[]
+  quizzes          Quiz[]
+}
+
+model LmsMaterial {
+  id         String   @id @default(uuid()) @db.Uuid
+  lesson_id  String?  @db.Uuid
+  course_id  String?  @db.Uuid
+  title      String
+  file_url   String
+  file_type  String?
+  created_at DateTime @default(now())
+
+  lesson     LmsLesson? @relation(fields: [lesson_id], references: [id], onDelete: Cascade)
+  course     Course?    @relation(fields: [course_id], references: [id], onDelete: Cascade)
+}
+
+model Assignment {
+  id          String       @id @default(uuid()) @db.Uuid
+  course_id   String       @db.Uuid
+  lesson_id   String?      @db.Uuid
+  title       String
+  description String
+  due_date    DateTime?
+  max_score   Int          @default(100)
+  created_at  DateTime     @default(now())
+
+  course      Course       @relation(fields: [course_id], references: [id], onDelete: Cascade)
+  lesson      LmsLesson?   @relation(fields: [lesson_id], references: [id], onDelete: SetNull)
+  submissions Submission[]
+}
+
+model Submission {
+  id            String    @id @default(uuid()) @db.Uuid
+  assignment_id String    @db.Uuid
+  user_id       String    @db.Uuid
+  file_url      String?
+  text_content  String?
+  grade         Int?
+  feedback      String?
+  submitted_at  DateTime  @default(now())
+  graded_at     DateTime?
+
+  assignment    Assignment @relation(fields: [assignment_id], references: [id], onDelete: Cascade)
+  user          User       @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}
+
+model Quiz {
+  id                 String         @id @default(uuid()) @db.Uuid
+  lesson_id          String?        @db.Uuid
+  title              String
+  passing_score      Int            @default(70)
+  time_limit_minutes Int?
+  created_at         DateTime       @default(now())
+
+  lesson             LmsLesson?     @relation(fields: [lesson_id], references: [id], onDelete: Cascade)
+  questions          QuizQuestion[]
+  results            QuizResult[]
+}
+
+model QuizQuestion {
+  id              String   @id @default(uuid()) @db.Uuid
+  quiz_id         String   @db.Uuid
+  question_text   String
+  question_type   String   @default("multiple_choice")
+  options         String   @default("[]") // JSON stringified option array
+  correct_answer  String?
+  order_index     Int      @default(0)
+
+  quiz            Quiz     @relation(fields: [quiz_id], references: [id], onDelete: Cascade)
+}
+
+model QuizResult {
+  id           String   @id @default(uuid()) @db.Uuid
+  quiz_id      String   @db.Uuid
+  user_id      String   @db.Uuid
+  score        Int
+  is_passed    Boolean
+  attempted_at DateTime @default(now())
+
+  quiz         Quiz     @relation(fields: [quiz_id], references: [id], onDelete: Cascade)
+  user         User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}
+
+model CourseModule {
+  id          String   @id @default(uuid()) @db.Uuid
+  course_id   String   @db.Uuid
+  title       String
+  description String?
+  sort_order  Int      @default(0)
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  course      Course   @relation(fields: [course_id], references: [id], onDelete: Cascade)
+  materials   CourseMaterial[]
+}
+
+model CourseMaterial {
+  id                   String         @id @default(uuid()) @db.Uuid
+  course_id            String         @db.Uuid
+  module_id            String?        @db.Uuid
+  title                String
+  description          String?
+  week_label           String?
+  material_type        String
+  material_category    String         @default("lecture_notes")
+  file_url             String
+  uploaded_by          String         @db.Uuid
+  original_filename    String?
+  file_size_bytes      BigInt?
+  semester             String?
+  academic_year        String?
+  lecture_note_number  Int?
+  download_count       Int            @default(0)
+  is_published         Boolean        @default(true)
+  created_at           DateTime       @default(now())
+
+  course               Course         @relation(fields: [course_id], references: [id], onDelete: Cascade)
+  module               CourseModule?  @relation(fields: [module_id], references: [id], onDelete: SetNull)
+  saved_materials      SavedMaterial[]
+}
+
+model SavedMaterial {
+  user_id     String   @db.Uuid
+  material_id String   @db.Uuid
+  saved_at    DateTime @default(now())
+
+  user        User     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  material    CourseMaterial @relation(fields: [material_id], references: [id], onDelete: Cascade)
+
+  @@id([user_id, material_id])
+}
+
+model Message {
+  id           String    @id @default(uuid()) @db.Uuid
+  from_user_id String    @db.Uuid
+  from_name    String
+  from_role    String
+  to_user_id   String
+  to_name      String
+  course_id    String?   
+  course_title String?   
+  subject      String
+  message      String
+  category     String    @default("general")
+  created_at   DateTime  @default(now())
+  read_at      DateTime?
+
+  sender       User      @relation("SentMessages", fields: [from_user_id], references: [id], onDelete: Cascade)
+}
+
+model Assessment {
+  id               String               @id @default(uuid()) @db.Uuid
+  course_id        String               @db.Uuid
+  title            String
+  description      String?
+  opens_at         DateTime?
+  closes_at        DateTime?
+  duration_minutes Int?
+  created_by       String               @db.Uuid
+  created_at       DateTime             @default(now())
+
+  course           Course               @relation(fields: [course_id], references: [id], onDelete: Cascade)
+  creator          User                 @relation(fields: [created_by], references: [id], onDelete: Cascade)
+  questions        AssessmentQuestion[]
+  attempts         AssessmentAttempt[]
+}
+
+model AssessmentQuestion {
+  id            String     @id @default(uuid()) @db.Uuid
+  assessment_id String     @db.Uuid
+  question_text String
+  options       String     @default("[]") // JSON stringified array of option strings
+  correct_index Int
+  points        Int        @default(1)
+  order_index   Int        @default(0)
+
+  assessment    Assessment @relation(fields: [assessment_id], references: [id], onDelete: Cascade)
+}
+
+model AssessmentAttempt {
+  id            String     @id @default(uuid()) @db.Uuid
+  assessment_id String     @db.Uuid
+  user_id       String     @db.Uuid
+  answers       String     @default("[]") // JSON stringified array of answers
+  score         Int
+  max_score     Int
+  submitted_at  DateTime   @default(now())
+
+  assessment    Assessment @relation(fields: [assessment_id], references: [id], onDelete: Cascade)
+  user          User       @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@unique([assessment_id, user_id])
+}

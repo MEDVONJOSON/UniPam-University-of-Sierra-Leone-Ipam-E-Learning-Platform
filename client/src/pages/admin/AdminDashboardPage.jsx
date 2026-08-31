@@ -2,16 +2,17 @@ import { useEffect, useState, useCallback } from "react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import { getCurrentUser, logoutUser } from "../../services/authService";
 import {
-  getAdminStats, getRecentActivity, getAdminUsers,
+  getAdminStats, getRecentActivity, getAdminUsers, getAdminUser,
   createAdminUser, updateAdminUser, deleteAdminUser, getSystemReports,
-  approveAdminUser, rejectAdminUser
+  approveAdminUser, rejectAdminUser, resetAdminUserPassword
 } from "../../services/adminService";
 import {
   LayoutDashboard, Users, BarChart3, Settings, LogOut, ShieldAlert, Search,
   Plus, Loader2, AlertCircle, CheckCircle2, ChevronDown, X,
   UserPlus, Activity, Shield, HardDrive, BookOpen, FileText, MessageSquare,
   Edit3, Eye, Trash2, TrendingUp, Clock, Mail, Phone, User, Building2,
-  Calendar, GraduationCap, Bookmark, Hash, Layers, Check, XCircle, Key, ShieldCheck, Lock
+  Calendar, GraduationCap, Bookmark, Hash, Layers, Check, XCircle, Key, ShieldCheck, Lock,
+  Copy, CheckCircle, ExternalLink, Share2, Send
 } from "lucide-react";
 
 /* ─── Sidebar ──────────────────────────────────────────────────────────────── */
@@ -197,6 +198,11 @@ function UserManagementTab() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(null);
   const [showApproveModal, setShowApproveModal] = useState(null);
   const [approvePassword, setApprovePassword] = useState("");
+  const [showCredentialsModal, setShowCredentialsModal] = useState(null);
+  const [showResetModal, setShowResetModal] = useState(null);
+  const [resetPasswordVal, setResetPasswordVal] = useState("uslLecturer2026!");
+  const [resetting, setResetting] = useState(false);
+  const [copiedType, setCopiedType] = useState("");
 
   // Create form
   const [createForm, setCreateForm] = useState({
@@ -231,15 +237,36 @@ function UserManagementTab() {
     setError(""); setMessage("");
     try {
       const result = await createAdminUser(createForm);
-      setMessage(`Account created for ${result.fullName}. Generated password: ${result.generatedPassword}`);
       setShowCreateModal(false);
+      const cred = {
+        fullName: result.fullName || createForm.fullName,
+        email: result.email || createForm.email,
+        role: result.role || createForm.role,
+        generatedPassword: result.generatedPassword || createForm.password || "uslLecturer2026!",
+        faculty: result.faculty || createForm.faculty,
+        department: result.department || createForm.department,
+        moduleTitle: result.moduleTitle || createForm.moduleTitle,
+        moduleCode: result.moduleCode || createForm.moduleCode,
+        academicYear: result.academicYear || createForm.academicYear,
+        semester: result.semester || createForm.semester
+      };
       setCreateForm({
         fullName: "", email: "", phoneNumber: "", role: "lecturer",
         faculty: "", department: "", password: "",
         moduleTitle: "", moduleCode: "", academicYear: "Year 1", semester: "Semester 1"
       });
       loadUsers();
+      // Instantly open the credentials modal so admin can view and copy login details!
+      setShowCredentialsModal(cred);
     } catch (err) { setError(err.message); }
+  };
+
+  const openViewModal = async (user) => {
+    setShowViewModal(user);
+    try {
+      const fresh = await getAdminUser(user.id);
+      if (fresh) setShowViewModal(fresh);
+    } catch (_) {}
   };
 
   const handleEdit = async (e) => {
@@ -274,7 +301,17 @@ function UserManagementTab() {
     try {
       const result = await approveAdminUser(showApproveModal.id, { defaultPassword: approvePassword });
       setMessage(`Account approved for ${showApproveModal.fullName || showApproveModal.email}! Default password set to: ${result.defaultPassword}`);
+      const cred = {
+        fullName: showApproveModal.fullName,
+        email: showApproveModal.email,
+        role: "learner",
+        generatedPassword: result.defaultPassword,
+        faculty: showApproveModal.faculty,
+        department: showApproveModal.department,
+        studentIdNumber: showApproveModal.studentIdNumber
+      };
       setShowApproveModal(null);
+      setShowCredentialsModal(cred);
       loadUsers();
     } catch (err) {
       setError(err.message || "Failed to approve account.");
@@ -291,6 +328,65 @@ function UserManagementTab() {
     } catch (err) {
       setError(err.message || "Failed to reject account.");
     }
+  };
+
+  const openResetPassword = (user) => {
+    setResetPasswordVal(user.role === "lecturer" ? "uslLecturer2026!" : (user.studentIdNumber || "usl2025"));
+    setShowResetModal(user);
+  };
+
+  const handleResetPasswordConfirm = async () => {
+    if (!showResetModal) return;
+    setResetting(true);
+    setError(""); setMessage("");
+    try {
+      const res = await resetAdminUserPassword(showResetModal.id, { newPassword: resetPasswordVal });
+      const cred = {
+        ...showResetModal,
+        generatedPassword: res.newPassword,
+        email: res.email || showResetModal.email,
+        fullName: res.fullName || showResetModal.fullName
+      };
+      setShowResetModal(null);
+      if (showViewModal) setShowViewModal(null);
+      setShowCredentialsModal(cred);
+      loadUsers();
+    } catch (err) {
+      setError(err.message || "Failed to reset password.");
+    } finally {
+      setResetting(false);
+    }
+  };
+
+  const copyToClipboard = (text, type) => {
+    navigator.clipboard.writeText(text);
+    setCopiedType(type);
+    setTimeout(() => setCopiedType(""), 3000);
+  };
+
+  const copyInvitationText = (cred) => {
+    const portalUrl = `${window.location.origin}/#/login`;
+    const messageText = `
+Welcome to UniPam - University of Sierra Leone eLearning Platform!
+
+Dear ${cred.fullName || "Lecturer"},
+
+Your ${cred.role === "lecturer" ? "Lecturer" : "Student"} account has been setup on the UniPam Portal.
+
+Login Credentials:
+• Portal URL: ${portalUrl}
+• Login Email: ${cred.email}
+• Password: ${cred.generatedPassword || cred.defaultPassword || "uslLecturer2026!"}
+• Role: ${cred.role === "lecturer" ? "Lecturer" : "Student"}
+• Faculty: ${cred.faculty || "Faculty of Information Systems & Technology"}
+• Department: ${cred.department || "Department of Information Technology"}
+${cred.moduleTitle ? `• Assigned Module: ${cred.moduleTitle} (Code: ${cred.moduleCode || "N/A"})` : ""}
+${cred.academicYear ? `• Academic Level: ${cred.academicYear} · ${cred.semester || "Semester 1"}` : ""}
+
+Please sign in at ${portalUrl} to manage your courses and access your teaching suite.
+`.trim();
+
+    copyToClipboard(messageText, "invitation");
   };
 
   const openEdit = (user) => {

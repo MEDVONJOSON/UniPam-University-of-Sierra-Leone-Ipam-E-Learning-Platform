@@ -1,13 +1,13 @@
-const { pool } = require("../config/db");
+const { prisma } = require("../config/db");
 
 // ─── Original Generic Handlers ────────────────────────────────────────────────
 
 exports.getFaculties = async (req, res) => {
   try {
-    const result = await pool.query(
-      `SELECT id, name, slug, description FROM faculties ORDER BY name ASC`
-    );
-    res.json(result.rows);
+    const result = await prisma.faculty.findMany({
+      orderBy: { name: "asc" }
+    });
+    res.json(result);
   } catch (error) {
     console.error("Error fetching faculties:", error);
     res.status(500).json({ error: "Failed to fetch faculties" });
@@ -17,23 +17,31 @@ exports.getFaculties = async (req, res) => {
 exports.getPrograms = async (req, res) => {
   const { facultyId } = req.query;
   try {
-    let query = `
-      SELECT up.id, up.name, up.degree_level, up.duration_years, d.name as department_name, f.id as faculty_id 
-      FROM university_programs up
-      JOIN departments d ON up.department_id = d.id
-      JOIN faculties f ON d.faculty_id = f.id
-    `;
-    const values = [];
-
+    const where = {};
     if (facultyId) {
-      query += ` WHERE f.id = $1`;
-      values.push(facultyId);
+      where.department = { faculty_id: facultyId };
     }
 
-    query += ` ORDER BY up.name ASC`;
+    const result = await prisma.universityProgram.findMany({
+      where,
+      include: {
+        department: {
+          select: { name: true, faculty_id: true }
+        }
+      },
+      orderBy: { name: "asc" }
+    });
 
-    const result = await pool.query(query, values);
-    res.json(result.rows);
+    const formatted = result.map(up => ({
+      id: up.id,
+      name: up.name,
+      degree_level: up.degree_level,
+      duration_years: up.duration_years,
+      department_name: up.department.name,
+      faculty_id: up.department.faculty_id
+    }));
+
+    res.json(formatted);
   } catch (error) {
     console.error("Error fetching university programs:", error);
     res.status(500).json({ error: "Failed to fetch university programs" });
@@ -48,14 +56,15 @@ exports.getModules = async (req, res) => {
   }
 
   try {
-    const result = await pool.query(
-      `SELECT id, module_code, module_name, credits 
-       FROM university_modules 
-       WHERE program_id = $1 AND academic_year = $2 AND semester = $3
-       ORDER BY module_code ASC`,
-      [programId, parseInt(year), parseInt(semester)]
-    );
-    res.json(result.rows);
+    const result = await prisma.universityModule.findMany({
+      where: {
+        program_id: programId,
+        academic_year: parseInt(year, 10),
+        semester: parseInt(semester, 10)
+      },
+      orderBy: { module_code: "asc" }
+    });
+    res.json(result);
   } catch (error) {
     console.error("Error fetching modules:", error);
     res.status(500).json({ error: "Failed to fetch modules" });
@@ -66,12 +75,37 @@ exports.getModules = async (req, res) => {
 
 /**
  * GET /api/v1/university/ipam/faculties
- * Returns all 5 IPAM faculties with live programme counts.
+ * Returns all IPAM faculties with live programme counts.
  */
 exports.getIpamFaculties = async (req, res) => {
   try {
-    const result = await pool.query(`SELECT * FROM ipam_faculties ORDER BY id ASC`);
-    res.json(result.rows);
+    const list = await prisma.faculty.findMany({
+      include: {
+        departments: {
+          include: {
+            university_programs: true
+          }
+        }
+      },
+      orderBy: { name: "asc" }
+    });
+
+    const formatted = list.map(f => {
+      let count = 0;
+      f.departments.forEach(d => {
+        count += d.university_programs.length;
+      });
+      return {
+        id: f.id,
+        name: f.name,
+        slug: f.slug,
+        dean_name: f.dean_name,
+        description: f.description,
+        programme_count: count
+      };
+    });
+
+    res.json(formatted);
   } catch (error) {
     console.error("Error fetching IPAM faculties:", error);
     res.status(500).json({ error: "Failed to fetch IPAM faculties" });
@@ -85,11 +119,29 @@ exports.getIpamFaculties = async (req, res) => {
 exports.getIpamDepartments = async (req, res) => {
   const { facultyId } = req.query;
   try {
-    const result = await pool.query(
-      `SELECT * FROM ipam_departments WHERE faculty_id = $1 ORDER BY name ASC`,
-      [facultyId || null]
-    );
-    res.json(result.rows);
+    const where = {};
+    if (facultyId) {
+      where.faculty_id = facultyId;
+    }
+
+    const result = await prisma.department.findMany({
+      where,
+      include: {
+        university_programs: true
+      },
+      orderBy: { name: "asc" }
+    });
+
+    const formatted = result.map(d => ({
+      id: d.id,
+      faculty_id: d.faculty_id,
+      name: d.name,
+      slug: d.slug,
+      head_of_department: d.head_of_department,
+      programme_count: d.university_programs.length
+    }));
+
+    res.json(formatted);
   } catch (error) {
     console.error("Error fetching IPAM departments:", error);
     res.status(500).json({ error: "Failed to fetch IPAM departments" });
@@ -103,11 +155,40 @@ exports.getIpamDepartments = async (req, res) => {
 exports.getIpamPrograms = async (req, res) => {
   const { facultyId, level, search } = req.query;
   try {
-    const result = await pool.query(
-      `SELECT * FROM ipam_programmes WHERE faculty_id = $1 AND level = $2 AND search = $3 ORDER BY name ASC`,
-      [facultyId || null, level || null, search || null]
-    );
-    res.json(result.rows);
+    const where = {};
+    if (facultyId) {
+      where.department = { faculty_id: facultyId };
+    }
+    if (level) {
+      where.degree_level = level;
+    }
+    if (search) {
+      where.name = { contains: search, mode: "insensitive" };
+    }
+
+    const result = await prisma.universityProgram.findMany({
+      where,
+      include: {
+        department: {
+          select: { name: true, faculty_id: true }
+        }
+      },
+      orderBy: { name: "asc" }
+    });
+
+    const formatted = result.map(up => ({
+      id: up.id,
+      faculty_id: up.department.faculty_id,
+      department_id: up.department_id,
+      name: up.name,
+      level: up.degree_level,
+      duration: `${up.duration_years} Years`,
+      description: `IPAM ${up.degree_level} program in ${up.name}.`,
+      requirements: "Five (5) WASSCE credits including English Language and Mathematics.",
+      careers: "Private Sector, Public Sector, Non-Governmental Organisations"
+    }));
+
+    res.json(formatted);
   } catch (error) {
     console.error("Error fetching IPAM programs:", error);
     res.status(500).json({ error: "Failed to fetch IPAM programs" });
@@ -121,14 +202,34 @@ exports.getIpamPrograms = async (req, res) => {
 exports.getIpamProgramById = async (req, res) => {
   const { programId } = req.params;
   try {
-    const result = await pool.query(
-      `SELECT * FROM ipam_programmes WHERE id = $1`,
-      [programId]
-    );
-    if (result.rowCount === 0) {
+    const up = await prisma.universityProgram.findUnique({
+      where: { id: programId },
+      include: {
+        department: {
+          include: {
+            faculty: true
+          }
+        }
+      }
+    });
+
+    if (!up) {
       return res.status(404).json({ error: "Programme not found" });
     }
-    res.json(result.rows[0]);
+
+    res.json({
+      id: up.id,
+      faculty_id: up.department.faculty_id,
+      department_id: up.department_id,
+      name: up.name,
+      level: up.degree_level,
+      duration: `${up.duration_years} Years`,
+      description: `IPAM ${up.degree_level} program in ${up.name}.`,
+      requirements: "Five (5) WASSCE credits including English Language and Mathematics.",
+      careers: "Private Sector, Public Sector, Non-Governmental Organisations",
+      faculty_name: up.department.faculty.name,
+      department_name: up.department.name
+    });
   } catch (error) {
     console.error("Error fetching IPAM program:", error);
     res.status(500).json({ error: "Failed to fetch IPAM program" });

@@ -1,64 +1,82 @@
-const { pool } = require("../config/db");
+const { prisma } = require("../config/db");
 
 class Course {
   static async findAll({ provider, category, level, query, isInternal, instructorId }) {
-    const params = [];
-    const filters = [];
-
+    const where = {};
     if (instructorId) {
-      params.push(instructorId);
-      filters.push(`c.instructor_id = $${params.length}`);
+      where.instructor_id = instructorId;
     }
     if (provider) {
-      params.push(String(provider).toLowerCase());
-      filters.push(`LOWER(p.slug) = $${params.length}`);
+      where.provider = {
+        slug: { equals: String(provider).toLowerCase(), mode: 'insensitive' }
+      };
     }
     if (category) {
-      params.push(String(category).toLowerCase());
-      filters.push(`LOWER(c.category) = $${params.length}`);
+      where.category = { equals: String(category).toLowerCase(), mode: 'insensitive' };
     }
     if (level) {
-      params.push(String(level).toLowerCase());
-      filters.push(`LOWER(c.skill_level) = $${params.length}`);
+      where.skill_level = { equals: String(level).toLowerCase(), mode: 'insensitive' };
     }
     if (isInternal !== undefined) {
-      params.push(isInternal === 'true' || isInternal === true);
-      filters.push(`c.is_internal = $${params.length}`);
+      where.is_internal = isInternal === 'true' || isInternal === true;
     }
     if (query) {
-      params.push(`%${String(query).toLowerCase()}%`);
-      filters.push(`(LOWER(c.title) LIKE $${params.length} OR LOWER(c.description) LIKE $${params.length})`);
+      where.OR = [
+        { title: { contains: String(query), mode: 'insensitive' } },
+        { description: { contains: String(query), mode: 'insensitive' } }
+      ];
     }
 
-    const whereSql = filters.length > 0 ? `WHERE ${filters.join(" AND ")}` : "";
-    const result = await pool.query(
-      `SELECT c.*,
-              p.name AS provider_name, p.slug AS provider_slug,
-              u.email AS instructor_email
-       FROM courses c
-       JOIN providers p ON p.id = c.provider_id
-       LEFT JOIN users u ON u.id = c.instructor_id
-       ${whereSql}
-       ORDER BY c.created_at DESC
-       LIMIT 200`,
-      params
-    );
-    return result.rows;
+    const courses = await prisma.course.findMany({
+      where,
+      include: {
+        provider: true
+      },
+      orderBy: {
+        created_at: 'desc'
+      },
+      take: 200
+    });
+
+    const instructorIds = [...new Set(courses.map(c => c.instructor_id).filter(Boolean))];
+    const instructors = await prisma.user.findMany({
+      where: { id: { in: instructorIds } },
+      select: { id: true, email: true }
+    });
+    const instructorMap = Object.fromEntries(instructors.map(u => [u.id, u.email]));
+
+    return courses.map(c => ({
+      ...c,
+      provider_name: c.provider.name,
+      provider_slug: c.provider.slug,
+      instructor_email: c.instructor_id ? instructorMap[c.instructor_id] : null
+    }));
   }
 
   static async findById(id) {
-    const result = await pool.query(
-      `SELECT c.*,
-              p.name AS provider_name, p.slug AS provider_slug,
-              u.email AS instructor_email
-       FROM courses c
-       JOIN providers p ON p.id = c.provider_id
-       LEFT JOIN users u ON u.id = c.instructor_id
-       WHERE c.id = $1
-       LIMIT 1`,
-      [id]
-    );
-    return result.rows[0];
+    const course = await prisma.course.findUnique({
+      where: { id },
+      include: {
+        provider: true
+      }
+    });
+    if (!course) return null;
+
+    let instructorEmail = null;
+    if (course.instructor_id) {
+      const user = await prisma.user.findUnique({
+        where: { id: course.instructor_id },
+        select: { email: true }
+      });
+      instructorEmail = user?.email || null;
+    }
+
+    return {
+      ...course,
+      provider_name: course.provider.name,
+      provider_slug: course.provider.slug,
+      instructor_email: instructorEmail
+    };
   }
 
   static async create(courseData) {
@@ -79,31 +97,26 @@ class Course {
       thumbnailUrl = null
     } = courseData;
 
-    const result = await pool.query(
-      `INSERT INTO courses (
-        provider_id, external_id, title, category, skill_level, duration_label, has_certificate,
-        cost_type, external_url, description, is_internal, instructor_id, instructor_name, thumbnail_url, is_active
-       )
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, TRUE)
-       RETURNING *`,
-      [
-        providerId,
-        externalId,
+    const course = await prisma.course.create({
+      data: {
+        provider_id: providerId,
+        external_id: externalId,
         title,
         category,
-        level,
-        duration,
-        hasCertificate,
-        costType,
-        externalUrl,
+        skill_level: level,
+        duration_label: duration,
+        has_certificate: hasCertificate === 'true' || hasCertificate === true,
+        cost_type: costType,
+        external_url: externalUrl,
         description,
-        isInternal,
-        instructorId,
-        instructorName,
-        thumbnailUrl
-      ]
-    );
-    return result.rows[0];
+        is_internal: isInternal === 'true' || isInternal === true,
+        instructor_id: instructorId,
+        instructor_name: instructorName,
+        thumbnail_url: thumbnailUrl,
+        is_active: true
+      }
+    });
+    return course;
   }
 }
 

@@ -163,8 +163,10 @@ exports.changePassword = async (req, res) => {
   }
 
   try {
-    const { pool } = require("../config/db");
-    const user = pool.data.users.find(u => u.id === userId);
+    const { prisma } = require("../config/db");
+    const user = await prisma.user.findUnique({
+      where: { id: userId }
+    });
     if (!user) {
       return res.status(404).json({ error: "User not found." });
     }
@@ -177,12 +179,14 @@ exports.changePassword = async (req, res) => {
       }
     }
 
-    user.password_hash = await bcrypt.hash(newPassword, 10);
-    user.has_changed_password = true;
-    user.is_default_password = false;
-    user.password_changed_at = new Date().toISOString();
-    user.updated_at = new Date().toISOString();
-    pool.save();
+    const newHash = await bcrypt.hash(newPassword, 10);
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        password_hash: newHash,
+        has_changed_password: true
+      }
+    });
 
     res.json({
       hasChangedPassword: true,

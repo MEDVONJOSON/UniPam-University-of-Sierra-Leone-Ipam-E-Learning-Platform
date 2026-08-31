@@ -62,6 +62,14 @@ export async function rejectAdminUser(id) {
   return data.data;
 }
 
+export async function resetAdminUserPassword(id, payload = {}) {
+  const data = await apiRequest(`/admin/users/${id}/reset-password`, {
+    method: "POST",
+    body: JSON.stringify(payload)
+  });
+  return data.data;
+}
+
 export async function getSystemReports() {
   const data = await apiRequest("/admin/reports");
   return data.data;

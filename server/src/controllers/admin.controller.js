@@ -1,4 +1,4 @@
-const { pool } = require("../config/db");
+const { prisma } = require("../config/db");
 const bcrypt = require("bcryptjs");
 
 /**
@@ -7,17 +7,22 @@ const bcrypt = require("bcryptjs");
  */
 exports.getStats = async (req, res) => {
   try {
-    const data = pool.data;
-    const totalUsers = data.users.length;
-    const activeStudents = data.users.filter(u => u.role === "learner" && u.is_active !== false).length;
-    const activeLecturers = data.users.filter(u => u.role === "lecturer" && u.is_active !== false).length;
-    const totalCourses = data.courses.length;
-    const totalMaterials = (data.course_materials || []).length;
+    const totalUsers = await prisma.user.count();
+    const activeStudents = await prisma.user.count({
+      where: { role: "learner", is_active: true }
+    });
+    const activeLecturers = await prisma.user.count({
+      where: { role: "lecturer", is_active: true }
+    });
+    const totalCourses = await prisma.course.count();
+    const totalMaterials = await prisma.courseMaterial.count();
 
     // Messages received today
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
-    const messagesToday = (data.messages || []).filter(m => new Date(m.created_at) >= todayStart).length;
+    const messagesToday = await prisma.message.count({
+      where: { created_at: { gte: todayStart } }
+    });
 
     res.json({
       data: {
@@ -37,33 +42,33 @@ exports.getStats = async (req, res) => {
 
 /**
  * GET /admin/recent-activity
- * Returns a mock recent activity feed for the dashboard.
+ * Returns recent activity feed for the dashboard.
  */
 exports.getRecentActivity = async (req, res) => {
   try {
-    const data = pool.data;
     const activities = [];
 
-    // Derive activities from real data
     // 1. Recent user registrations
-    const recentUsers = [...data.users]
-      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-      .slice(0, 3);
+    const recentUsers = await prisma.user.findMany({
+      include: { profile: true },
+      orderBy: { created_at: "desc" },
+      take: 3
+    });
     recentUsers.forEach(u => {
-      const profile = data.profiles.find(p => p.user_id === u.id);
       activities.push({
         id: "act-" + u.id,
         type: "user_created",
         status: "SUCCESS",
-        description: `New ${u.role} account created: ${profile?.full_name || u.email}`,
+        description: `New ${u.role} account created: ${u.profile?.full_name || u.email}`,
         timestamp: u.created_at
       });
     });
 
     // 2. Recent material uploads
-    const recentMats = [...(data.course_materials || [])]
-      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))
-      .slice(0, 2);
+    const recentMats = await prisma.courseMaterial.findMany({
+      orderBy: { created_at: "desc" },
+      take: 2
+    });
     recentMats.forEach(m => {
       activities.push({
         id: "act-" + m.id,
@@ -74,7 +79,8 @@ exports.getRecentActivity = async (req, res) => {
       });
     });
 
-    // 3. Add some mock system events
+    // 3. Add system events
+    const totalUsers = await prisma.user.count();
     activities.push({
       id: "act-backup-1",
       type: "system_backup",
@@ -86,7 +92,7 @@ exports.getRecentActivity = async (req, res) => {
       id: "act-concurrent-1",
       type: "system_warning",
       status: "WARNING",
-      description: `High concurrent users detected: ${data.users.length} active`,
+      description: `High concurrent users detected: ${totalUsers} active`,
       timestamp: new Date(Date.now() - 7200000).toISOString()
     });
 
@@ -101,21 +107,46 @@ exports.getRecentActivity = async (req, res) => {
 };
 
 /**
- * GET /admin/users?search=&role=
+ * GET /admin/users?search=&role=&status=
  * Returns list of all users with profiles, supporting search and role filters.
  */
 exports.getUsers = async (req, res) => {
   try {
     const { search, role, status } = req.query;
-    const data = pool.data;
-    let users = data.users.map(u => {
-      const profile = data.profiles.find(p => p.user_id === u.id) || {};
-      const approvalStatus = u.approval_status || (u.is_active === false ? "pending" : "approved");
+
+    const where = {};
+    if (role && role !== "all") {
+      where.role = role;
+    }
+    if (status && status !== "all") {
+      where.approval_status = status;
+    }
+
+    if (search) {
+      const q = search.toLowerCase();
+      where.OR = [
+        { email: { contains: q, mode: 'insensitive' } },
+        { profile: { full_name: { contains: q, mode: 'insensitive' } } },
+        { profile: { student_id_number: { contains: q, mode: 'insensitive' } } }
+      ];
+    }
+
+    const users = await prisma.user.findMany({
+      where,
+      include: {
+        profile: true
+      },
+      orderBy: { created_at: "desc" }
+    });
+
+    const data = users.map(u => {
+      const profile = u.profile || {};
+      const approvalStatus = u.approval_status;
       return {
         id: u.id,
         email: u.email,
         role: u.role,
-        is_active: u.is_active !== false,
+        is_active: u.is_active,
         approval_status: approvalStatus,
         approvalStatus: approvalStatus,
         created_at: u.created_at,
@@ -127,36 +158,14 @@ exports.getUsers = async (req, res) => {
         universityProgramId: profile.university_program_id || "",
         enrollmentYear: profile.enrollment_year || "",
         academicStanding: profile.academic_standing || "",
-        moduleTitle: profile.module_title || profile.assigned_module || "",
-        moduleCode: profile.module_code || "",
-        academicYear: profile.academic_year || profile.current_academic_year || "",
-        semester: profile.semester || profile.current_semester || ""
+        moduleTitle: profile.designation || "",
+        moduleCode: "",
+        academicYear: profile.current_academic_year || "",
+        semester: profile.current_semester || ""
       };
     });
 
-    // Filter by role
-    if (role && role !== "all") {
-      users = users.filter(u => u.role === role);
-    }
-
-    // Filter by approval status if requested
-    if (status && status !== "all") {
-      users = users.filter(u => u.approval_status === status);
-    }
-
-    // Search filter
-    if (search) {
-      const q = search.toLowerCase();
-      users = users.filter(u =>
-        u.fullName.toLowerCase().includes(q) ||
-        u.email.toLowerCase().includes(q) ||
-        u.studentIdNumber.toLowerCase().includes(q) ||
-        (u.moduleCode && u.moduleCode.toLowerCase().includes(q)) ||
-        (u.moduleTitle && u.moduleTitle.toLowerCase().includes(q))
-      );
-    }
-
-    res.json({ data: users });
+    res.json({ data });
   } catch (error) {
     console.error("Admin Get Users Error:", error);
     res.status(500).json({ error: "Failed to fetch users." });
@@ -170,18 +179,20 @@ exports.getUsers = async (req, res) => {
 exports.getUser = async (req, res) => {
   try {
     const { id } = req.params;
-    const data = pool.data;
-    const user = data.users.find(u => u.id === id);
+    const user = await prisma.user.findUnique({
+      where: { id },
+      include: { profile: true }
+    });
     if (!user) return res.status(404).json({ error: "User not found." });
 
-    const profile = data.profiles.find(p => p.user_id === user.id) || {};
-    const approvalStatus = user.approval_status || (user.is_active === false ? "pending" : "approved");
+    const profile = user.profile || {};
+    const approvalStatus = user.approval_status;
     res.json({
       data: {
         id: user.id,
         email: user.email,
         role: user.role,
-        is_active: user.is_active !== false,
+        is_active: user.is_active,
         approval_status: approvalStatus,
         approvalStatus: approvalStatus,
         created_at: user.created_at,
@@ -196,10 +207,10 @@ exports.getUser = async (req, res) => {
         designation: profile.designation || "",
         bio: profile.bio || "",
         institutionName: profile.institution_name || "",
-        moduleTitle: profile.module_title || profile.assigned_module || "",
-        moduleCode: profile.module_code || "",
-        academicYear: profile.academic_year || profile.current_academic_year || "",
-        semester: profile.semester || profile.current_semester || ""
+        moduleTitle: profile.designation || "",
+        moduleCode: "",
+        academicYear: profile.current_academic_year || "",
+        semester: profile.current_semester || ""
       }
     });
   } catch (error) {
@@ -222,10 +233,10 @@ exports.createUser = async (req, res) => {
       return res.status(400).json({ error: "Email, full name, and role are required." });
     }
 
-    const data = pool.data;
-
     // Check duplicate email
-    const existing = data.users.find(u => u.email.toLowerCase() === email.toLowerCase());
+    const existing = await prisma.user.findUnique({
+      where: { email: email.toLowerCase().trim() }
+    });
     if (existing) {
       return res.status(409).json({ error: "A user with this email already exists." });
     }
@@ -234,94 +245,80 @@ exports.createUser = async (req, res) => {
     const rawPassword = password || Math.random().toString(36).slice(-10);
     const passwordHash = await bcrypt.hash(rawPassword, 10);
 
-    const id = "user-" + Math.random().toString(36).substr(2, 9);
-    const newUser = {
-      id,
-      email: email.toLowerCase().trim(),
-      password_hash: passwordHash,
-      role: role || "learner",
-      is_active: true,
-      created_at: new Date().toISOString()
-    };
-    data.users.push(newUser);
-
-    const newProfile = {
-      user_id: id,
-      full_name: fullName,
-      phone_number: phoneNumber || "",
-      country_code: "SL",
-      preferred_language: "English",
-      education_background: "",
-      skills_interests: "[]",
-      learning_goals: "",
-      institution_name: "University of Sierra Leone",
-      faculty: faculty || "",
-      department: department || "",
-      enrollment_year: new Date().getFullYear().toString(),
-      academic_standing: "Good",
-      designation: role === "lecturer" ? "Lecturer & Module Coordinator" : "",
-      module_title: moduleTitle || "",
-      assigned_module: moduleTitle || "",
-      module_code: moduleCode || "",
-      academic_year: academicYear || "",
-      current_academic_year: academicYear || "",
-      semester: semester || "Semester 1",
-      current_semester: semester || "Semester 1",
-      created_at: new Date().toISOString()
-    };
-    data.profiles.push(newProfile);
+    const newUser = await prisma.user.create({
+      data: {
+        email: email.toLowerCase().trim(),
+        password_hash: passwordHash,
+        role: role || "learner",
+        approval_status: "approved",
+        is_active: true,
+        profile: {
+          create: {
+            full_name: fullName,
+            phone_number: phoneNumber || "",
+            faculty: faculty || "",
+            department: department || "",
+            enrollment_year: new Date().getFullYear().toString(),
+            designation: role === "lecturer" ? "Lecturer & Module Coordinator" : "",
+            current_academic_year: academicYear ? parseInt(academicYear, 10) : null,
+            current_semester: semester ? parseInt(semester, 10) : null
+          }
+        }
+      },
+      include: {
+        profile: true
+      }
+    });
 
     // If lecturer with a module, ensure course and module exist in repository
     if (role === "lecturer" && (moduleTitle || moduleCode)) {
-      const courseId = "c-" + Math.random().toString(36).substr(2, 9);
-      const newCourse = {
-        id: courseId,
-        provider_id: "5", // UniPam
-        external_id: moduleCode || "MOD-101",
-        title: moduleTitle || `${fullName}'s Module`,
-        category: faculty || "Information Systems & Technology",
-        skill_level: academicYear || "Undergraduate",
-        duration_label: "1 Semester",
-        has_certificate: true,
-        cost_type: "free",
-        external_url: "https://unipam.edu.sl/",
-        description: `Academic course module coordinated by ${fullName}. Code: ${moduleCode || 'N/A'}.`,
-        is_internal: true,
-        instructor_id: id,
-        instructor_name: fullName,
-        thumbnail_url: null,
-        is_active: true,
-        created_at: new Date().toISOString()
-      };
-      data.courses.push(newCourse);
+      // Find or create provider
+      const provider = await prisma.provider.findFirst({
+        where: { slug: "unipam" }
+      });
+      const providerId = provider?.id || (await prisma.provider.create({
+        data: { name: "UniPam", slug: "unipam" }
+      })).id;
 
-      if (!data.modules) data.modules = [];
-      data.modules.push({
-        id: "m-" + Math.random().toString(36).substr(2, 9),
-        course_id: courseId,
-        title: moduleTitle || "Module Syllabus & Foundation",
-        module_code: moduleCode || "IPAM-101",
-        order_index: 0,
-        semester: semester || "Semester 1",
-        lecturer_name: fullName
+      await prisma.course.create({
+        data: {
+          provider_id: providerId,
+          external_id: moduleCode || "MOD-101",
+          title: moduleTitle || `${fullName}'s Module`,
+          category: faculty || "Information Systems & Technology",
+          skill_level: academicYear || "Undergraduate",
+          duration_label: "1 Semester",
+          has_certificate: true,
+          cost_type: "free",
+          external_url: "https://unipam.edu.sl/",
+          description: `Academic course module coordinated by ${fullName}. Code: ${moduleCode || 'N/A'}.`,
+          is_internal: true,
+          instructor_id: newUser.id,
+          instructor_name: fullName,
+          is_active: true,
+          lms_modules: {
+            create: {
+              title: moduleTitle || "Module Syllabus & Foundation",
+              order_index: 0
+            }
+          }
+        }
       });
     }
 
-    // Seed notifications
-    data.notifications.push({
-      id: "n-" + Math.random().toString(36).substr(2, 9),
-      user_id: id,
-      title: "Welcome to UniPam",
-      message: `Your ${role} account has been created by the administrator.`,
-      created_at: new Date().toISOString(),
-      read_at: null
+    // Push notification to user
+    await prisma.notification.create({
+      data: {
+        user_id: newUser.id,
+        title: "Welcome to UniPam",
+        message: `Your ${role} account has been created by the administrator.`,
+        type: "info"
+      }
     });
-
-    pool.save();
 
     res.status(201).json({
       data: {
-        id,
+        id: newUser.id,
         email: newUser.email,
         role: newUser.role,
         fullName,
@@ -349,55 +346,50 @@ exports.updateUser = async (req, res) => {
       email, fullName, role, phoneNumber, faculty, department, is_active,
       moduleTitle, moduleCode, academicYear, semester
     } = req.body;
-    const data = pool.data;
 
-    const userIdx = data.users.findIndex(u => u.id === id);
-    if (userIdx === -1) return res.status(404).json({ error: "User not found." });
+    const user = await prisma.user.findUnique({
+      where: { id }
+    });
+    if (!user) return res.status(404).json({ error: "User not found." });
 
-    if (email !== undefined) data.users[userIdx].email = email.toLowerCase().trim();
-    if (role !== undefined) data.users[userIdx].role = role;
-    if (is_active !== undefined) data.users[userIdx].is_active = is_active;
-
-    const profileIdx = data.profiles.findIndex(p => p.user_id === id);
-    if (profileIdx !== -1) {
-      if (fullName !== undefined) data.profiles[profileIdx].full_name = fullName;
-      if (phoneNumber !== undefined) data.profiles[profileIdx].phone_number = phoneNumber;
-      if (faculty !== undefined) data.profiles[profileIdx].faculty = faculty;
-      if (department !== undefined) data.profiles[profileIdx].department = department;
-      if (moduleTitle !== undefined) {
-        data.profiles[profileIdx].module_title = moduleTitle;
-        data.profiles[profileIdx].assigned_module = moduleTitle;
+    const updatedUser = await prisma.user.update({
+      where: { id },
+      data: {
+        email: email !== undefined ? email.toLowerCase().trim() : undefined,
+        role: role !== undefined ? role : undefined,
+        is_active: is_active !== undefined ? is_active : undefined,
+        profile: {
+          update: {
+            full_name: fullName !== undefined ? fullName : undefined,
+            phone_number: phoneNumber !== undefined ? phoneNumber : undefined,
+            faculty: faculty !== undefined ? faculty : undefined,
+            department: department !== undefined ? department : undefined,
+            designation: moduleTitle !== undefined ? moduleTitle : undefined,
+            current_academic_year: academicYear !== undefined && academicYear !== "" ? parseInt(academicYear, 10) : undefined,
+            current_semester: semester !== undefined && semester !== "" ? parseInt(semester, 10) : undefined
+          }
+        }
+      },
+      include: {
+        profile: true
       }
-      if (moduleCode !== undefined) data.profiles[profileIdx].module_code = moduleCode;
-      if (academicYear !== undefined) {
-        data.profiles[profileIdx].academic_year = academicYear;
-        data.profiles[profileIdx].current_academic_year = academicYear;
-      }
-      if (semester !== undefined) {
-        data.profiles[profileIdx].semester = semester;
-        data.profiles[profileIdx].current_semester = semester;
-      }
-      data.profiles[profileIdx].updated_at = new Date().toISOString();
-    }
+    });
 
-    pool.save();
-
-    const user = data.users[userIdx];
-    const profile = data.profiles.find(p => p.user_id === id) || {};
+    const profile = updatedUser.profile || {};
     res.json({
       data: {
-        id: user.id,
-        email: user.email,
-        role: user.role,
-        is_active: user.is_active,
+        id: updatedUser.id,
+        email: updatedUser.email,
+        role: updatedUser.role,
+        is_active: updatedUser.is_active,
         fullName: profile.full_name || "",
         phoneNumber: profile.phone_number || "",
         faculty: profile.faculty || "",
         department: profile.department || "",
-        moduleTitle: profile.module_title || profile.assigned_module || "",
-        moduleCode: profile.module_code || "",
-        academicYear: profile.academic_year || profile.current_academic_year || "",
-        semester: profile.semester || profile.current_semester || ""
+        moduleTitle: profile.designation || "",
+        moduleCode: "",
+        academicYear: profile.current_academic_year || "",
+        semester: profile.current_semester || ""
       }
     });
   } catch (error) {
@@ -413,24 +405,21 @@ exports.updateUser = async (req, res) => {
 exports.deleteUser = async (req, res) => {
   try {
     const { id } = req.params;
-    const data = pool.data;
 
     // Don't allow deleting yourself
     if (id === req.auth.userId) {
       return res.status(400).json({ error: "You cannot delete your own admin account." });
     }
 
-    const userIdx = data.users.findIndex(u => u.id === id);
-    if (userIdx === -1) return res.status(404).json({ error: "User not found." });
+    const user = await prisma.user.findUnique({
+      where: { id }
+    });
+    if (!user) return res.status(404).json({ error: "User not found." });
 
-    data.users.splice(userIdx, 1);
-    data.profiles = data.profiles.filter(p => p.user_id !== id);
-    data.enrollments = data.enrollments.filter(e => e.user_id !== id);
-    data.notifications = data.notifications.filter(n => n.user_id !== id);
-    data.transactions = data.transactions.filter(t => t.user_id !== id);
-    data.scholarships = data.scholarships.filter(s => s.user_id !== id);
+    await prisma.user.delete({
+      where: { id }
+    });
 
-    pool.save();
     res.json({ data: { message: "User deleted successfully." } });
   } catch (error) {
     console.error("Admin Delete User Error:", error);
@@ -444,11 +433,10 @@ exports.deleteUser = async (req, res) => {
  */
 exports.getReports = async (req, res) => {
   try {
-    const data = pool.data;
-    const totalUsers = data.users.length;
-    const totalMaterials = (data.course_materials || []).length;
+    const totalUsers = await prisma.user.count();
+    const totalMaterials = await prisma.courseMaterial.count();
 
-    // Mock storage calculation (each material ~2MB average)
+    // Storage calculation (each material ~2MB average)
     const storageUsedGB = Math.round((totalMaterials * 2 * 1024 * 1024) / (1024 * 1024 * 1024) * 100 + 284);
     const storageTotalGB = 500;
 
@@ -484,23 +472,27 @@ exports.getReports = async (req, res) => {
     // Activity log (last 24 hours)
     const activityLog = [];
     const now = new Date();
+    const oneDayAgo = new Date(now - 86400000);
 
-    // Derive from real data
-    const recentUsers = data.users
-      .filter(u => new Date(u.created_at) > new Date(now - 86400000))
-      .slice(0, 3);
+    const recentUsers = await prisma.user.findMany({
+      where: { created_at: { gte: oneDayAgo } },
+      include: { profile: true },
+      orderBy: { created_at: "desc" },
+      take: 3
+    });
     recentUsers.forEach(u => {
-      const profile = data.profiles.find(p => p.user_id === u.id);
       activityLog.push({
         timestamp: u.created_at,
         status: "SUCCESS",
-        description: `User account created: ${profile?.full_name || u.email}`
+        description: `User account created: ${u.profile?.full_name || u.email}`
       });
     });
 
-    const recentMats = (data.course_materials || [])
-      .filter(m => new Date(m.created_at) > new Date(now - 86400000))
-      .slice(0, 2);
+    const recentMats = await prisma.courseMaterial.findMany({
+      where: { created_at: { gte: oneDayAgo } },
+      orderBy: { created_at: "desc" },
+      take: 2
+    });
     recentMats.forEach(m => {
       activityLog.push({
         timestamp: m.created_at,
@@ -540,34 +532,35 @@ exports.approveUser = async (req, res) => {
   try {
     const { id } = req.params;
     const { defaultPassword } = req.body;
-    const data = pool.data;
-    const userIdx = data.users.findIndex(u => u.id === id);
-    if (userIdx === -1) return res.status(404).json({ error: "User not found." });
 
-    data.users[userIdx].is_active = true;
-    data.users[userIdx].approval_status = "approved";
+    const user = await prisma.user.findUnique({
+      where: { id },
+      include: { profile: true }
+    });
+    if (!user) return res.status(404).json({ error: "User not found." });
 
-    const profile = data.profiles.find(p => p.user_id === id) || {};
+    const pass = (defaultPassword && defaultPassword.trim()) || user.profile?.student_id_number || "usl2025";
+    const hashedPass = await bcrypt.hash(pass, 10);
 
-    // If defaultPassword provided, update their password hash
-    const pass = (defaultPassword && defaultPassword.trim()) || profile.student_id_number || "usl2025";
-    data.users[userIdx].password_hash = await bcrypt.hash(pass, 10);
-    data.users[userIdx].updated_at = new Date().toISOString();
-
-    // Push notification to user
-    if (!data.notifications) data.notifications = [];
-    data.notifications.push({
-      id: "n-" + Math.random().toString(36).substr(2, 9),
-      user_id: id,
-      title: "Account Approved by Registry",
-      message: `Your student account has been approved by the University Registry! You can now sign in using your Student ID and your default password.`,
-      type: "success",
-      link: "/login",
-      created_at: new Date().toISOString(),
-      read_at: null
+    await prisma.user.update({
+      where: { id },
+      data: {
+        is_active: true,
+        approval_status: "approved",
+        password_hash: hashedPass
+      }
     });
 
-    pool.save();
+    // Push notification to user
+    await prisma.notification.create({
+      data: {
+        user_id: id,
+        title: "Account Approved by Registry",
+        message: `Your student account has been approved by the University Registry! You can now sign in using your Student ID and your default password.`,
+        type: "success",
+        link: "/login"
+      }
+    });
 
     res.json({
       data: {
@@ -591,14 +584,19 @@ exports.approveUser = async (req, res) => {
 exports.rejectUser = async (req, res) => {
   try {
     const { id } = req.params;
-    const data = pool.data;
-    const userIdx = data.users.findIndex(u => u.id === id);
-    if (userIdx === -1) return res.status(404).json({ error: "User not found." });
 
-    data.users[userIdx].is_active = false;
-    data.users[userIdx].approval_status = "rejected";
-    data.users[userIdx].updated_at = new Date().toISOString();
-    pool.save();
+    const user = await prisma.user.findUnique({
+      where: { id }
+    });
+    if (!user) return res.status(404).json({ error: "User not found." });
+
+    await prisma.user.update({
+      where: { id },
+      data: {
+        is_active: false,
+        approval_status: "rejected"
+      }
+    });
 
     res.json({
       data: {
@@ -611,5 +609,46 @@ exports.rejectUser = async (req, res) => {
   } catch (error) {
     console.error("Admin Reject User Error:", error);
     res.status(500).json({ error: "Failed to reject user." });
+  }
+};
+
+/**
+ * POST /admin/users/:id/reset-password
+ * Admin resets or assigns a new password for a user/lecturer.
+ */
+exports.resetPassword = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { newPassword } = req.body;
+
+    const user = await prisma.user.findUnique({
+      where: { id },
+      include: { profile: true }
+    });
+    if (!user) return res.status(404).json({ error: "User not found." });
+
+    const passwordToSet = (newPassword && newPassword.trim()) || "uslLecturer2026!";
+    const hashedPass = await bcrypt.hash(passwordToSet, 10);
+
+    await prisma.user.update({
+      where: { id },
+      data: {
+        password_hash: hashedPass,
+        has_changed_password: false
+      }
+    });
+
+    res.json({
+      data: {
+        id,
+        email: user.email,
+        fullName: user.profile?.full_name || "",
+        newPassword: passwordToSet,
+        message: `Password assigned successfully. Login password: ${passwordToSet}`
+      }
+    });
+  } catch (error) {
+    console.error("Admin Reset Password Error:", error);
+    res.status(500).json({ error: "Failed to reset password." });
   }
 };
