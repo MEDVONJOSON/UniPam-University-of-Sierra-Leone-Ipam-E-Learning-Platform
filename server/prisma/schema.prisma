@@ -505,7 +505,7 @@ model CourseMaterial {
   file_size_bytes      BigInt?
   semester             String?
   academic_year        String?
-  lecture_note_number  Int?
+  lecture_note_number  String?
   download_count       Int            @default(0)
   is_published         Boolean        @default(true)
   created_at           DateTime       @default(now())

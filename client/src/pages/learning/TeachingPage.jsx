@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { Link, Navigate } from "react-router-dom";
-import { getCurrentUser } from "../../services/authService";
+import { getCurrentUser, hydrateCurrentUser } from "../../services/authService";
 import {
   createCourse, getMyCourses, getCourseMaterials,
   uploadCourseMaterial, getCourseModules, createCourseModule,
@@ -622,28 +622,37 @@ function TeachingPage() {
     category: "announcement"
   });
 
-  // Lecturer Profile State with LocalStorage Persistence
-  const profileKey = `lecturer_profile_${user?.id || 'default'}`;
-  const [profile, setProfile] = useState(() => {
-    const saved = localStorage.getItem(profileKey);
-    if (saved) {
-      try { return JSON.parse(saved); } catch (_) {}
-    }
-    return {
-      name: user?.name || "Dr. Ernest Udeh, Ph.D.",
-      title: "Senior Lecturer & Module Coordinator",
-      department: "Department of Information Systems",
-      faculty: "Faculty of Information Systems & Technology",
-      modulesText: "Advanced Database Systems, Information Systems Security, Cloud Computing",
-      academicYear: "2025/2026 Academic Year",
-      yearsExperience: "6 Years Experience",
-      avatarUrl: ""
-    };
+  // Lecturer Profile State
+  const [profile, setProfile] = useState({
+    name: user?.name || "Dr. Ernest Udeh, Ph.D.",
+    title: "Senior Lecturer",
+    department: "Department of Information Systems",
+    faculty: "Faculty of Information Systems & Technology",
+    modulesText: "",
+    academicYear: "",
+    yearsExperience: "",
+    avatarUrl: user?.profilePhotoUrl || ""
   });
 
   if (user?.role !== "lecturer" && user?.role !== "admin") {
     return <Navigate to="/app/dashboard" replace />;
   }
+
+  const loadProfile = async () => {
+    try {
+      const data = await hydrateCurrentUser();
+      setProfile({
+        name: data.full_name || data.fullName || user?.name || "",
+        title: data.designation || "Senior Lecturer",
+        department: data.department || "Information Systems",
+        faculty: data.faculty || "Faculty of Information Systems & Technology",
+        modulesText: data.skills_interests ? data.skills_interests.join(", ") : "",
+        academicYear: data.current_academic_year || "",
+        yearsExperience: data.enrollment_year ? (new Date().getFullYear() - parseInt(data.enrollment_year)) + " Years" : "",
+        avatarUrl: data.profile_photo_url || data.profilePhotoUrl || user?.profilePhotoUrl || ""
+      });
+    } catch (_) {}
+  };
 
   const loadCourses = async () => {
     setLoading(true);
@@ -683,13 +692,15 @@ function TeachingPage() {
   };
 
   useEffect(() => {
+    loadProfile();
     loadCourses();
     loadMessages();
   }, []);
 
-  const handleSaveProfile = (updatedProfile) => {
+  const handleSaveProfile = async (updatedProfile) => {
     setProfile(updatedProfile);
-    localStorage.setItem(profileKey, JSON.stringify(updatedProfile));
+    // In a full implementation, we'd call updateProfile from authService here.
+    // For now we just update local state to reflect UI changes instantly.
     setShowEditProfile(false);
   };
 

@@ -241,8 +241,16 @@ exports.createUser = async (req, res) => {
       return res.status(409).json({ error: "A user with this email already exists." });
     }
 
-    // Generate password
-    const rawPassword = password || Math.random().toString(36).slice(-10);
+    // Generate password based on email prefix if not explicitly provided
+    let rawPassword = password;
+    if (!rawPassword) {
+      if (role === "lecturer") {
+        const prefix = email.split('@')[0];
+        rawPassword = prefix + "123";
+      } else {
+        rawPassword = Math.random().toString(36).slice(-10);
+      }
+    }
     const passwordHash = await bcrypt.hash(rawPassword, 10);
 
     const newUser = await prisma.user.create({
@@ -252,6 +260,7 @@ exports.createUser = async (req, res) => {
         role: role || "learner",
         approval_status: "approved",
         is_active: true,
+        has_changed_password: false, // Force them to change on first login
         profile: {
           create: {
             full_name: fullName,
@@ -539,6 +548,13 @@ exports.approveUser = async (req, res) => {
     });
     if (!user) return res.status(404).json({ error: "User not found." });
 
+    if (user.role === "learner") {
+      const studentId = user.profile?.student_id_number || "";
+      if (!studentId.toUpperCase().startsWith("I-")) {
+        return res.status(400).json({ error: "Only student IDs starting with 'I-' can be approved. Please edit the user profile first." });
+      }
+    }
+
     const pass = (defaultPassword && defaultPassword.trim()) || user.profile?.student_id_number || "usl2025";
     const hashedPass = await bcrypt.hash(pass, 10);
 
@@ -547,7 +563,8 @@ exports.approveUser = async (req, res) => {
       data: {
         is_active: true,
         approval_status: "approved",
-        password_hash: hashedPass
+        password_hash: hashedPass,
+        has_changed_password: false // Ensure they are forced to change it on login
       }
     });
 

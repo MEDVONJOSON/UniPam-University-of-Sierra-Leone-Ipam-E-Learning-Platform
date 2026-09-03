@@ -174,11 +174,7 @@ function UserDashboardPage() {
                              </span>
                            ))
                         ) : (
-                           <>
-                             <span className="px-3 py-1.5 bg-slate-50 border border-slate-200 text-slate-600 rounded-lg text-xs font-bold">Advanced Database Systems</span>
-                             <span className="px-3 py-1.5 bg-slate-50 border border-slate-200 text-slate-600 rounded-lg text-xs font-bold">Information Systems Security</span>
-                             <span className="px-3 py-1.5 bg-emerald-50 border border-emerald-100 text-emerald-700 rounded-lg text-xs font-bold">Cloud Computing</span>
-                           </>
+                           <span className="px-3 py-1.5 bg-slate-50 border border-slate-200 text-slate-400 rounded-lg text-xs font-bold italic">No courses assigned yet</span>
                         )}
                       </div>
                    </div>

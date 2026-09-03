@@ -295,102 +295,108 @@ function ProfilePage() {
               </div>
             )}
 
-            {/* Personal Information */}
-            <ProfileSection title="PERSONAL INFORMATION">
-               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                  <ProfileInput label="Full Name" name="fullName" value={profile?.fullName} onChange={handleChange} placeholder="EX: MOHAMED VONJO" />
-                  <ProfileInput label="Mobile Contact" name="phoneNumber" value={profile?.phoneNumber} onChange={handleChange} placeholder="+232 ..." />
-               </div>
-               <div className="mt-8">
-                  <label className="text-[10px] font-black text-hover-500 uppercase tracking-widest block ml-1 mb-2">Short Bio</label>
-                  <textarea 
-                    name="bio"
-                    value={profile?.bio || ""}
-                    onChange={handleChange}
-                    rows={4}
-                    placeholder="Tell us about yourself..."
-                    className="block w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-3xl text-sm font-black text-[#0B5E3C] focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 transition-all placeholder-slate-300 outline-none"
-                  />
-               </div>
-            </ProfileSection>
+            {/* Sections below are locked until default password is changed */}
+            {sessionUser?.hasChangedPassword !== false && (
+              <>
+                {/* Personal Information */}
+                <ProfileSection title="PERSONAL INFORMATION">
+                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                      <ProfileInput label="Full Name" name="fullName" value={profile?.fullName} onChange={handleChange} placeholder="EX: MOHAMED VONJO" />
+                      <ProfileInput label="Mobile Contact" name="phoneNumber" value={profile?.phoneNumber} onChange={handleChange} placeholder="+232 ..." />
+                   </div>
+                   <div className="mt-8">
+                      <label className="text-[10px] font-black text-hover-500 uppercase tracking-widest block ml-1 mb-2">Short Bio</label>
+                      <textarea 
+                        name="bio"
+                        value={profile?.bio || ""}
+                        onChange={handleChange}
+                        rows={4}
+                        placeholder="Tell us about yourself..."
+                        className="block w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-3xl text-sm font-black text-[#0B5E3C] focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 transition-all placeholder-slate-300 outline-none"
+                      />
+                   </div>
+                </ProfileSection>
 
-            {/* Academic Records */}
-            {isStudent && (
-              <ProfileSection title="Academic Records">
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <ProfileInput 
-                      label="Faculty" 
-                      name="faculty" 
-                      value={profile?.faculty} 
-                      onChange={handleChange} 
-                    />
-                    <ProfileInput 
-                      label="Current course/Program" 
-                      name="program" 
-                      value={profile?.program} 
-                      onChange={handleChange} 
-                    />
-                    <ProfileInput 
-                      label="Academic Year" 
-                      name="currentAcademicYear" 
-                      value={profile?.currentAcademicYear} 
-                      onChange={handleChange} 
-                      placeholder="2" 
-                    />
-                    <ProfileInput 
-                      label="Current Semester" 
-                      name="currentSemester" 
-                      value={profile?.currentSemester} 
-                      onChange={handleChange} 
-                      placeholder="1" 
-                    />
-                 </div>
-              </ProfileSection>
-            )}
+                {/* Academic Records */}
+                {isStudent && (
+                  <ProfileSection title="Academic Records">
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <ProfileInput 
+                          label="Faculty" 
+                          name="faculty" 
+                          value={profile?.faculty} 
+                          onChange={handleChange} 
+                        />
+                        <ProfileInput 
+                          label="Current course/Program" 
+                          name="program" 
+                          value={profile?.program} 
+                          onChange={handleChange} 
+                        />
+                        <ProfileInput 
+                          label="Academic Year" 
+                          name="currentAcademicYear" 
+                          value={profile?.currentAcademicYear} 
+                          onChange={handleChange} 
+                          placeholder="2" 
+                        />
+                        <ProfileInput 
+                          label="Current Semester" 
+                          name="currentSemester" 
+                          value={profile?.currentSemester} 
+                          onChange={handleChange} 
+                          placeholder="1" 
+                        />
+                     </div>
+                  </ProfileSection>
+                )}
 
-            {isLecturer && (
-              <ProfileSection title="Faculty & Professional Data">
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <ProfileInput 
-                      label="Active Faculty" 
-                      name="faculty" 
-                      value={profile?.faculty} 
-                      onChange={handleChange} 
-                    />
-                    <ProfileInput 
-                      label="Primary Department" 
-                      name="department" 
-                      value={profile?.department} 
-                      onChange={handleChange} 
-                    />
-                    <ProfileInput label="Current Designation" name="designation" value={profile?.designation} onChange={handleChange} placeholder="Senior Lecturer" />
-                    <ProfileInput label="Institutional Portal ID" name="institutionName" value={profile?.institutionName} onChange={handleChange} placeholder="University of Sierra Leone" />
-                 </div>
-                 <div className="mt-8">
-                    <label className="text-[10px] font-black text-hover-500 uppercase tracking-widest block ml-1 mb-2">Educational Background</label>
-                    <textarea 
-                      name="educationBackground"
-                      value={profile?.educationBackground || ""}
-                      onChange={handleChange}
-                      rows={3}
-                      placeholder="List your previous degrees or qualifications..."
-                      className="block w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-3xl text-sm font-black text-[#0B5E3C] focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 transition-all placeholder-slate-300 outline-none"
-                    />
-                 </div>
-              </ProfileSection>
-            )}
+                {/* Faculty & Professional Data */}
+                {isLecturer && (
+                  <ProfileSection title="Faculty & Professional Data">
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <ProfileInput 
+                          label="Active Faculty" 
+                          name="faculty" 
+                          value={profile?.faculty} 
+                          onChange={handleChange} 
+                        />
+                        <ProfileInput 
+                          label="Primary Department" 
+                          name="department" 
+                          value={profile?.department} 
+                          onChange={handleChange} 
+                        />
+                        <ProfileInput label="Current Designation" name="designation" value={profile?.designation} onChange={handleChange} placeholder="Senior Lecturer" />
+                        <ProfileInput label="Institutional Portal ID" name="institutionName" value={profile?.institutionName} onChange={handleChange} placeholder="University of Sierra Leone" />
+                     </div>
+                     <div className="mt-8">
+                        <label className="text-[10px] font-black text-hover-500 uppercase tracking-widest block ml-1 mb-2">Educational Background</label>
+                        <textarea 
+                          name="educationBackground"
+                          value={profile?.educationBackground || ""}
+                          onChange={handleChange}
+                          rows={3}
+                          placeholder="List your previous degrees or qualifications..."
+                          className="block w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-3xl text-sm font-black text-[#0B5E3C] focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 transition-all placeholder-slate-300 outline-none"
+                        />
+                     </div>
+                  </ProfileSection>
+                )}
 
-            {/* Institution/Partner Section */}
-            {isPartner && (
-              <ProfileSection title="Organizational Profile">
-                 <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <ProfileInput label="Organization Full Name" name="institutionName" value={profile?.institutionName} onChange={handleChange} />
-                    <ProfileInput label="Official Website" name="websiteUrl" value={profile?.websiteUrl} onChange={handleChange} placeholder="https://..." />
-                    <div className="md:col-span-2">
-                       <ProfileInput label="Primary Designation / Function" name="designation" value={profile?.designation} onChange={handleChange} placeholder="University Administration / Corporate Trainer" />
-                    </div>
-                 </div>
-              </ProfileSection>
+                {/* Institution/Partner Section */}
+                {isPartner && (
+                  <ProfileSection title="Organizational Profile">
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <ProfileInput label="Organization Full Name" name="institutionName" value={profile?.institutionName} onChange={handleChange} />
+                        <ProfileInput label="Official Website" name="websiteUrl" value={profile?.websiteUrl} onChange={handleChange} placeholder="https://..." />
+                        <div className="md:col-span-2">
+                           <ProfileInput label="Primary Designation / Function" name="designation" value={profile?.designation} onChange={handleChange} placeholder="University Administration / Corporate Trainer" />
+                        </div>
+                     </div>
+                  </ProfileSection>
+                )}
+              </>
             )}
 
             {/* Password & Security Management */}
@@ -503,20 +509,22 @@ function ProfilePage() {
             </ProfileSection>
 
             {/* Action Bar */}
-            <div className="flex items-center justify-between pt-12">
-               <div className="hidden md:flex items-center gap-4 text-slate-400">
-                  <div className="w-3 h-3 bg-brand-500 rounded-full animate-pulse" />
-                  <span className="text-[10px] font-black uppercase tracking-widest">Profile Integrity: Verified</span>
-               </div>
-               <button 
-                  onClick={handleSave}
-                  disabled={saving}
-                  className="w-full md:w-auto flex items-center justify-center gap-4 px-16 py-6 bg-brand-600 text-white rounded-full font-black uppercase tracking-[0.2em] text-[10px] shadow-2xl shadow-brand-600/30 hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
-               >
-                  {saving ? <Loader2 className="w-6 h-6 animate-spin" /> : <Save className="w-6 h-6" />}
-                  {saving ? "SAVING CHANGES..." : "SYNC PROFILE DATA"}
-               </button>
-            </div>
+            {sessionUser?.hasChangedPassword !== false && (
+              <div className="flex items-center justify-between pt-12">
+                 <div className="hidden md:flex items-center gap-4 text-slate-400">
+                    <div className="w-3 h-3 bg-brand-500 rounded-full animate-pulse" />
+                    <span className="text-[10px] font-black uppercase tracking-widest">Profile Integrity: Verified</span>
+                 </div>
+                 <button 
+                    onClick={handleSave}
+                    disabled={saving}
+                    className="w-full md:w-auto flex items-center justify-center gap-4 px-16 py-6 bg-brand-600 text-white rounded-full font-black uppercase tracking-[0.2em] text-[10px] shadow-2xl shadow-brand-600/30 hover:scale-105 active:scale-95 transition-all disabled:opacity-50"
+                 >
+                    {saving ? <Loader2 className="w-6 h-6 animate-spin" /> : <Save className="w-6 h-6" />}
+                    {saving ? "SAVING CHANGES..." : "SYNC PROFILE DATA"}
+                 </button>
+              </div>
+            )}
 
          </div>
       </div>

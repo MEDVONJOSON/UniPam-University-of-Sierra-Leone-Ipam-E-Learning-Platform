@@ -1,4 +1,4 @@
-import { NavLink, Outlet } from "react-router-dom";
+import { NavLink, Outlet, Navigate, useLocation } from "react-router-dom";
 import { getCurrentUser } from "../services/authService";
 import {
   LayoutDashboard, BookOpen, User,
@@ -34,8 +34,14 @@ const navLinkClass = ({ isActive }) =>
 
 function LmsShell() {
   const user = getCurrentUser();
+  const location = useLocation();
   const isLecturer = user?.role === "lecturer" || user?.role === "admin";
   const navItems = isLecturer ? LECTURER_NAV_ITEMS : STUDENT_NAV_ITEMS;
+
+  // Force password change on first login
+  if (user && user.hasChangedPassword === false && location.pathname !== "/app/profile") {
+    return <Navigate to="/app/profile" replace />;
+  }
 
   return (
     <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 items-start">
