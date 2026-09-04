@@ -4,7 +4,7 @@ import { getCurrentUser, hydrateCurrentUser, logoutUser, updateProfile, changePa
 import {
   User, Mail, GraduationCap,
   Loader2, AlertCircle, Camera, Save, UserCheck,
-  CheckCircle2, Target, Sparkles, LogOut, Lock, Key, ShieldCheck
+  CheckCircle2, Target, Sparkles, LogOut, Lock, Key, ShieldCheck, ShieldAlert
 } from "lucide-react";
 
 function ProfileSection({ title, children }) {

@@ -139,9 +139,19 @@ exports.getUsers = async (req, res) => {
       orderBy: { created_at: "desc" }
     });
 
+    const courses = await prisma.course.findMany({
+      where: { instructor_id: { in: users.map(u => u.id) } }
+    });
+    
+    const courseMap = courses.reduce((acc, c) => {
+      acc[c.instructor_id] = c;
+      return acc;
+    }, {});
+
     const data = users.map(u => {
       const profile = u.profile || {};
       const approvalStatus = u.approval_status;
+      const course = courseMap[u.id];
       return {
         id: u.id,
         email: u.email,
@@ -158,9 +168,9 @@ exports.getUsers = async (req, res) => {
         universityProgramId: profile.university_program_id || "",
         enrollmentYear: profile.enrollment_year || "",
         academicStanding: profile.academic_standing || "",
-        moduleTitle: profile.designation || "",
-        moduleCode: "",
-        academicYear: profile.current_academic_year || "",
+        moduleTitle: course?.title || profile.designation || "",
+        moduleCode: course?.external_id || "",
+        academicYear: course?.skill_level || profile.current_academic_year || "",
         semester: profile.current_semester || ""
       };
     });
@@ -185,6 +195,10 @@ exports.getUser = async (req, res) => {
     });
     if (!user) return res.status(404).json({ error: "User not found." });
 
+    const course = await prisma.course.findFirst({
+      where: { instructor_id: id }
+    });
+
     const profile = user.profile || {};
     const approvalStatus = user.approval_status;
     res.json({
@@ -207,9 +221,9 @@ exports.getUser = async (req, res) => {
         designation: profile.designation || "",
         bio: profile.bio || "",
         institutionName: profile.institution_name || "",
-        moduleTitle: profile.designation || "",
-        moduleCode: "",
-        academicYear: profile.current_academic_year || "",
+        moduleTitle: course?.title || profile.designation || "",
+        moduleCode: course?.external_id || "",
+        academicYear: course?.skill_level || profile.current_academic_year || "",
         semester: profile.current_semester || ""
       }
     });
@@ -384,6 +398,26 @@ exports.updateUser = async (req, res) => {
       }
     });
 
+    // Update corresponding course if it exists
+    if (moduleTitle !== undefined || moduleCode !== undefined || academicYear !== undefined) {
+      const existingCourse = await prisma.course.findFirst({ where: { instructor_id: id } });
+      if (existingCourse) {
+        await prisma.course.update({
+          where: { id: existingCourse.id },
+          data: {
+            title: moduleTitle !== undefined ? moduleTitle : undefined,
+            external_id: moduleCode !== undefined ? moduleCode : undefined,
+            skill_level: academicYear !== undefined ? academicYear : undefined,
+            category: faculty !== undefined ? faculty : undefined
+          }
+        });
+      }
+    }
+
+    const course = await prisma.course.findFirst({
+      where: { instructor_id: id }
+    });
+
     const profile = updatedUser.profile || {};
     res.json({
       data: {
@@ -395,9 +429,9 @@ exports.updateUser = async (req, res) => {
         phoneNumber: profile.phone_number || "",
         faculty: profile.faculty || "",
         department: profile.department || "",
-        moduleTitle: profile.designation || "",
-        moduleCode: "",
-        academicYear: profile.current_academic_year || "",
+        moduleTitle: course?.title || profile.designation || "",
+        moduleCode: course?.external_id || "",
+        academicYear: course?.skill_level || profile.current_academic_year || "",
         semester: profile.current_semester || ""
       }
     });

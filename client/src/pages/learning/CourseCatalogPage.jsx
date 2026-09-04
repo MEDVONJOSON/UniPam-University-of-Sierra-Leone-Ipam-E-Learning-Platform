@@ -6,103 +6,48 @@ import {
   ChevronRight, UserCircle2, ArrowRight, X, FileText, Video
 } from "lucide-react";
 
-// Mock module generator based on student's registered program
-function generateCurriculum(programName) {
-  // Simple heuristic for generating curriculum based on program name
-  const isFinance = programName?.toLowerCase().includes("finance") || programName?.toLowerCase().includes("accounting") || programName?.toLowerCase().includes("economic");
-  const isTech = programName?.toLowerCase().includes("information") || programName?.toLowerCase().includes("computer") || programName?.toLowerCase().includes("software");
-  
-  const coreLecturers = isFinance 
-    ? ["Dr. Ernest Udeh", "Prof. James Kollie", "Mr. Abu Kamara", "Dr. Mariatu Sesay"]
-    : isTech
-      ? ["Dr. John Conteh", "Mr. Alusine Bangura", "Mrs. Fatmata Jalloh", "Prof. David Koroma"]
-      : ["Dr. Aminata Cole", "Mr. Ibrahim Mansaray", "Dr. Samuel Williams", "Prof. Zainab Turay"];
+import { getCourses } from "../../services/platformService";
 
-  const prefix = isFinance ? "ECO" : isTech ? "IST" : "MGT";
-
-  return {
-    "Semester 1": [
-      { id: 1, code: `${prefix}111`, title: "Introduction to Core Principles", credits: 3, lecturer: coreLecturers[0], status: "Enrolled" },
-      { id: 2, code: `${prefix}112`, title: "Quantitative Methods I", credits: 4, lecturer: coreLecturers[1], status: "Enrolled" },
-      { id: 3, code: `ENG111`, title: "Academic Communication Skills", credits: 2, lecturer: "Dr. Hassan Sesay", status: "Enrolled" },
-      { id: 4, code: `${prefix}113`, title: "Fundamentals of Practice", credits: 3, lecturer: coreLecturers[2], status: "Enrolled" }
-    ],
-    "Semester 2": [
-      { id: 5, code: `${prefix}121`, title: "Advanced Core Principles", credits: 3, lecturer: coreLecturers[0], status: "Upcoming" },
-      { id: 6, code: `${prefix}122`, title: "Quantitative Methods II", credits: 4, lecturer: coreLecturers[1], status: "Upcoming" },
-      { id: 7, code: `CSC121`, title: "Digital Literacy & Computing", credits: 3, lecturer: "Mr. Alusine Bangura", status: "Upcoming" },
-      { id: 8, code: `${prefix}123`, title: "Ethics in Profession", credits: 2, lecturer: coreLecturers[3], status: "Upcoming" }
-    ]
-  };
+// Helper to get initials
+function getInitials(name) {
+  if (!name) return "L";
+  return name.split(" ").map(n => n[0]).join("").substring(0, 2).toUpperCase();
 }
-
-// Dynamic module details generator based on module code
-const getModuleDetails = (code) => {
-  const codeNormalized = code?.toUpperCase() || "";
-  if (codeNormalized.includes("111")) {
-    return {
-      lecturerTitle: "Senior Database Professor & Dean",
-      lecturerDept: "Department of Systems Architecture",
-      lecturerEmail: "e.udeh@usl.edu.sl",
-      lecturerPhone: "+232 76 998877",
-      lecturerBio: "Dr. Ernest Udeh has spent over 15 years researching modern database architectures, query performance optimization, and institutional resource systems.",
-      lectures: [
-        { id: 1, title: "Course Introduction & Syllabus Overview", type: "pdf", duration: "8 pages", date: "Aug 24, 2026" },
-        { id: 2, title: "LMS Platform Walkthrough & Features", type: "video", duration: "12 mins", date: "Aug 25, 2026" },
-        { id: 3, title: "Introduction to System Architectures", type: "pdf", duration: "14 pages", date: "Aug 26, 2026" },
-        { id: 4, title: "Lab 1: First System Interaction Guide", type: "doc", duration: "5 pages", date: "Aug 27, 2026" }
-      ]
-    };
-  } else if (codeNormalized.includes("112")) {
-    return {
-      lecturerTitle: "Associate Professor of Mathematics",
-      lecturerDept: "Department of Quantitative Science",
-      lecturerEmail: "j.kollie@usl.edu.sl",
-      lecturerPhone: "+232 30 112233",
-      lecturerBio: "Prof. James Kollie specializes in business mathematics, linear models, and analytical tools for resource planning.",
-      lectures: [
-        { id: 1, title: "Intro to Quantitative Methods & Course Mechanics", type: "pdf", duration: "6 pages", date: "Aug 24, 2026" },
-        { id: 2, title: "Equations and Algebra Fundamentals", type: "pdf", duration: "12 pages", date: "Aug 25, 2026" },
-        { id: 3, title: "Lab 2: Plotting and Mathematical Models", type: "video", duration: "18 mins", date: "Aug 27, 2026" }
-      ]
-    };
-  } else if (codeNormalized.includes("113")) {
-    return {
-      lecturerTitle: "Industry Practice Lecturer",
-      lecturerDept: "Department of Applied Information Systems",
-      lecturerEmail: "a.kamara@usl.edu.sl",
-      lecturerPhone: "+232 77 445566",
-      lecturerBio: "Mr. Abu Kamara brings a decade of commercial consulting experience into the classroom, teaching professional standards and practical workflow modeling.",
-      lectures: [
-        { id: 1, title: "Ethics & Professionalism in Practice", type: "pdf", duration: "10 pages", date: "Aug 24, 2026" },
-        { id: 2, title: "Core Workflows and Team Collaboration", type: "video", duration: "15 mins", date: "Aug 26, 2026" }
-      ]
-    };
-  } else {
-    return {
-      lecturerTitle: "Senior Lecturer",
-      lecturerDept: "Department of Liberal Studies",
-      lecturerEmail: "h.sesay@usl.edu.sl",
-      lecturerPhone: "+232 88 776655",
-      lecturerBio: "Dr. Hassan Sesay teaches academic writing, critical communication, and structured research methods.",
-      lectures: [
-        { id: 1, title: "Academic Writing and Structuring Principles", type: "pdf", duration: "15 pages", date: "Aug 24, 2026" },
-        { id: 2, title: "Referencing Methods and Avoiding Plagiarism", type: "pdf", duration: "9 pages", date: "Aug 25, 2026" }
-      ]
-    };
-  }
-};
 
 function CourseCatalogPage() {
   const user = getCurrentUser() || {};
-  const [activeSemester, setActiveSemester] = useState("Semester 1");
+  const [activeSemester, setActiveSemester] = useState("All Courses");
   const [selectedModule, setSelectedModule] = useState(null);
+  const [courses, setCourses] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    import("../../services/platformService").then(({ getCourses }) => {
+      getCourses().then(data => {
+        setCourses(data);
+        setLoading(false);
+      }).catch(err => {
+        console.error(err);
+        setLoading(false);
+      });
+    });
+  }, []);
 
   const programName = user.program || "Bachelor of Science";
   const facultyName = user.facultyName || "Faculty of General Studies";
   const currentYear = user.currentAcademicYear || "Year 1";
   
-  const curriculum = generateCurriculum(programName);
+  const curriculum = {
+    "All Courses": courses.map(c => ({
+      id: c.id,
+      code: c.external_id || "N/A",
+      title: c.title,
+      credits: 3, // default dummy
+      lecturer: c.instructor_name || "Unknown Lecturer",
+      status: "Enrolled",
+      rawCourse: c
+    }))
+  };
 
   return (
     <div className="max-w-7xl mx-auto space-y-10 pb-20">
@@ -233,7 +178,7 @@ function CourseCatalogPage() {
       </div>
 
       {selectedModule && (() => {
-        const details = getModuleDetails(selectedModule.code);
+        const c = selectedModule.rawCourse;
         return (
           <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 overflow-y-auto">
             <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-2xl w-full max-w-3xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
@@ -264,35 +209,21 @@ function CourseCatalogPage() {
                     </div>
                     <div className="space-y-1">
                       <p className="font-black text-slate-950 text-base">{selectedModule.lecturer}</p>
-                      <p className="text-xs font-bold text-[#0B5E3C] uppercase tracking-widest">{details.lecturerTitle}</p>
-                      <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">{details.lecturerDept}</p>
+                      <p className="text-xs font-bold text-[#0B5E3C] uppercase tracking-widest">Lecturer</p>
+                      <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">{c.category || facultyName}</p>
                       <div className="flex flex-wrap gap-x-4 gap-y-1 pt-2 text-xs text-slate-600 font-medium">
-                        <span>✉ {details.lecturerEmail}</span>
-                        <span>📞 {details.lecturerPhone}</span>
+                        <span>Academic Year: {c.skill_level || "N/A"}</span>
                       </div>
                     </div>
                   </div>
-                  <p className="mt-4 text-xs text-slate-600 leading-relaxed italic">{details.lecturerBio}</p>
+                  <p className="mt-4 text-xs text-slate-600 leading-relaxed italic">{c.description || "No bio available."}</p>
                 </div>
 
                 {/* Lectures List */}
                 <div className="space-y-4">
                   <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-[0.2em]">Lectures & Content Posted</h4>
                   <div className="space-y-3">
-                    {details.lectures.map((lecture) => (
-                      <div key={lecture.id} className="flex items-center justify-between p-4 border border-slate-100 rounded-2xl hover:bg-slate-50 transition-all">
-                        <div className="flex items-center gap-3">
-                          <div className="w-8 h-8 rounded-xl bg-slate-100 flex items-center justify-center text-[#0B5E3C]">
-                            {lecture.type === 'video' ? <Video className="w-4 h-4" /> : <FileText className="w-4 h-4" />}
-                          </div>
-                          <div>
-                            <p className="text-sm font-black text-slate-800">{lecture.title}</p>
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Posted {lecture.date}</p>
-                          </div>
-                        </div>
-                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest bg-slate-100 px-3 py-1 rounded-full">{lecture.duration}</span>
-                      </div>
-                    ))}
+                    <p className="text-xs text-slate-500 italic">Access these materials in the Repository.</p>
                   </div>
                 </div>
               </div>
