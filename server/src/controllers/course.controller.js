@@ -17,7 +17,13 @@ exports.getAllCourses = async (req, res) => {
     description: row.description || "",
     thumbnailUrl: row.thumbnail_url || "",
     isInternal: row.is_internal,
-    instructor: row.instructor_name ? { name: row.instructor_name, email: row.instructor_email } : null,
+    external_id: row.external_id || "",
+    skill_level: row.skill_level || "",
+    instructor_name: row.instructor_full_name || row.instructor_name || "",
+    instructor: row.instructor_name ? {
+      name: row.instructor_full_name || row.instructor_name,
+      email: row.instructor_email
+    } : null,
     provider: {
       name: row.provider_name,
       slug: row.provider_slug

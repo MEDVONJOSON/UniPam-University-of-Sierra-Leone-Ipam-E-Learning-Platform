@@ -42,8 +42,9 @@ function CourseCatalogPage() {
       id: c.id,
       code: c.external_id || "N/A",
       title: c.title,
-      credits: 3, // default dummy
-      lecturer: c.instructor_name || "Unknown Lecturer",
+      credits: 3,
+      lecturer: c.instructor_name || c.instructor?.name || "Unassigned",
+      academicYear: c.skill_level || c.level || "",
       status: "Enrolled",
       rawCourse: c
     }))
@@ -205,14 +206,19 @@ function CourseCatalogPage() {
                   <h4 className="text-[10px] font-black text-[#0B5E3C] uppercase tracking-[0.2em] mb-4">Assigned Lecturer</h4>
                   <div className="flex gap-4 items-start">
                     <div className="w-12 h-12 rounded-full bg-emerald-600 text-white flex items-center justify-center font-black text-lg">
-                      {selectedModule.lecturer?.split(" ").pop()?.[0] || "L"}
+                      {getInitials(selectedModule.lecturer)}
                     </div>
                     <div className="space-y-1">
                       <p className="font-black text-slate-950 text-base">{selectedModule.lecturer}</p>
                       <p className="text-xs font-bold text-[#0B5E3C] uppercase tracking-widest">Lecturer</p>
                       <p className="text-xs text-slate-500 font-bold uppercase tracking-wider">{c.category || facultyName}</p>
                       <div className="flex flex-wrap gap-x-4 gap-y-1 pt-2 text-xs text-slate-600 font-medium">
-                        <span>Academic Year: {c.skill_level || "N/A"}</span>
+                        {selectedModule.code && selectedModule.code !== "N/A" && (
+                          <span>Module Code: <strong>{selectedModule.code}</strong></span>
+                        )}
+                        {selectedModule.academicYear && (
+                          <span>Academic Year: <strong>{selectedModule.academicYear}</strong></span>
+                        )}
                       </div>
                     </div>
                   </div>

@@ -41,15 +41,16 @@ class Course {
     const instructorIds = [...new Set(courses.map(c => c.instructor_id).filter(Boolean))];
     const instructors = await prisma.user.findMany({
       where: { id: { in: instructorIds } },
-      select: { id: true, email: true }
+      include: { profile: true }
     });
-    const instructorMap = Object.fromEntries(instructors.map(u => [u.id, u.email]));
+    const instructorMap = Object.fromEntries(instructors.map(u => [u.id, { email: u.email, fullName: u.profile?.full_name || null }]));
 
     return courses.map(c => ({
       ...c,
       provider_name: c.provider.name,
       provider_slug: c.provider.slug,
-      instructor_email: c.instructor_id ? instructorMap[c.instructor_id] : null
+      instructor_email: c.instructor_id ? instructorMap[c.instructor_id]?.email : null,
+      instructor_full_name: c.instructor_id ? instructorMap[c.instructor_id]?.fullName : null
     }));
   }
 
