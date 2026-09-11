@@ -110,7 +110,7 @@ function AppLayout() {
               </div>
               <div className="flex flex-col">
                 <span className="text-2xl font-black text-white tracking-tighter leading-none">UniPam</span>
-                <span className="text-[9px] text-white/90 font-black tracking-[0.2em] uppercase mt-0.5">University of Sierra Leone eLearning</span>
+                <span className="text-[9px] text-white/90 font-black tracking-[0.2em] uppercase mt-0.5">UNIPAM ELEARNING WEB APPLICATION IPAM</span>
               </div>
             </Link>
 

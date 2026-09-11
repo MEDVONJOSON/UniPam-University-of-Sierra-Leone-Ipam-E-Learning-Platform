@@ -85,10 +85,8 @@ function HomePage() {
         <div className="container mx-auto px-6 text-center">
            <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-10">Trusted Partners & Affiliations</p>
            <div className="flex flex-wrap items-center justify-center gap-12 grayscale opacity-40 hover:grayscale-0 hover:opacity-100 transition-all duration-500">
-              <span className="font-black text-slate-400 text-xl tracking-tighter italic">Fourah Bay College</span>
               <span className="font-black text-slate-400 text-xl tracking-tighter italic">IPAM</span>
-              <span className="font-black text-slate-400 text-xl tracking-tighter italic">COMAHS</span>
-              <span className="font-black text-slate-400 text-xl tracking-tighter italic">TEC Sierra Leone</span>
+              <span className="font-black text-slate-400 text-xl tracking-tighter italic">USL</span>
            </div>
         </div>
       </section>
