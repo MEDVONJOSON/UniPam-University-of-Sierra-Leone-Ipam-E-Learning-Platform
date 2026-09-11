@@ -42,14 +42,14 @@ function HomePage() {
               </span>
             </h1>
             <p className="max-w-xl text-lg text-slate-600 leading-relaxed mb-10 font-medium">
-              Join the official University of Sierra Leone eLearning platform. Access accredited Degree programs, Professional Diplomas, and Free Certificate courses designed for the modern professional.
+                     The official e-learning platform for the Institute of Public Administration and Management (IPAM), University of Sierra Leone. Access course materials, stay connected with lecturers, and manage your learning — built for IPAM-USL students and lecturers
             </p>
             <div className="flex flex-col sm:flex-row items-center gap-4">
               <Link 
                 to="/register" 
                 className="w-full sm:w-auto flex items-center justify-center gap-2 px-8 py-4 bg-[#0B5E3C] hover:bg-emerald-800 text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl shadow-[#0B5E3C]/20 transition-all hover:-translate-y-0.5 active:translate-y-0"
               >
-                Start Learning <ArrowRight className="w-4 h-4 text-amber-400" />
+                Access Learning Material <ArrowRight className="w-4 h-4 text-amber-400" />
               </Link>
               <Link 
                 to="/app/repository" 
@@ -63,12 +63,12 @@ function HomePage() {
           <div className="relative hidden lg:block">
              <div className="relative z-10 grid grid-cols-2 gap-4">
                 <div className="space-y-4 pt-12">
-                   <InfoCard icon={GraduationCap} title="TEC Accredited" subtitle="Tertiary Education Commission" tone="brand" rotate="-rotate-3" />
-                   <InfoCard icon={Star} title="National Leader" subtitle="Top-ranked in Sierra Leone" tone="gold" rotate="rotate-2" />
+                   <InfoCard icon={GraduationCap} title="DOWNLOADABLE MATERIALS" subtitle="Access course content anytime" tone="brand" rotate="-rotate-3" />
+                   <InfoCard icon={Star} title="ROLE-BASED" subtitle="Student & lecturer views" tone="gold" rotate="rotate-2" />
                 </div>
                 <div className="space-y-4">
-                   <InfoCard icon={Briefcase} title="Digital Skills" subtitle="Job-ready Curriculum" tone="brand" rotate="rotate-6" />
-                   <InfoCard icon={Award} title="USL Certification" subtitle="Recognized Worldwide" dark rotate="-rotate-2" />
+                   <InfoCard icon={Briefcase} title="COURSE MATERIALS" subtitle="Centralized access" tone="brand" rotate="rotate-6" />
+                   <InfoCard icon={Award} title="NOTIFICATIONS" subtitle="Academic communication" dark rotate="-rotate-2" />
                 </div>
              </div>
              {/* Decorative circles */}
