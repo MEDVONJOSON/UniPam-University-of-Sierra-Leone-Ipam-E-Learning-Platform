@@ -6,6 +6,7 @@
   "main": "src/server.js",
   "scripts": {
     "build": "npx prisma generate && npx prisma db push --accept-data-loss",
+    "postinstall": "prisma generate",
     "dev": "node src/server.js",
     "start": "node src/server.js"
   },

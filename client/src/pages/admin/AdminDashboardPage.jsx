@@ -12,15 +12,20 @@ import {
   UserPlus, Activity, Shield, HardDrive, BookOpen, FileText, MessageSquare,
   Edit3, Eye, Trash2, TrendingUp, Clock, Mail, Phone, User, Building2,
   Calendar, GraduationCap, Bookmark, Hash, Layers, Check, XCircle, Key, ShieldCheck, Lock,
-  Copy, CheckCircle, ExternalLink, Share2, Send
+  Copy, CheckCircle, ExternalLink, Share2, Send, Menu
 } from "lucide-react";
 
 /* ─── Sidebar ──────────────────────────────────────────────────────────────── */
-function AdminSidebar({ activeTab, setActiveTab }) {
+function AdminSidebar({ activeTab, setActiveTab, isMobileMenuOpen, setIsMobileMenuOpen }) {
   const navigate = useNavigate();
   const handleLogout = () => {
     logoutUser();
     navigate("/admin-login");
+  };
+
+  const handleTabClick = (id) => {
+    setActiveTab(id);
+    setIsMobileMenuOpen(false);
   };
 
   const menuItems = [
@@ -31,19 +36,32 @@ function AdminSidebar({ activeTab, setActiveTab }) {
   ];
 
   return (
-    <div className="w-80 flex-shrink-0 hidden lg:flex flex-col bg-[#0B5E3C] text-white min-h-[calc(100vh-100px)] rounded-[3rem] p-8 shadow-2xl">
-      <div className="mb-12 px-4">
-        <div className="inline-flex items-center gap-2 px-3 py-1 bg-brand-500/20 border border-brand-500/30 rounded-full text-[10px] font-black uppercase tracking-widest text-brand-300 mb-4">
-          Registry Portal
+    <>
+      {/* Mobile Overlay */}
+      {isMobileMenuOpen && (
+        <div 
+          className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm lg:hidden"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
+      <div className={`w-80 flex-shrink-0 flex-col bg-[#0B5E3C] text-white min-h-[calc(100vh-100px)] rounded-[3rem] p-8 shadow-2xl transition-transform ${isMobileMenuOpen ? "fixed inset-y-4 left-4 z-50 flex overflow-y-auto max-h-[calc(100vh-32px)]" : "hidden lg:flex lg:relative lg:inset-0"}`}>
+        <div className="flex items-center justify-between mb-12 px-4">
+          <div>
+            <div className="inline-flex items-center gap-2 px-3 py-1 bg-brand-500/20 border border-brand-500/30 rounded-full text-[10px] font-black uppercase tracking-widest text-brand-300 mb-4">
+              Registry Portal
+            </div>
+            <h2 className="text-2xl font-black uppercase tracking-tighter">Admin Panel</h2>
+          </div>
+          <button onClick={() => setIsMobileMenuOpen(false)} className="lg:hidden p-2 rounded-xl bg-white/10 text-white hover:bg-white/20 transition-colors">
+            <X className="w-5 h-5" />
+          </button>
         </div>
-        <h2 className="text-2xl font-black uppercase tracking-tighter">Admin Panel</h2>
-      </div>
 
       <nav className="flex-grow space-y-2">
         {menuItems.map((item) => (
           <button
             key={item.id}
-            onClick={() => setActiveTab(item.id)}
+            onClick={() => handleTabClick(item.id)}
             className={`w-full flex items-center gap-4 px-6 py-4 rounded-2xl font-black text-[10px] uppercase tracking-widest transition-all ${
               activeTab === item.id
                 ? "bg-white text-[#0B5E3C] shadow-xl"
@@ -67,7 +85,8 @@ function AdminSidebar({ activeTab, setActiveTab }) {
         </button>
       </div>
     </div>
-  );
+  </>
+);
 }
 
 /* ─── Stat Card ────────────────────────────────────────────────────────────── */
@@ -92,11 +111,14 @@ function StatCard({ icon, value, label, accent = "brand" }) {
 }
 
 /* ─── Tab Header ───────────────────────────────────────────────────────────── */
-function TabHeader({ icon, title, subtitle, action }) {
+function TabHeader({ icon, title, subtitle, action, onMenuClick }) {
   return (
-    <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white p-8 rounded-[3rem] border border-slate-100 shadow-sm">
-      <div className="flex items-center gap-5">
-        <div className="w-14 h-14 bg-brand-50 text-[#0B5E3C] rounded-2xl flex items-center justify-center shadow-inner">
+    <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white p-6 md:p-8 rounded-[2.5rem] md:rounded-[3rem] border border-slate-100 shadow-sm">
+      <div className="flex items-center gap-4 md:gap-5">
+        <button onClick={onMenuClick} className="lg:hidden p-3 bg-brand-50 text-[#0B5E3C] rounded-xl hover:bg-brand-100 transition-colors">
+          <Menu className="w-6 h-6" />
+        </button>
+        <div className="w-12 h-12 md:w-14 md:h-14 bg-brand-50 text-[#0B5E3C] rounded-2xl flex items-center justify-center shadow-inner hidden sm:flex">
           {icon}
         </div>
         <div>
@@ -1448,6 +1470,7 @@ function SettingsTab() {
 function AdminDashboardPage() {
   const user = getCurrentUser();
   const [activeTab, setActiveTab] = useState("dashboard");
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   if (!user) return <Navigate to="/admin-login" replace />;
   if (user.role !== "admin") {
@@ -1482,14 +1505,20 @@ function AdminDashboardPage() {
   };
 
   return (
-    <div className="flex flex-col lg:flex-row gap-10 pb-20 max-w-[1600px] mx-auto">
-      <AdminSidebar activeTab={activeTab} setActiveTab={setActiveTab} />
+    <div className="flex flex-col lg:flex-row gap-6 lg:gap-10 pb-20 max-w-[1600px] mx-auto p-4 lg:p-0">
+      <AdminSidebar 
+        activeTab={activeTab} 
+        setActiveTab={setActiveTab} 
+        isMobileMenuOpen={isMobileMenuOpen}
+        setIsMobileMenuOpen={setIsMobileMenuOpen}
+      />
 
-      <div className="flex-grow space-y-10">
+      <div className="flex-grow space-y-6 lg:space-y-10">
         <TabHeader
           icon={tabIcons[activeTab]}
           title={tabTitles[activeTab]}
           subtitle="UniPam · University of Sierra Leone eLearning"
+          onMenuClick={() => setIsMobileMenuOpen(true)}
         />
 
         {activeTab === "dashboard" && <DashboardTab />}

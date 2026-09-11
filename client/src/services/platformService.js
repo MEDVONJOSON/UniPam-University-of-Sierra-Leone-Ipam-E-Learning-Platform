@@ -1,4 +1,4 @@
-import { apiRequest } from "./apiClient";
+import { apiRequest, API_BASE } from "./apiClient";
 
 export async function getCourses(filters = {}) {
   const params = new URLSearchParams();
@@ -175,7 +175,7 @@ export async function getEnrolledCourseMaterials(courseId) {
 }
 
 export function getDownloadUrl(courseId, materialId) {
-  return `/api/v1/courses/${courseId}/materials/${materialId}/download`;
+  return `${API_BASE}/courses/${courseId}/materials/${materialId}/download`;
 }
 
 // ─── Repository (student — all enrolled courses, rich search) ─────────────────

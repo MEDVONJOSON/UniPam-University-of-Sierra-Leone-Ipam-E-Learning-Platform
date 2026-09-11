@@ -110,21 +110,25 @@ exports.createMaterial = async (req, res) => {
   // Notify all students enrolled in this course if published
   if (material.is_published) {
     try {
-      const { pool } = require("../config/db");
-      const enrollResult = await pool.query(
-        "SELECT user_id FROM enrollments WHERE course_id = $1",
-        [courseId]
-      );
+      const { prisma } = require("../config/db");
+      const enrollResult = await prisma.enrollment.findMany({
+        where: { course_id: courseId },
+        select: { user_id: true }
+      });
       const notifTitle = "New Learning Material Available";
       const itemDesc = material.week_label ? `${material.week_label} – ${material.title}` : material.title;
       const notifMsg = `${course.title}: ${itemDesc} has been uploaded by your lecturer.`;
 
-      for (const row of enrollResult.rows) {
-        await pool.query(
-          `INSERT INTO notifications (user_id, title, message, type, link)
-           VALUES ($1, $2, $3, $4, $5)`,
-          [row.user_id, notifTitle, notifMsg, "info", "/app/repository"]
-        );
+      for (const row of enrollResult) {
+        await prisma.notification.create({
+          data: {
+            user_id: row.user_id,
+            title: notifTitle,
+            message: notifMsg,
+            type: "info",
+            link: "/app/repository"
+          }
+        }).catch(() => {});
       }
     } catch (notifErr) {
       console.warn("Notification dispatch notice:", notifErr.message);
@@ -160,15 +164,43 @@ exports.downloadMaterial = async (req, res) => {
     return res.status(404).json({ error: "Material not found." });
   }
 
-  // Verify user is enrolled (or is a lecturer/admin)
+  // Verify user is enrolled (or is a lecturer/admin or in matching department/faculty)
   if (req.auth.role === "student" || req.auth.role === "learner") {
-    const { pool } = require("../config/db");
-    const enroll = await pool.query(
-      "SELECT id FROM enrollments WHERE user_id = $1 AND course_id = $2 LIMIT 1",
-      [req.auth.userId, material.course_id]
-    );
-    if (enroll.rowCount === 0) {
-      return res.status(403).json({ error: "You are not enrolled in this course." });
+    const { prisma } = require("../config/db");
+    const enroll = await prisma.enrollment.findUnique({
+      where: {
+        user_id_course_id: {
+          user_id: req.auth.userId,
+          course_id: material.course_id
+        }
+      }
+    });
+    if (!enroll) {
+      const user = await prisma.user.findUnique({
+        where: { id: req.auth.userId },
+        include: { profile: true }
+      });
+      const course = await prisma.course.findUnique({
+        where: { id: material.course_id }
+      });
+
+      const userFaculty = (user?.profile?.faculty || "").toLowerCase();
+      const userDept = (user?.profile?.department || "").toLowerCase();
+      const courseCat = (course?.category || "").toLowerCase();
+
+      const isAllowed = course?.is_internal ||
+        (userFaculty && courseCat.includes(userFaculty)) ||
+        (userDept && courseCat.includes(userDept));
+
+      if (isAllowed) {
+        await prisma.enrollment.upsert({
+          where: { user_id_course_id: { user_id: req.auth.userId, course_id: material.course_id } },
+          create: { user_id: req.auth.userId, course_id: material.course_id, status: "enrolled" },
+          update: {}
+        }).catch(() => {});
+      } else {
+        return res.status(403).json({ error: "You are not enrolled in this course." });
+      }
     }
   }
 

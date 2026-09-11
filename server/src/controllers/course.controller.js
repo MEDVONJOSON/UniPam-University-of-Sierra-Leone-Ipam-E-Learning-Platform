@@ -102,14 +102,13 @@ exports.createCourse = async (req, res) => {
   }
 
   // Get provider
-  const providerResult = await pool.query(
-    "SELECT id, name, slug FROM providers WHERE slug = $1 LIMIT 1",
-    [String(providerSlug).toLowerCase()]
-  );
-  if (providerResult.rows.length === 0) {
+  const { prisma } = require("../config/db");
+  const provider = await prisma.provider.findFirst({
+    where: { slug: String(providerSlug).toLowerCase() }
+  });
+  if (!provider) {
     return res.status(400).json({ error: "Provider not found." });
   }
-  const provider = providerResult.rows[0];
 
   // Lecturer-authored courses are always internal (no external catalog link) and self-owned.
   const isLecturer = req.auth?.role === "lecturer";

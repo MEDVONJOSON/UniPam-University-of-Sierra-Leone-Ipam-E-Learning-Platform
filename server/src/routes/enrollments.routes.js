@@ -1,5 +1,5 @@
 const express = require("express");
-const { pool } = require("../config/db");
+const { prisma } = require("../config/db");
 const { authRequired } = require("../middleware/auth-required");
 const { asyncHandler } = require("../middleware/async-handler");
 
@@ -16,59 +16,80 @@ router.post("/", asyncHandler(async (req, res) => {
     });
   }
 
-  const courseResult = await pool.query(
-    `SELECT id, title, category, external_url
-     FROM courses
-     WHERE id = $1
-     LIMIT 1`,
-    [courseId]
-  );
-  if (courseResult.rows.length === 0) {
+  const course = await prisma.course.findUnique({
+    where: { id: courseId },
+    select: { id: true, title: true, category: true, external_url: true }
+  });
+  if (!course) {
     return res.status(404).json({ error: "Course not found." });
   }
 
-  const existing = await pool.query(
-    `SELECT id, user_id, course_id, status, progress_percent, lessons_completed, lessons_total, enrolled_at
-     FROM enrollments
-     WHERE user_id = $1 AND course_id = $2
-     LIMIT 1`,
-    [req.auth.userId, courseId]
-  );
-  if (existing.rows.length > 0) {
-    return res.json({ data: existing.rows[0] });
+  const existing = await prisma.enrollment.findUnique({
+    where: {
+      user_id_course_id: {
+        user_id: req.auth.userId,
+        course_id: courseId
+      }
+    }
+  });
+  if (existing) {
+    return res.json({ data: existing });
   }
 
-  const inserted = await pool.query(
-    `INSERT INTO enrollments (user_id, course_id, status, progress_percent, lessons_completed, lessons_total, redirect_clicked_at)
-     VALUES ($1, $2, 'enrolled', 0, 0, 0, NOW())
-     RETURNING id, user_id, course_id, status, progress_percent, lessons_completed, lessons_total, enrolled_at`,
-    [req.auth.userId, courseId]
-  );
+  const inserted = await prisma.enrollment.create({
+    data: {
+      user_id: req.auth.userId,
+      course_id: courseId,
+      status: "enrolled",
+      progress_percent: 0,
+      lessons_completed: 0
+    }
+  });
 
-  await pool.query(
-    "INSERT INTO learning_events (user_id, course_id, event_type, event_payload) VALUES ($1, $2, 'enrollment_click', $3::jsonb)",
-    [req.auth.userId, courseId, JSON.stringify({ source: "catalog" })]
-  );
+  await prisma.learningEvent.create({
+    data: {
+      user_id: req.auth.userId,
+      course_id: courseId,
+      event_type: "enrollment_click",
+      event_payload: JSON.stringify({ source: "catalog" })
+    }
+  }).catch(() => {});
 
   return res.status(201).json({
-    data: inserted.rows[0],
-    redirectUrl: courseResult.rows[0].external_url
+    data: inserted,
+    redirectUrl: course.external_url
   });
 }));
 
 router.get("/", asyncHandler(async (req, res) => {
-  const result = await pool.query(
-    `SELECT e.id, e.course_id, e.status, e.progress_percent, e.lessons_completed, e.lessons_total, e.enrolled_at,
-            c.title, c.category, c.external_url, p.name AS provider_name
-     FROM enrollments e
-     JOIN courses c ON c.id = e.course_id
-     JOIN providers p ON p.id = c.provider_id
-     WHERE e.user_id = $1
-     ORDER BY e.enrolled_at DESC`,
-    [req.auth.userId]
-  );
+  const enrollments = await prisma.enrollment.findMany({
+    where: { user_id: req.auth.userId },
+    include: {
+      course: {
+        include: {
+          provider: { select: { name: true } }
+        }
+      }
+    },
+    orderBy: { enrolled_at: "desc" }
+  });
+
+  const formatted = enrollments.map(e => ({
+    id: e.id,
+    course_id: e.course_id,
+    status: e.status,
+    progress_percent: Number(e.progress_percent),
+    lessons_completed: e.lessons_completed,
+    lessons_total: 0,
+    enrolled_at: e.enrolled_at,
+    title: e.course.title,
+    category: e.course.category,
+    external_url: e.course.external_url,
+    provider_name: e.course.provider?.name || ""
+  }));
+
   return res.json({
-    data: result.rows
+    data: formatted
   });
 }));
 
@@ -81,25 +102,29 @@ router.patch("/:enrollmentId/progress", asyncHandler(async (req, res) => {
   const normalizedProgress = Math.max(0, Math.min(100, progress));
   const status = normalizedProgress >= 100 ? "completed" : "enrolled";
 
-  const result = await pool.query(
-    `UPDATE enrollments
-     SET progress_percent = $1,
-         status = $2,
-         completed_at = CASE WHEN $1 >= 100 THEN NOW() ELSE completed_at END
-     WHERE id = $3 AND user_id = $4
-     RETURNING id, course_id, status, progress_percent, enrolled_at, completed_at`,
-    [normalizedProgress, status, req.params.enrollmentId, req.auth.userId]
-  );
-  if (result.rows.length === 0) {
+  const updated = await prisma.enrollment.update({
+    where: { id: req.params.enrollmentId },
+    data: {
+      progress_percent: normalizedProgress,
+      status,
+      completed_at: normalizedProgress >= 100 ? new Date() : undefined
+    }
+  }).catch(() => null);
+
+  if (!updated) {
     return res.status(404).json({ error: "Enrollment not found." });
   }
 
-  await pool.query(
-    "INSERT INTO learning_events (user_id, course_id, event_type, event_payload) VALUES ($1, $2, 'progress_updated', $3::jsonb)",
-    [req.auth.userId, result.rows[0].course_id, JSON.stringify({ progressPercent: normalizedProgress })]
-  );
+  await prisma.learningEvent.create({
+    data: {
+      user_id: req.auth.userId,
+      course_id: updated.course_id,
+      event_type: "progress_updated",
+      event_payload: JSON.stringify({ progressPercent: normalizedProgress })
+    }
+  }).catch(() => {});
 
-  return res.json({ data: result.rows[0] });
+  return res.json({ data: updated });
 }));
 
 module.exports = router;

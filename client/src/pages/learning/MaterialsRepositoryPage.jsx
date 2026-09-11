@@ -222,9 +222,9 @@ export default function MaterialsRepositoryPage() {
         const q = searchQuery.toLowerCase();
         const titleMatch = m.title?.toLowerCase().includes(q);
         const descMatch = m.description?.toLowerCase().includes(q);
-        const courseMatch = m.course_title?.toLowerCase().includes(q) || m.course_code?.toLowerCase().includes(q);
-        const lecturerMatch = m.lecturer_name?.toLowerCase().includes(q);
-        const weekMatch = m.week_label?.toLowerCase().includes(q);
+        const courseMatch = m.course_title?.toLowerCase().includes(q) || m.course_code?.toLowerCase().includes(q) || m.course_department?.toLowerCase().includes(q);
+        const lecturerMatch = (m.lecturer_name || m.uploader_name)?.toLowerCase().includes(q);
+        const weekMatch = m.week_label?.toLowerCase().includes(q) || (m.lecture_note_number && String(m.lecture_note_number).toLowerCase().includes(q));
 
         if (!titleMatch && !descMatch && !courseMatch && !lecturerMatch && !weekMatch) {
           return false;
@@ -494,6 +494,12 @@ export default function MaterialsRepositoryPage() {
 
                   {/* Meta Info */}
                   <div className="space-y-1.5 pt-2 border-t border-slate-50 text-xs text-slate-500">
+                    {mat.course_department && (
+                      <p className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider truncate mb-1">
+                        {mat.course_department}
+                      </p>
+                    )}
+
                     {(mat.module_title || mat.course_title) && (
                       <div className="flex items-center gap-1.5 truncate">
                         <BookOpen className="w-3.5 h-3.5 text-slate-400 shrink-0" />
@@ -503,17 +509,17 @@ export default function MaterialsRepositoryPage() {
                       </div>
                     )}
 
-                    {mat.lecturer_name && (
+                    {(mat.lecturer_name || mat.uploader_name) && (
                       <div className="flex items-center gap-1.5 truncate">
                         <GraduationCap className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                        <span className="truncate">{mat.lecturer_name}</span>
+                        <span className="truncate">{mat.lecturer_name || mat.uploader_name}</span>
                       </div>
                     )}
 
                     <div className="flex items-center justify-between text-[11px] text-slate-400 pt-1">
-                      <span>{mat.week_label || typeLabel}</span>
-                      {mat.file_size ? (
-                        <span>{formatBytes(mat.file_size)}</span>
+                      <span>{mat.lecture_note_number ? `Note ${mat.lecture_note_number}` : mat.week_label || typeLabel}</span>
+                      {(mat.file_size || mat.file_size_bytes) ? (
+                        <span>{formatBytes(mat.file_size || mat.file_size_bytes)}</span>
                       ) : (
                         <span>{mat.external_url ? "Link" : "Resource"}</span>
                       )}
