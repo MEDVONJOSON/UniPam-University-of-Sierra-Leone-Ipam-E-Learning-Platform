@@ -410,22 +410,22 @@ function AppLayout() {
           <div>
             <h4 className="text-white font-bold mb-6 text-sm uppercase tracking-widest">Faculties & Programs</h4>
             <ul className="space-y-4 text-sm font-medium">
-              <li><Link to="/course-catalog" className="hover:text-hover-400 transition-colors">Accounting & Finance</Link></li>
-              <li><Link to="/course-catalog" className="hover:text-hover-400 transition-colors">Information Systems & Technology</Link></li>
-              <li><Link to="/course-catalog" className="hover:text-hover-400 transition-colors">Business Administration & Entrepreneurship</Link></li>
-              <li><Link to="/course-catalog" className="hover:text-hover-400 transition-colors">Leadership & Governance</Link></li>
-              <li><Link to="/course-catalog" className="hover:text-hover-400 transition-colors">Extra-Mural Studies</Link></li>
+              <li>Accounting & Finance</li>
+              <li>Information Systems & Technology</li>
+              <li>Business Administration & Entrepreneurship</li>
+              <li>Leadership & Governance</li>
+              <li>Extra-Mural Studies</li>
             </ul>
           </div>
 
           <div>
             <h4 className="text-white font-bold mb-6 text-sm uppercase tracking-widest">Student Portal</h4>
             <ul className="space-y-4 text-sm font-medium">
-              <li><Link to="/app/repository" className="hover:text-hover-400 transition-colors">Course Materials</Link></li>
-              <li><Link to="/app/messages" className="hover:text-hover-400 transition-colors">Notifications</Link></li>
-              <li><Link to="/app/dashboard" className="hover:text-hover-400 transition-colors">My Dashboard</Link></li>
-              <li><Link to="/about" className="hover:text-hover-400 transition-colors">Academic Calendar</Link></li>
-              <li><Link to="/contact" className="hover:text-hover-400 transition-colors">Contact Support</Link></li>
+              <li>Course Materials</li>
+              <li>Notifications</li>
+              <li>My Dashboard</li>
+              <li>Academic Calendar</li>
+              <li>Contact Support</li>
             </ul>
           </div>
 
