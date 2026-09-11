@@ -189,12 +189,6 @@ function CoursePlayerPage() {
                  >
                    Resources ({materials.length})
                  </button>
-                 <button
-                   onClick={() => setActiveTab("assessments")}
-                   className={`px-10 py-6 border-b-4 text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === "assessments" ? "border-brand-600 text-[#0B5E3C] bg-brand-50/30" : "border-transparent text-slate-400 hover:text-[#0B5E3C]"}`}
-                 >
-                   Assessments ({assessments.length})
-                 </button>
               </div>
               {activeTab === "overview" ? (
                 <div className="p-10 lg:p-14">
@@ -219,7 +213,7 @@ function CoursePlayerPage() {
                       </div>
                    </div>
                 </div>
-              ) : activeTab === "resources" ? (
+              ) : (
                 <div className="p-10 lg:p-14">
                    {materials.length === 0 ? (
                      <div className="text-center py-16">
@@ -251,38 +245,6 @@ function CoursePlayerPage() {
                               </a>
                            );
                         })}
-                     </div>
-                   )}
-                </div>
-              ) : (
-                <div className="p-10 lg:p-14">
-                   {assessments.length === 0 ? (
-                     <div className="text-center py-16">
-                        <FileCheck className="w-12 h-12 text-slate-200 mx-auto mb-4" />
-                        <p className="text-slate-400 font-bold uppercase tracking-widest text-xs">No assessments published for this course yet</p>
-                     </div>
-                   ) : (
-                     <div className="space-y-4">
-                        {assessments.map((a) => (
-                           <Link
-                              key={a.id}
-                              to={`/app/learn/${activeEnrollment?.course_id || paramCourseId}/assessments/${a.id}`}
-                              className="flex items-center gap-5 p-6 bg-slate-50 hover:bg-hover-50 border border-slate-100 rounded-2xl transition-all group"
-                           >
-                              <div className="w-12 h-12 bg-white rounded-xl shadow-sm flex items-center justify-center text-brand-600 flex-shrink-0">
-                                 <FileCheck className="w-6 h-6" />
-                              </div>
-                              <div className="flex-grow min-w-0">
-                                 <p className="font-black text-[#0B5E3C] truncate">{a.title}</p>
-                                 <p className="text-[10px] font-bold text-hover-500 uppercase tracking-widest mt-1">
-                                    Closes {new Date(a.closesAt).toLocaleString()}
-                                 </p>
-                              </div>
-                              <span className={`text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full border flex-shrink-0 ${ASSESSMENT_STATUS_STYLE[a.status]}`}>
-                                 {a.status}
-                              </span>
-                           </Link>
-                        ))}
                      </div>
                    )}
                 </div>

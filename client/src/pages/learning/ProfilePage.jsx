@@ -2,10 +2,11 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { getCurrentUser, hydrateCurrentUser, logoutUser, updateProfile, changePassword } from "../../services/authService";
 import {
-  User, Mail, GraduationCap,
+  User, Mail, GraduationCap, Building2,
   Loader2, AlertCircle, Camera, Save, UserCheck,
   CheckCircle2, Target, Sparkles, LogOut, Lock, Key, ShieldCheck, ShieldAlert
 } from "lucide-react";
+import { getMyCourses, getCourseMaterials } from "../../services/platformService";
 
 function ProfileSection({ title, children }) {
   return (
@@ -45,10 +46,29 @@ function ProfilePage() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+  const [totalMaterialsCount, setTotalMaterialsCount] = useState(0);
+  const [lecturerCourses, setLecturerCourses] = useState([]);
 
   useEffect(() => {
     if (!sessionUser?.id) return;
     refreshProfile();
+    if (sessionUser?.role === 'lecturer' || sessionUser?.role === 'admin') {
+      getMyCourses()
+        .then(async (courses) => {
+          setLecturerCourses(courses || []);
+          let count = 0;
+          await Promise.all(
+            (courses || []).map(async (c) => {
+              try {
+                const mats = await getCourseMaterials(c.id);
+                count += (mats || []).length;
+              } catch (_) {}
+            })
+          );
+          setTotalMaterialsCount(count);
+        })
+        .catch(() => {});
+    }
   }, [sessionUser?.id]);
 
   const refreshProfile = async () => {
@@ -213,33 +233,40 @@ function ProfilePage() {
   const isLecturer = profile?.role === 'lecturer';
   const isPartner = ['university', 'institution', 'partner', 'organization'].includes(profile?.role);
 
+  const modulesList = lecturerCourses.length > 0
+    ? lecturerCourses.map(c => c.title)
+    : (Array.isArray(profile?.skillsInterests) && profile.skillsInterests.length > 0
+      ? profile.skillsInterests
+      : ["Advanced Database Systems", "Information Systems Security"]);
+
   return (
     <div className="max-w-7xl mx-auto pb-20 px-4">
       
       {/* Profile Header */}
-      <div className="bg-[#0B5E3C] -mx-4 sm:-mx-6 lg:-mx-8 px-8 py-20 text-white relative overflow-hidden mb-12 rounded-b-[4rem]">
-         <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-[#0B5E3C] to-transparent z-10" />
-         <div className="absolute top-0 right-0 w-96 h-96 bg-brand-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
-         
-         <div className="relative z-20 flex flex-col md:flex-row items-center gap-10 max-w-7xl mx-auto">
-            <div className="relative group">
-                <div 
-                  onClick={handlePhotoClick}
-                  className="w-44 h-44 rounded-full border-4 border-brand-500/30 p-2 bg-white/10 backdrop-blur-md shadow-2xl flex items-center justify-center overflow-hidden cursor-pointer hover:border-brand-500/60 transition-all"
-                >
-                    <div className="w-full h-full rounded-full bg-slate-100 flex items-center justify-center overflow-hidden">
-                        {profile?.profilePhotoUrl ? (
-                          <img src={profile.profilePhotoUrl} alt="Profile" className="w-full h-full object-cover" />
-                        ) : (
-                          <User className="w-24 h-24 text-slate-300" />
-                        )}
+      {isLecturer ? (
+        /* Verified Lecturer Identity Card */
+        <div className="bg-white rounded-[2.5rem] border border-slate-200 shadow-sm p-8 lg:p-10 mb-10 relative overflow-hidden">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+            
+            {/* Profile Picture with Edit Badge */}
+            <div className="lg:col-span-3 flex flex-col items-center text-center">
+              <div className="relative group cursor-pointer" onClick={handlePhotoClick}>
+                <div className="w-36 h-36 rounded-full border-4 border-[#0B5E3C] p-1.5 bg-slate-50 shadow-lg overflow-hidden flex items-center justify-center transition-transform group-hover:scale-105 duration-300">
+                  {profile?.profilePhotoUrl ? (
+                    <img src={profile.profilePhotoUrl} alt={profile.fullName} className="w-full h-full object-cover rounded-full" />
+                  ) : (
+                    <div className="w-full h-full rounded-full bg-emerald-50 flex items-center justify-center text-[#0B5E3C]">
+                      <User className="w-16 h-16 text-emerald-700" />
                     </div>
+                  )}
                 </div>
                 <button 
+                  type="button"
                   onClick={handlePhotoClick}
-                  className="absolute bottom-4 right-4 bg-brand-600 text-white p-4 rounded-full shadow-2xl hover:scale-110 transition-transform active:scale-95 border-4 border-[#0B5E3C] cursor-pointer animate-pulse"
+                  title="Update Profile Picture"
+                  className="absolute bottom-1 right-1 bg-[#0B5E3C] hover:bg-emerald-800 text-white p-2.5 rounded-full shadow-lg border-2 border-white transition-transform hover:scale-110 cursor-pointer"
                 >
-                  <Camera className="w-5 h-5" />
+                  <Camera className="w-4 h-4 text-amber-400" />
                 </button>
                 <input 
                   type="file" 
@@ -248,28 +275,114 @@ function ProfilePage() {
                   onChange={handlePhotoChange} 
                   className="hidden" 
                 />
+              </div>
+              <span className="mt-3.5 px-3.5 py-1 bg-emerald-100 text-emerald-800 text-[10px] font-black uppercase tracking-widest rounded-full">
+                VERIFIED LECTURER
+              </span>
             </div>
 
-            <div className="text-center md:text-left space-y-4">
-               <div>
-                  <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-brand-500 text-white rounded-full text-[10px] font-black uppercase tracking-widest mb-4 shadow-lg shadow-brand-500/20">
-                     Official {profile?.role?.replace('_', ' ')} Profile
-                  </div>
-                  <h1 className="text-4xl md:text-6xl font-black tracking-tight">{profile?.fullName || "SET YOUR NAME"}</h1>
-               </div>
-               <div className="flex flex-wrap justify-center md:justify-start gap-8 opacity-80">
-                  <div className="flex items-center gap-3 text-sm font-black uppercase tracking-widest text-brand-300">
-                     <UserCheck className="w-5 h-5 text-brand-400" />
-                     STUDENT | ID NO: {sessionUser?.studentIdNumber || "—"} | {profile?.program?.toUpperCase() || "—"}
-                  </div>
-                  <div className="flex items-center gap-3 text-sm font-black uppercase tracking-widest">
-                     <Mail className="w-5 h-5 text-brand-400" />
-                     {profile?.email}
-                  </div>
-               </div>
+            {/* Lecturer Info Details */}
+            <div className="lg:col-span-6 space-y-3 text-center lg:text-left">
+              <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-[10px] font-black uppercase tracking-widest">
+                <Building2 className="w-3.5 h-3.5 text-emerald-700" /> {profile?.faculty || "FACULTY OF INFORMATION SYSTEMS & TECHNOLOGY"}
+              </div>
+
+              <h1 className="text-3xl sm:text-4xl font-[900] text-[#0B5E3C] uppercase tracking-tight leading-tight">
+                {profile?.fullName || "MOHAMED DUMBUYA"}
+              </h1>
+              <p className="text-slate-500 text-xs font-bold uppercase tracking-wider">
+                {profile?.department ? (profile.department.toUpperCase().startsWith("DEPARTMENT") ? profile.department.toUpperCase() : `DEPARTMENT OF ${profile.department.toUpperCase()}`) : "DEPARTMENT OF INFORMATION SYSTEMS"} · {profile?.currentAcademicYear ? `${profile.currentAcademicYear} Academic Year` : "Academic Staff"}
+              </p>
+
+              {/* Modules Lecturing Tag Cloud */}
+              <div className="pt-2">
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">MODULES LECTURING:</p>
+                <div className="flex flex-wrap gap-1.5 justify-center lg:justify-start">
+                  {modulesList.map((mod, idx) => (
+                    <span
+                      key={idx}
+                      className="px-3 py-1 bg-slate-100 hover:bg-emerald-50 text-slate-700 hover:text-[#0B5E3C] border border-slate-200 rounded-lg text-xs font-bold transition-colors"
+                    >
+                      {mod}
+                    </span>
+                  ))}
+                </div>
+              </div>
             </div>
-         </div>
-      </div>
+
+            {/* Stats */}
+            <div className="lg:col-span-3 flex flex-col gap-4 bg-slate-50/80 p-6 rounded-2xl border border-slate-200/80 text-center">
+              <div>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">TOTAL MATERIALS UPLOADED</p>
+                <p className="text-3xl font-[900] text-[#0B5E3C] mt-1">{totalMaterialsCount} Files</p>
+              </div>
+              <div className="h-px bg-slate-200" />
+              <div>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">TEACHING EXPERIENCE</p>
+                <p className="text-sm font-black text-slate-700 mt-0.5">
+                  {profile?.enrollmentYear ? `${new Date().getFullYear() - parseInt(profile.enrollmentYear)} Years Experience` : (profile?.designation || "Senior Academic Staff")}
+                </p>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      ) : (
+        /* Student / General Profile Header */
+        <div className="bg-[#0B5E3C] -mx-4 sm:-mx-6 lg:-mx-8 px-8 py-20 text-white relative overflow-hidden mb-12 rounded-b-[4rem]">
+           <div className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-[#0B5E3C] to-transparent z-10" />
+           <div className="absolute top-0 right-0 w-96 h-96 bg-brand-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
+           
+           <div className="relative z-20 flex flex-col md:flex-row items-center gap-10 max-w-7xl mx-auto">
+              <div className="relative group">
+                  <div 
+                    onClick={handlePhotoClick}
+                    className="w-44 h-44 rounded-full border-4 border-brand-500/30 p-2 bg-white/10 backdrop-blur-md shadow-2xl flex items-center justify-center overflow-hidden cursor-pointer hover:border-brand-500/60 transition-all"
+                  >
+                      <div className="w-full h-full rounded-full bg-slate-100 flex items-center justify-center overflow-hidden">
+                          {profile?.profilePhotoUrl ? (
+                            <img src={profile.profilePhotoUrl} alt="Profile" className="w-full h-full object-cover" />
+                          ) : (
+                            <User className="w-24 h-24 text-slate-300" />
+                          )}
+                      </div>
+                  </div>
+                  <button 
+                    onClick={handlePhotoClick}
+                    className="absolute bottom-4 right-4 bg-brand-600 text-white p-4 rounded-full shadow-2xl hover:scale-110 transition-transform active:scale-95 border-4 border-[#0B5E3C] cursor-pointer animate-pulse"
+                  >
+                    <Camera className="w-5 h-5" />
+                  </button>
+                  <input 
+                    type="file" 
+                    id="photo-upload-input" 
+                    accept="image/*" 
+                    onChange={handlePhotoChange} 
+                    className="hidden" 
+                  />
+              </div>
+
+              <div className="text-center md:text-left space-y-4">
+                 <div>
+                    <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-brand-500 text-white rounded-full text-[10px] font-black uppercase tracking-widest mb-4 shadow-lg shadow-brand-500/20">
+                       Official {profile?.role?.replace('_', ' ')} Profile
+                    </div>
+                    <h1 className="text-4xl md:text-6xl font-black tracking-tight">{profile?.fullName || "SET YOUR NAME"}</h1>
+                 </div>
+                 <div className="flex flex-wrap justify-center md:justify-start gap-8 opacity-80">
+                    <div className="flex items-center gap-3 text-sm font-black uppercase tracking-widest text-brand-300">
+                       <UserCheck className="w-5 h-5 text-brand-400" />
+                       STUDENT | ID NO: {sessionUser?.studentIdNumber || "—"} | {profile?.program?.toUpperCase() || "—"}
+                    </div>
+                    <div className="flex items-center gap-3 text-sm font-black uppercase tracking-widest">
+                       <Mail className="w-5 h-5 text-brand-400" />
+                       {profile?.email}
+                    </div>
+                 </div>
+              </div>
+           </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 gap-12">
 

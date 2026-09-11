@@ -3,13 +3,20 @@ const { prisma } = require("../config/db");
 exports.listMessages = async (req, res) => {
   try {
     const userId = req.auth.userId;
+    const isStudent = req.auth.role !== "lecturer" && req.auth.role !== "admin";
+
+    const orConditions = [
+      { from_user_id: userId },
+      { to_user_id: userId },
+      { to_user_id: "all" },
+      { to_user_id: "all_students" },
+      { to_user_id: "all_faculty_students" },
+      { to_user_id: "all_department_students" }
+    ];
+
     const list = await prisma.message.findMany({
       where: {
-        OR: [
-          { from_user_id: userId },
-          { to_user_id: userId },
-          { to_user_id: "all" }
-        ]
+        OR: orConditions
       },
       orderBy: { created_at: "desc" },
       take: 100
@@ -67,7 +74,9 @@ exports.sendMessage = async (req, res) => {
       const notifLink = senderRole === "lecturer" ? "/app/dashboard" : "/app/teach";
 
       // If sent to a specific user
-      if (to_user_id && to_user_id !== "all" && to_user_id !== "all_students") {
+      const isBroadcast = ["all", "all_students", "all_faculty_students", "all_department_students"].includes(to_user_id);
+
+      if (!isBroadcast && to_user_id) {
         await prisma.notification.create({
           data: {
             user_id: to_user_id,
@@ -78,21 +87,68 @@ exports.sendMessage = async (req, res) => {
           }
         });
       } else {
-        // If broadcast to all students/enrolled students, create notification for users
-        const allUsers = await prisma.user.findMany({
-          select: { id: true, role: true }
-        });
-        const targetUsers = allUsers.filter(u => senderRole === "lecturer" ? (u.role !== "lecturer" && u.id !== userId) : (u.role === "lecturer" || u.role === "admin"));
-        
-        await prisma.notification.createMany({
-          data: targetUsers.map(target => ({
-            user_id: target.id,
-            title: notifTitle,
-            message: notifMessage,
-            type: "message",
-            link: notifLink
-          }))
-        });
+        // Broadcast to relevant students
+        let targetUsers = [];
+        if (senderRole === "lecturer") {
+          const senderProfile = await prisma.profile.findUnique({
+            where: { user_id: userId },
+            select: { faculty: true, department: true, faculty_id: true, department_id: true }
+          });
+
+          if (to_user_id === "all_department_students" && (senderProfile?.department_id || senderProfile?.department)) {
+            const matchingProfiles = await prisma.profile.findMany({
+              where: {
+                OR: [
+                  ...(senderProfile.department_id ? [{ department_id: senderProfile.department_id }] : []),
+                  ...(senderProfile.department ? [{ department: { contains: senderProfile.department, mode: "insensitive" } }] : [])
+                ],
+                user: { role: { not: "lecturer" }, id: { not: userId } }
+              },
+              select: { user_id: true }
+            });
+            targetUsers = matchingProfiles.map(p => ({ id: p.user_id }));
+          } else if (to_user_id === "all_faculty_students" && (senderProfile?.faculty_id || senderProfile?.faculty)) {
+            const matchingProfiles = await prisma.profile.findMany({
+              where: {
+                OR: [
+                  ...(senderProfile.faculty_id ? [{ faculty_id: senderProfile.faculty_id }] : []),
+                  ...(senderProfile.faculty ? [{ faculty: { contains: senderProfile.faculty, mode: "insensitive" } }] : [])
+                ],
+                user: { role: { not: "lecturer" }, id: { not: userId } }
+              },
+              select: { user_id: true }
+            });
+            targetUsers = matchingProfiles.map(p => ({ id: p.user_id }));
+          }
+
+          // Fallback if no matching profiles found or general broadcast
+          if (targetUsers.length === 0) {
+            const allStudents = await prisma.user.findMany({
+              where: { role: { not: "lecturer" }, id: { not: userId } },
+              select: { id: true }
+            });
+            targetUsers = allStudents;
+          }
+        } else {
+          // Inquiry from student -> notify lecturers/admins
+          const lecturers = await prisma.user.findMany({
+            where: { role: { in: ["lecturer", "admin"] } },
+            select: { id: true }
+          });
+          targetUsers = lecturers;
+        }
+
+        if (targetUsers.length > 0) {
+          await prisma.notification.createMany({
+            data: targetUsers.map(target => ({
+              user_id: target.id,
+              title: notifTitle,
+              message: notifMessage,
+              type: "message",
+              link: notifLink
+            }))
+          });
+        }
       }
     } catch (notifErr) {
       console.warn("Notification dispatch notice:", notifErr.message);

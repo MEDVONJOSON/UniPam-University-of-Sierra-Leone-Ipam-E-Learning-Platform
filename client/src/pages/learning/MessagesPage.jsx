@@ -23,9 +23,9 @@ function MessagesPage() {
   const [replyTo, setReplyTo]         = useState(null);
 
   const [composeForm, setComposeForm] = useState({
-    to_user_id: isLecturer ? "all_students" : "lecturer-uuid",
-    to_name: isLecturer ? "All Enrolled Students" : "Course Lecturer",
-    course_id: "", course_title: "", subject: "", message: "",
+    to_user_id: isLecturer ? "all_faculty_students" : "lecturer-uuid",
+    to_name: isLecturer ? "All Students Enrolled in this Faculty" : "Course Lecturer",
+    course_id: "General (All Modules)", course_title: "General (All Modules)", subject: "", message: "",
     category: isLecturer ? "announcement" : "inquiry"
   });
 
@@ -56,7 +56,7 @@ function MessagesPage() {
     }
     setMsgSending(true); setMsgError(""); setMsgSuccess("");
     try {
-      let courseTitle = composeForm.course_title;
+      let courseTitle = composeForm.course_title || composeForm.course_id || "General (All Modules)";
       let toName = composeForm.to_name;
 
       if (!isLecturer) {
@@ -64,9 +64,10 @@ function MessagesPage() {
         courseTitle = sel ? sel.title : (composeForm.course_title || "General Academic Inquiry");
         toName = replyTo ? replyTo.from_name : (sel ? `${sel.provider_name || "Faculty"} Lecturer` : "Course Lecturer");
       } else {
-        const selC = courses.find(c => c.id === composeForm.course_id);
-        courseTitle = selC ? selC.title : "General (All Modules)";
-        if (composeForm.to_user_id === "all_students") toName = "All Enrolled Students";
+        courseTitle = composeForm.course_id || "General (All Modules)";
+        if (composeForm.to_user_id === "all_faculty_students") toName = "All Students Enrolled in this Faculty";
+        else if (composeForm.to_user_id === "all_department_students") toName = "Students in My Department";
+        else if (composeForm.to_user_id === "all_students") toName = "All Enrolled Students";
       }
 
       await sendMessage({
@@ -77,9 +78,9 @@ function MessagesPage() {
 
       setMsgSuccess(isLecturer ? "Notification dispatched to students successfully!" : "Inquiry dispatched directly to your lecturer!");
       setComposeForm({
-        to_user_id: isLecturer ? "all_students" : "lecturer-uuid",
-        to_name: isLecturer ? "All Enrolled Students" : "Course Lecturer",
-        course_id: "", course_title: "", subject: "", message: "",
+        to_user_id: isLecturer ? "all_faculty_students" : "lecturer-uuid",
+        to_name: isLecturer ? "All Students Enrolled in this Faculty" : "Course Lecturer",
+        course_id: "General (All Modules)", course_title: "General (All Modules)", subject: "", message: "",
         category: isLecturer ? "announcement" : "inquiry"
       });
       setReplyTo(null);
@@ -148,7 +149,7 @@ function MessagesPage() {
                 Inbox ({messages.length})
               </button>
               <button
-                onClick={() => { setReplyTo(null); setMsgTab("compose"); setComposeForm(f => ({ ...f, to_user_id: "all_students", to_name: "All Enrolled Students" })); }}
+                onClick={() => { setReplyTo(null); setMsgTab("compose"); setComposeForm(f => ({ ...f, to_user_id: "all_faculty_students", to_name: "All Students Enrolled in this Faculty", course_id: "General (All Modules)", course_title: "General (All Modules)" })); }}
                 className={`flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all ${
                   msgTab === "compose" ? "bg-[#0B5E3C] text-white shadow-sm" : "text-slate-500 hover:text-slate-900"
                 }`}
@@ -187,7 +188,7 @@ function MessagesPage() {
                 {replyTo && (
                   <button
                     type="button"
-                    onClick={() => { setReplyTo(null); setComposeForm(f => ({ ...f, to_user_id: "all_students", to_name: "All Enrolled Students" })); }}
+                    onClick={() => { setReplyTo(null); setComposeForm(f => ({ ...f, to_user_id: "all_faculty_students", to_name: "All Students Enrolled in this Faculty", course_id: "General (All Modules)", course_title: "General (All Modules)" })); }}
                     className="text-[10px] font-bold text-slate-400 hover:text-red-500 uppercase"
                   >
                     Cancel Reply
@@ -204,7 +205,8 @@ function MessagesPage() {
                       onChange={e => setComposeForm(f => ({ ...f, to_user_id: e.target.value }))}
                       className="block w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all outline-none appearance-none pr-10"
                     >
-                      <option value="all_students">📢 All Enrolled Students (Broadcast)</option>
+                      <option value="all_faculty_students">📢 All Students Enrolled in this Faculty</option>
+                      <option value="all_department_students">🎓 Students in My Department</option>
                       {replyTo && <option value={replyTo.from_user_id}>👤 {replyTo.from_name} (Student)</option>}
                     </select>
                     <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
@@ -216,11 +218,19 @@ function MessagesPage() {
                   <div className="relative">
                     <select
                       value={composeForm.course_id}
-                      onChange={e => setComposeForm(f => ({ ...f, course_id: e.target.value }))}
+                      onChange={e => setComposeForm(f => ({ ...f, course_id: e.target.value, course_title: e.target.value }))}
                       className="block w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all outline-none appearance-none pr-10"
                     >
-                      <option value="">General (All Modules)</option>
-                      {courses.map(c => <option key={c.id} value={c.id}>{c.title}</option>)}
+                      <option value="General (All Modules)">General (All Modules)</option>
+                      <option value="Networking">Networking</option>
+                      <option value="Database">Database</option>
+                      <option value="Data Analysis">Data Analysis</option>
+                      <option value="Cyber Security">Cyber Security</option>
+                      <option value="Programming">Programming</option>
+                      <option value="Web Development">Web Development</option>
+                      <option value="Research">Research</option>
+                      <option value="Software Development">Software Development</option>
+                      <option value="Others">Others</option>
                     </select>
                     <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
                   </div>
@@ -235,8 +245,6 @@ function MessagesPage() {
                       className="block w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all outline-none appearance-none pr-10"
                     >
                       <option value="announcement">📢 Course Announcement</option>
-                      <option value="assignment">📝 Assignment Alert</option>
-                      <option value="exam_notice">🎓 Exam Schedule / Notice</option>
                       <option value="feedback">💬 Feedback &amp; Academic Advice</option>
                     </select>
                     <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
