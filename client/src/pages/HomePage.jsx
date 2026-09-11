@@ -104,9 +104,9 @@ function HomePage() {
                  Browse programmes across all faculties.
                </p>
             </div>
-            <Link to="/ipam" className="flex items-center gap-2 text-[#0B5E3C] font-black text-xs uppercase tracking-widest hover:text-emerald-700 transition-colors group">
-               View Full Directory (39 Programmes) <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-            </Link>
+            <span className="flex items-center gap-2 text-[#0B5E3C] font-black text-xs uppercase tracking-widest">
+               Full Directory (39 Programmes)
+            </span>
          </div>
 
          {/* 5 Faculty Cards */}
@@ -163,16 +163,15 @@ function HomePage() {
                   badge: "8 Programmes"
                }
             ].map((faculty, i) => (
-               <Link
+               <div
                   key={i}
-                  to={`/ipam/${faculty.slug}`}
-                  className={`group text-left flex flex-col p-6 bg-white border border-slate-200 ${faculty.borderAccent} rounded-3xl hover:border-emerald-300 hover:shadow-xl transition-all duration-300 hover:-translate-y-1 relative`}
+                  className={`text-left flex flex-col p-6 bg-white border border-slate-200 ${faculty.borderAccent} rounded-3xl relative`}
                >
                   <div className="flex items-center justify-between mb-4">
-                     <div className={`w-12 h-12 ${faculty.iconBg} rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform`}>
+                     <div className={`w-12 h-12 ${faculty.iconBg} rounded-2xl flex items-center justify-center`}>
                         {faculty.icon}
                      </div>
-                     <span className="text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-lg bg-slate-100 text-slate-600 group-hover:bg-[#0B5E3C] group-hover:text-white transition-colors">
+                     <span className="text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-lg bg-slate-100 text-slate-600">
                         {faculty.badge}
                      </span>
                   </div>
@@ -182,15 +181,7 @@ function HomePage() {
                   <p className="text-slate-500 text-xs font-medium leading-relaxed flex-grow line-clamp-3">
                      {faculty.desc}
                   </p>
-                  <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between w-full">
-                     <span className="text-[10px] font-bold text-slate-400">
-                        View Portal
-                     </span>
-                     <span className="inline-flex items-center gap-1 text-[10px] font-black uppercase tracking-widest text-[#0B5E3C] group-hover:translate-x-1 transition-transform">
-                        Explore <ArrowRight className="w-3 h-3" />
-                     </span>
-                  </div>
-               </Link>
+               </div>
             ))}
          </div>
       </section>

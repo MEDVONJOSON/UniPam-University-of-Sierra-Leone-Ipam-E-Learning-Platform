@@ -319,7 +319,7 @@ function AppLayout() {
                     to="/register"
                     className="px-6 py-2.5 text-sm font-[900] text-[#0B5E3C] bg-white hover:bg-slate-100 rounded-full transition-all shadow-xl active:scale-95 uppercase tracking-wider"
                   >
-                    Apply Now
+                    Sign Up
                   </Link>
                 </div>
               )}
