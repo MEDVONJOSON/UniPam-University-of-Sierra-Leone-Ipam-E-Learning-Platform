@@ -8,7 +8,7 @@ import {
 import {
   BookOpen, Plus, Loader2, AlertCircle, X,
   Upload, FileText, Video, File, Image, Table2, Link2,
-  Download, Eye, GraduationCap, CloudUpload, CheckCircle2,
+  Download, Eye, GraduationCap, CloudUpload, CheckCircle2, FileCheck,
   FolderOpen, Hash, Calendar, Building2, ChevronDown, Layers
 } from "lucide-react";
 import DashboardStat from "../../components/DashboardStat";
