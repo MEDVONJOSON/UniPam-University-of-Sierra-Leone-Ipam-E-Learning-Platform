@@ -1,3 +1,5 @@
+const { prisma } = require("../config/db");
+
 function sanitizeLectureNoteNumber(val) {
   if (val === null || val === undefined) return null;
   const s = String(val).trim();
