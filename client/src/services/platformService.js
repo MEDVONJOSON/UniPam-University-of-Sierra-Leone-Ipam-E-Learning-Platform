@@ -1,4 +1,4 @@
-import { apiRequest, API_BASE } from "./apiClient";
+import { apiRequest, API_BASE, getToken } from "./apiClient";
 
 export async function getCourses(filters = {}) {
   const params = new URLSearchParams();
@@ -178,6 +178,42 @@ export function getDownloadUrl(courseId, materialId) {
   return `${API_BASE}/courses/${courseId}/materials/${materialId}/download`;
 }
 
+function getFilenameFromDisposition(disposition) {
+  if (!disposition) return "";
+  const utfMatch = disposition.match(/filename\*=UTF-8''([^;]+)/i);
+  if (utfMatch?.[1]) return decodeURIComponent(utfMatch[1].replace(/"/g, ""));
+  const match = disposition.match(/filename="?([^"]+)"?/i);
+  return match?.[1] || "";
+}
+
+export async function downloadCourseMaterial(courseId, materialId, fallbackFilename = "learning-material") {
+  const token = getToken();
+  const response = await fetch(getDownloadUrl(courseId, materialId), {
+    headers: token ? { Authorization: `Bearer ${token}` } : {}
+  });
+
+  if (!response.ok) {
+    let data = {};
+    try {
+      data = await response.json();
+    } catch (_) {
+      data = {};
+    }
+    throw new Error(data.error || "Download failed. Please sign in again and try once more.");
+  }
+
+  const blob = await response.blob();
+  const filename = getFilenameFromDisposition(response.headers.get("Content-Disposition")) || fallbackFilename;
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
 // ─── Repository (student — all enrolled courses, rich search) ─────────────────
 export async function getRepositoryMaterials(filters = {}) {
   const params = new URLSearchParams();
@@ -284,5 +320,3 @@ export async function markMessageRead(id) {
   const res = await apiRequest(`/messages/${id}/read`, { method: "PATCH" });
   return res.data;
 }
-
-

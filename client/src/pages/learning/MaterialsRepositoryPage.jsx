@@ -4,7 +4,7 @@ import {
   getSavedMaterials,
   saveMaterial,
   unsaveMaterial,
-  getDownloadUrl,
+  downloadCourseMaterial,
   getCourses
 } from "../../services/platformService";
 import { getCurrentUser } from "../../services/authService";
@@ -79,6 +79,8 @@ export default function MaterialsRepositoryPage() {
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [downloadError, setDownloadError] = useState("");
+  const [downloadingMap, setDownloadingMap] = useState({});
 
   const handleDownloadTrack = (mat) => {
     try {
@@ -181,6 +183,23 @@ export default function MaterialsRepositoryPage() {
       console.error("Save/unsave toggle error:", err);
     } finally {
       setSavingMap(prev => ({ ...prev, [matId]: false }));
+    }
+  };
+
+  const handleDownload = async (material) => {
+    const matId = material.id;
+    const courseId = material.course_id || material.courseId;
+    if (!matId || !courseId) return;
+
+    setDownloadingMap(prev => ({ ...prev, [matId]: true }));
+    setDownloadError("");
+    try {
+      await downloadCourseMaterial(courseId, matId, material.original_filename || material.title || "learning-material");
+      handleDownloadTrack(material);
+    } catch (err) {
+      setDownloadError(err.message || "Download failed. Please sign in again and try once more.");
+    } finally {
+      setDownloadingMap(prev => ({ ...prev, [matId]: false }));
     }
   };
 
@@ -384,6 +403,16 @@ export default function MaterialsRepositoryPage() {
         </div>
       </div>
 
+      {downloadError && (
+        <div className="bg-red-50 rounded-2xl p-4 border border-red-100 text-red-700 flex items-center gap-3">
+          <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
+          <p className="font-semibold text-sm">{downloadError}</p>
+          <button onClick={() => setDownloadError("")} className="ml-auto text-red-400 hover:text-red-600">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
       {/* ─── Content Grid / List ─────────────────────────────────────────────── */}
       {loading ? (
         <div className="bg-white rounded-2xl p-12 text-center shadow-sm border border-slate-100 flex flex-col items-center justify-center">
@@ -433,7 +462,7 @@ export default function MaterialsRepositoryPage() {
             const typeCfg = TYPE_CONFIG[mat.material_type] || TYPE_CONFIG.doc;
             const { Icon: TypeIcon, color: typeColor, bg: typeBg, label: typeLabel } = typeCfg;
             const catBadge = getCategoryBadge(mat.material_category);
-            const courseId = mat.course_id || mat.courseId;
+            const isDownloading = Boolean(downloadingMap[mat.id]);
 
             return (
               <div
@@ -545,15 +574,15 @@ export default function MaterialsRepositoryPage() {
                       <ExternalLink className="w-3.5 h-3.5" />
                     </a>
                   ) : (
-                    <a
-                      href={getDownloadUrl(courseId, mat.id)}
-                      download
-                      onClick={() => handleDownloadTrack(mat)}
+                    <button
+                      type="button"
+                      onClick={() => handleDownload(mat)}
+                      disabled={isDownloading}
                       className="px-3 py-1.5 rounded-xl bg-[#0B5E3C]/10 text-[#0B5E3C] hover:bg-[#0B5E3C] hover:text-white text-xs font-bold transition-all flex items-center gap-1"
                     >
-                      Download
-                      <Download className="w-3.5 h-3.5" />
-                    </a>
+                      {isDownloading ? "Downloading..." : "Download"}
+                      {isDownloading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Download className="w-3.5 h-3.5" />}
+                    </button>
                   )}
                 </div>
               </div>

@@ -5,7 +5,7 @@ import {
   getDashboardSummary,
   getEnrollments,
   getRepositoryMaterials,
-  getDownloadUrl,
+  downloadCourseMaterial,
   getMyCourses
 } from "../../services/platformService";
 import {
@@ -13,7 +13,7 @@ import {
   GraduationCap, PlayCircle, User,
   Building2, Bell, Zap, ExternalLink, Download,
   FileText, Video, Link2, File, FileSpreadsheet, Image as ImageIcon, FolderOpen,
-  Camera, ShieldAlert, Key, ShieldCheck
+  Camera, ShieldAlert, Key, ShieldCheck, AlertCircle, X
 } from "lucide-react";
 import DashboardStat from "../../components/DashboardStat";
 
@@ -47,6 +47,7 @@ function UserDashboardPage() {
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [downloadingMap, setDownloadingMap] = useState({});
 
   async function loadDashboardData() {
     setLoading(true);
@@ -81,6 +82,19 @@ function UserDashboardPage() {
     }
   }, [user?.id]);
 
+  const handleReDownload = async (item) => {
+    if (!item.course_id || !item.id) return;
+    setDownloadingMap(prev => ({ ...prev, [item.id]: true }));
+    setError("");
+    try {
+      await downloadCourseMaterial(item.course_id, item.id, item.original_filename || item.title || "learning-material");
+    } catch (err) {
+      setError(err.message || "Download failed. Please sign in again and try once more.");
+    } finally {
+      setDownloadingMap(prev => ({ ...prev, [item.id]: false }));
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-32">
@@ -95,6 +109,16 @@ function UserDashboardPage() {
 
   return (
     <div className="space-y-10 pb-20 max-w-7xl mx-auto">
+
+      {error && (
+        <div className="bg-red-50 rounded-2xl p-4 border border-red-100 text-red-700 flex items-center gap-3">
+          <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
+          <p className="font-semibold text-sm">{error}</p>
+          <button onClick={() => setError("")} className="ml-auto text-red-400 hover:text-red-600">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
 
       {/* ⚠️ DEFAULT PASSWORD SECURITY NOTICE BANNER (Only shows until password is changed) */}
       {!isLecturer && user?.hasChangedPassword === false && (
@@ -299,6 +323,7 @@ function UserDashboardPage() {
                   {downloadedMaterials.map((item) => {
                      const typeCfg = TYPE_CONFIG[item.material_type] || TYPE_CONFIG.doc;
                      const { Icon: TypeIcon, color: typeColor, bg: typeBg } = typeCfg;
+                     const isDownloading = Boolean(downloadingMap[item.id]);
                      return (
                         <div key={item.id} className="group bg-slate-50/70 border border-slate-200 rounded-[2.5rem] p-8 hover:bg-white hover:border-emerald-300 hover:shadow-2xl transition-all duration-300">
                            <div className="flex items-start justify-between mb-8">
@@ -337,9 +362,15 @@ function UserDashboardPage() {
                                     Open Link <ExternalLink className="w-4 h-4" />
                                  </a>
                               ) : (
-                                 <a href={getDownloadUrl(item.course_id, item.id)} download className="flex items-center gap-2 text-xs font-black text-[#0B5E3C] hover:text-emerald-700 transition-colors uppercase tracking-widest">
-                                    Re-download <Download className="w-4 h-4" />
-                                 </a>
+                                 <button
+                                   type="button"
+                                   onClick={() => handleReDownload(item)}
+                                   disabled={isDownloading}
+                                   className="flex items-center gap-2 text-xs font-black text-[#0B5E3C] hover:text-emerald-700 transition-colors uppercase tracking-widest disabled:opacity-60"
+                                 >
+                                    {isDownloading ? "Downloading..." : "Re-download"}
+                                    {isDownloading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                                 </button>
                               )}
                            </div>
                         </div>
