@@ -196,30 +196,30 @@ function HomePage() {
       </section>
 
 
-      {/* Why USL Digital? */}
+      {/* Why UniPam? */}
       <section className="bg-slate-50 py-24 border-y border-slate-100">
         <div className="container mx-auto px-6">
            <div className="text-center mb-16">
               <h2 className="text-3xl font-[900] text-[#0B5E3C] mb-3 uppercase tracking-tight">Why Choose UniPam?</h2>
-              <p className="text-slate-600 max-w-xl mx-auto font-medium">University of Sierra Leone eLearning.</p>
+              <p className="text-slate-600 max-w-xl mx-auto font-medium">University of Sierra</p>
            </div>
            
            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               {[
                 { 
-                  icon: <ShieldCheck className="w-8 h-8 text-emerald-600" />, 
-                  title: "Official Accreditation", 
-                  desc: "All degrees and certificates are issued directly by the University of Sierra Leone and recognized by the Tertiary Education Commission (TEC)." 
+                           icon: <BookOpen className="w-8 h-8 text-emerald-600" />, 
+                           title: "Course Materials", 
+                           desc: "Centralized access to learning content and course resources for students and lecturers." 
                 },
                 { 
-                  icon: <Briefcase className="w-8 h-8 text-emerald-600" />, 
-                  title: "Career Ready", 
-                  desc: "Our curriculum is developed in partnership with Sierra Leonean industry leaders to ensure graduates are ready for the local and global market." 
+                           icon: <MessageSquare className="w-8 h-8 text-emerald-600" />, 
+                           title: "Notifications", 
+                           desc: "Academic communication between students and lecturers through built-in notification messages." 
                 },
                 { 
-                  icon: <Layout className="w-8 h-8 text-emerald-600" />, 
-                  title: "Digital Flexibility", 
-                  desc: "Learn from anywhere in Sierra Leone or abroad. Our UniPam platform works on low bandwidth and provides offline learning resources." 
+                           icon: <ShieldCheck className="w-8 h-8 text-emerald-600" />, 
+                           title: "Built for IPAM-USL", 
+                           desc: "Designed around the technological environment of IPAM-USL." 
                 }
               ].map((item, i) => (
                 <div key={i} className="bg-white p-10 rounded-3xl border border-slate-200 shadow-sm hover:shadow-xl transition-all duration-300">
