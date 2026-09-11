@@ -268,12 +268,12 @@ function HomePage() {
       <section className="bg-[#0B5E3C] rounded-[50px] mx-6 py-20 px-10 text-center relative overflow-hidden">
          <div className="relative z-10 max-w-3xl mx-auto">
             <h2 className="text-3xl font-[900] text-white mb-6 uppercase tracking-tight">Official UniPam Portal</h2>
-            <p className="text-brand-100 text-lg mb-10 leading-relaxed font-medium">Join thousands of students at the University of Sierra Leone's digital initiative. Secure your future with recognized degrees from West Africa's oldest university.</p>
+            <p className="text-brand-100 text-lg mb-10 leading-relaxed font-medium">The E-Learning platform for IPAM-USL students and lecturers. Access your course materials, stay connected, and manage your learning securely.</p>
             <Link 
                 to="/register"
                 className="inline-flex items-center justify-center gap-2 px-10 py-4 bg-white text-[#0B5E3C] rounded-full font-black uppercase tracking-widest shadow-2xl hover:bg-slate-50 transition-all hover:scale-105"
               >
-                Start Learning
+                Sign Up
             </Link>
          </div>
       </section>

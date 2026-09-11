@@ -145,32 +145,6 @@ function AppLayout() {
                           </div>
                         </Link>
                         <Link 
-                          to="/ipam?level=Certificate" 
-                          onClick={() => setIsExploreOpen(false)}
-                          className="flex items-center gap-3 p-3 rounded-xl hover:bg-amber-50 group transition-colors"
-                        >
-                          <div className="p-2.5 bg-amber-50 rounded-xl text-amber-700 group-hover:bg-amber-600 group-hover:text-white transition-colors shadow-sm">
-                            <BookOpen className="w-4 h-4" />
-                          </div>
-                          <div>
-                            <p className="text-sm font-black text-[#0B5E3C]">Certificate & Diplomas</p>
-                            <p className="text-[10px] font-bold text-slate-500">8 Skill Acquisition & Extra-Mural</p>
-                          </div>
-                        </Link>
-                        <Link 
-                          to="/ipam?level=Postgraduate" 
-                          onClick={() => setIsExploreOpen(false)}
-                          className="flex items-center gap-3 p-3 rounded-xl hover:bg-purple-50 group transition-colors"
-                        >
-                          <div className="p-2.5 bg-purple-50 rounded-xl text-purple-700 group-hover:bg-purple-700 group-hover:text-white transition-colors shadow-sm">
-                            <GraduationCap className="w-4 h-4" />
-                          </div>
-                          <div>
-                            <p className="text-sm font-black text-[#0B5E3C]">Postgraduate School</p>
-                            <p className="text-[10px] font-bold text-slate-500">14 Masters, MBA, PGDP & PhD</p>
-                          </div>
-                        </Link>
-                        <Link 
                           to="/ipam" 
                           onClick={() => setIsExploreOpen(false)}
                           className="flex items-center gap-3 p-3 rounded-xl hover:bg-emerald-50 group transition-colors border-t border-slate-100 mt-1"
@@ -422,7 +396,7 @@ function AppLayout() {
               <span className="text-xl font-[900] text-white tracking-tight leading-tight">UniPam</span>
             </Link>
             <p className="text-sm leading-relaxed text-slate-400">
-              Fostering excellence, innovation, and digital transformation in higher education across Sierra Leone and beyond. UniPam is your gateway to world-class learning.
+              Fostering excellence, innovation, and digital transformation in learning at the Institute of Public Administration and Management (IPAM), University of Sierra Leone. UniPam is your gateway to course materials, academic collaboration, and learning.
             </p>
             <div className="flex items-center gap-4">
               {[Facebook, Twitter, Linkedin, Instagram].map((Icon, i) => (
@@ -436,22 +410,22 @@ function AppLayout() {
           <div>
             <h4 className="text-white font-bold mb-6 text-sm uppercase tracking-widest">Faculties & Programs</h4>
             <ul className="space-y-4 text-sm font-medium">
-              <li><Link to="/course-catalog" className="hover:text-hover-400 transition-colors">Faculty of Engineering</Link></li>
-              <li><Link to="/course-catalog" className="hover:text-hover-400 transition-colors">Social Sciences & Law</Link></li>
-              <li><Link to="/course-catalog" className="hover:text-hover-400 transition-colors">Arts and Humanities</Link></li>
-              <li><Link to="/course-catalog" className="hover:text-hover-400 transition-colors">Pure & Applied Sciences</Link></li>
-              <li><Link to="/training" className="hover:text-hover-400 transition-colors">Postgraduate School</Link></li>
+              <li><Link to="/course-catalog" className="hover:text-hover-400 transition-colors">Accounting & Finance</Link></li>
+              <li><Link to="/course-catalog" className="hover:text-hover-400 transition-colors">Information Systems & Technology</Link></li>
+              <li><Link to="/course-catalog" className="hover:text-hover-400 transition-colors">Business Administration & Entrepreneurship</Link></li>
+              <li><Link to="/course-catalog" className="hover:text-hover-400 transition-colors">Leadership & Governance</Link></li>
+              <li><Link to="/course-catalog" className="hover:text-hover-400 transition-colors">Extra-Mural Studies</Link></li>
             </ul>
           </div>
 
           <div>
             <h4 className="text-white font-bold mb-6 text-sm uppercase tracking-widest">Student Portal</h4>
             <ul className="space-y-4 text-sm font-medium">
+              <li><Link to="/app/repository" className="hover:text-hover-400 transition-colors">Course Materials</Link></li>
+              <li><Link to="/app/messages" className="hover:text-hover-400 transition-colors">Notifications</Link></li>
+              <li><Link to="/app/dashboard" className="hover:text-hover-400 transition-colors">My Dashboard</Link></li>
               <li><Link to="/about" className="hover:text-hover-400 transition-colors">Academic Calendar</Link></li>
-              <li><Link to="/contact" className="hover:text-hover-400 transition-colors">Admission Portal</Link></li>
-              <li><Link to="/contact" className="hover:text-hover-400 transition-colors">Scholarship Hub</Link></li>
-              <li><Link to="/about" className="hover:text-hover-400 transition-colors">Research Repository</Link></li>
-              <li><Link to="/contact" className="hover:text-hover-400 transition-colors">Career Services</Link></li>
+              <li><Link to="/contact" className="hover:text-hover-400 transition-colors">Contact Support</Link></li>
             </ul>
           </div>
 
@@ -464,7 +438,7 @@ function AppLayout() {
               </li>
               <li className="flex items-center gap-3">
                 <Phone className="w-5 h-5 text-brand-500" />
-                <span>+232 00 000 000</span>
+                <span>+23279688260 / +23272659157</span>
               </li>
               <li className="flex items-center gap-3">
                 <Mail className="w-5 h-5 text-brand-500" />
@@ -479,7 +453,7 @@ function AppLayout() {
         </div>
 
         <div className="max-w-7xl mx-auto px-6 lg:px-8 pt-10 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-6">
-          <p className="text-xs text-slate-500 italic">© {new Date().getFullYear()} UniPam. University of Sierra Leone eLearning.</p>
+          <p className="text-xs text-slate-500 italic">© {new Date().getFullYear()} UniPam. IPAM-USL e-learning platform.</p>
           <div className="flex gap-6 text-xs font-bold uppercase tracking-widest">
             <a href="#" className="hover:text-white transition-colors">Privacy Policy</a>
             <a href="#" className="hover:text-white transition-colors">Terms of Use</a>
