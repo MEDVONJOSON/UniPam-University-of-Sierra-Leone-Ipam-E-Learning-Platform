@@ -234,22 +234,22 @@ function HomePage() {
         </div>
       </section>
 
-      {/* FAQ Section */}
+      {/* Signup Section */}
       <section className="container mx-auto px-6 pb-24">
          <div className="bg-white rounded-[3rem] border border-slate-200 shadow-sm p-12 lg:p-20">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
                <div>
-                  <h2 className="text-3xl font-[900] text-[#0B5E3C] mb-6 uppercase tracking-tight">Student Support FAQ</h2>
+                  <h2 className="text-3xl font-[900] text-[#0B5E3C] mb-6 uppercase tracking-tight">Sign Up</h2>
                   <p className="text-slate-600 mb-10 font-medium">Need help with the UniPam portal? Here are the most common questions from our students.</p>
-                  <Link to="/contact" className="inline-flex items-center gap-3 px-8 py-4 bg-emerald-50 text-[#0B5E3C] rounded-2xl font-black uppercase tracking-widest hover:bg-emerald-100 transition-all">
-                     <HelpCircle className="w-5 h-5 text-[#0B5E3C]" /> Contact Support
+                  <Link to="/register" className="inline-flex items-center gap-3 px-8 py-4 bg-emerald-50 text-[#0B5E3C] rounded-2xl font-black uppercase tracking-widest hover:bg-emerald-100 transition-all">
+                     <HelpCircle className="w-5 h-5 text-[#0B5E3C]" /> Sign Up
                   </Link>
                </div>
                <div className="space-y-6">
                   {[
-                     { q: "How do I access my LMS account?", a: "Once your application is approved, use your Student ID and the password sent to your registered email to login to the LMS Dashboard." },
-                     { q: "Are the courses TEC accredited?", a: "Yes, all programs offered through UniPam are officially accredited by the Tertiary Education Commission of Sierra Leone." },
-                     { q: "How can I verify my certificate?", a: "Every certificate issued has a unique verification ID that can be checked through our public verification portal in the Certificate Wallet." }
+                     { q: "How do I access my account?", a: "Use your registered credentials to log in securely to your student or lecturer dashboard." },
+                     { q: "Who can access the platform?", a: "UniPam is built for IPAM-USL students and lecturers, with role-based access so each user sees only what's relevant to them." },
+                     { q: "How do I get course materials?", a: "Once logged in, course materials are available directly on your repository organized by module." }
                   ].map((faq, i) => (
                      <div key={i} className="p-6 bg-slate-50/70 rounded-2xl border border-slate-200">
                         <h4 className="font-black text-[#0B5E3C] text-sm uppercase tracking-tight mb-2 flex items-start gap-3">
