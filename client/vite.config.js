@@ -8,22 +8,22 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: "autoUpdate",
-      includeAssets: ["img/logo.jpg"],
+      includeAssets: ["img/unipam-logo.png"],
       manifest: {
         name: "UniPam",
         short_name: "UniPam",
         description: "Smart Hybrid E-Learning Platform",
-        theme_color: "#0d2d57",
+        theme_color: "#0B5E3C",
         icons: [
           {
-            src: "img/logo.jpg",
+            src: "img/unipam-logo.png",
             sizes: "192x192",
-            type: "image/jpg",
+            type: "image/png",
           },
           {
-            src: "img/logo.jpg",
+            src: "img/unipam-logo.png",
             sizes: "512x512",
-            type: "image/jpg",
+            type: "image/png",
           },
         ],
       },

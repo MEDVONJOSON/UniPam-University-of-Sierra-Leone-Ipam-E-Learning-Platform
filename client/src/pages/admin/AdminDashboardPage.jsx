@@ -45,12 +45,17 @@ function AdminSidebar({ activeTab, setActiveTab, isMobileMenuOpen, setIsMobileMe
         />
       )}
       <div className={`w-80 flex-shrink-0 flex-col bg-[#0B5E3C] text-white min-h-[calc(100vh-100px)] rounded-[3rem] p-8 shadow-2xl transition-transform ${isMobileMenuOpen ? "fixed inset-y-4 left-4 z-50 flex overflow-y-auto max-h-[calc(100vh-32px)]" : "hidden lg:flex lg:relative lg:inset-0"}`}>
-        <div className="flex items-center justify-between mb-12 px-4">
-          <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 bg-brand-500/20 border border-brand-500/30 rounded-full text-[10px] font-black uppercase tracking-widest text-brand-300 mb-4">
-              Registry Portal
+        <div className="flex items-center justify-between mb-10 px-2">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 rounded-2xl bg-white p-1.5 shadow-md flex items-center justify-center flex-shrink-0">
+              <img src="/img/unipam-logo.png" alt="UniPam Logo" className="w-full h-full object-contain" />
             </div>
-            <h2 className="text-2xl font-black uppercase tracking-tighter">Admin Panel</h2>
+            <div>
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 bg-brand-500/20 border border-brand-500/30 rounded-full text-[9px] font-black uppercase tracking-widest text-brand-300 mb-1">
+                Registry Portal
+              </div>
+              <h2 className="text-xl font-black uppercase tracking-tighter">Admin Panel</h2>
+            </div>
           </div>
           <button onClick={() => setIsMobileMenuOpen(false)} className="lg:hidden p-2 rounded-xl bg-white/10 text-white hover:bg-white/20 transition-colors">
             <X className="w-5 h-5" />

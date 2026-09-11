@@ -39,8 +39,15 @@ function AdminLoginPage() {
         <div className="absolute top-0 left-0 w-full h-2 bg-red-600" />
         
         <div className="text-center">
-          <div className="mx-auto h-16 w-16 flex items-center justify-center rounded-2xl bg-red-50 text-red-600 mb-6 shadow-sm border border-red-100">
-            <ShieldAlert className="w-8 h-8" />
+          <div className="mx-auto h-20 w-20 flex items-center justify-center rounded-2xl bg-white shadow-md p-2 mb-6 border border-slate-100 relative">
+            <img
+              src="/img/unipam-logo.png"
+              alt="UniPam Logo"
+              className="w-full h-full object-contain"
+            />
+            <div className="absolute -bottom-1.5 -right-1.5 bg-red-600 text-white p-1 rounded-full shadow-md">
+              <ShieldAlert className="w-3.5 h-3.5" />
+            </div>
           </div>
           <h2 className="text-3xl font-black text-[#0B5E3C] uppercase tracking-tight leading-none mb-2">
             UniPam Registry

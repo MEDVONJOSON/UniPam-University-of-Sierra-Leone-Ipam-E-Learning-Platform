@@ -49,8 +49,12 @@ function LoginPage() {
 
         {/* Header */}
         <div className="text-center">
-          <div className="mx-auto h-16 w-16 flex items-center justify-center rounded-2xl bg-[#e8f4ef] text-[#0B5E3C] shadow-inner mb-6">
-            <GraduationCap className="w-8 h-8" />
+          <div className="mx-auto h-20 w-20 flex items-center justify-center rounded-2xl bg-white shadow-md p-2 mb-6 border border-slate-100">
+            <img
+              src="/img/unipam-logo.png"
+              alt="UniPam Logo"
+              className="w-full h-full object-contain"
+            />
           </div>
           <h2 className="text-3xl font-black text-[#0B5E3C] tracking-tight">
             UniPam Portal

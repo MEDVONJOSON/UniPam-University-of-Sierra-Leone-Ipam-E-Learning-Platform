@@ -100,13 +100,17 @@ function AppLayout() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-20">
             {/* Top Left Logo: UniPam */}
-            <Link to="/" className="flex items-center gap-2.5 group">
-              <div className="bg-gradient-to-br from-brand-500 to-brand-800 p-2.5 rounded-[12px] shadow-2xl transform group-hover:scale-110 transition-all duration-300">
-                <GraduationCap className="w-6 h-6 text-amber-400" />
+            <Link to="/" className="flex items-center gap-3 group">
+              <div className="w-12 h-12 rounded-[14px] bg-white shadow-xl overflow-hidden flex items-center justify-center p-1 transform group-hover:scale-105 transition-all duration-300">
+                <img
+                  src="/img/unipam-logo.png"
+                  alt="UniPam Logo"
+                  className="w-full h-full object-contain"
+                />
               </div>
               <div className="flex flex-col">
                 <span className="text-2xl font-black text-white tracking-tighter leading-none">UniPam</span>
-                <span className="text-[9px] text-white font-black tracking-[0.2em] uppercase mt-0.5">University of Sierra Leone eLearning</span>
+                <span className="text-[9px] text-white/90 font-black tracking-[0.2em] uppercase mt-0.5">University of Sierra Leone eLearning</span>
               </div>
             </Link>
 
@@ -408,8 +412,12 @@ function AppLayout() {
         <div className="max-w-7xl mx-auto px-6 lg:px-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
           <div className="space-y-6">
             <Link to="/" className="flex items-center gap-2">
-              <div className="bg-brand-500 p-1.5 rounded-lg shadow-lg">
-                <GraduationCap className="w-5 h-5 text-white" />
+              <div className="w-9 h-9 rounded-lg bg-white shadow-lg overflow-hidden flex items-center justify-center">
+                <img
+                  src="/img/unipam-logo.png"
+                  alt="UNIPAM logo"
+                  className="w-8 h-8 object-contain"
+                />
               </div>
               <span className="text-xl font-[900] text-white tracking-tight leading-tight">UniPam</span>
             </Link>
