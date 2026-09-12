@@ -122,7 +122,7 @@ function AppLayout() {
                   onMouseEnter={() => setIsExploreOpen(true)}
                   className="flex items-center gap-2 px-4 py-2 text-sm font-bold text-white bg-white/5 hover:bg-white/10 rounded-full border border-white/10 transition-all group"
                 >
-                  Explore <ChevronDown className={`w-4 h-4 text-amber-400 transition-transform ${isExploreOpen ? 'rotate-180' : ''}`} />
+                  Explore <ChevronDown className={`w-4 h-4 text-white transition-transform ${isExploreOpen ? 'rotate-180' : ''}`} />
                 </button>
 
                   {isExploreOpen && (
@@ -132,29 +132,23 @@ function AppLayout() {
                     >
                       <div className="space-y-1">
                         <Link 
-                          to="/ipam?level=Degree" 
+                          to="/training" 
                           onClick={() => setIsExploreOpen(false)}
                           className="flex items-center gap-3 p-3 rounded-xl hover:bg-emerald-50 group transition-colors"
                         >
-                          <div className="p-2.5 bg-emerald-50 rounded-xl text-emerald-700 group-hover:bg-[#0B5E3C] group-hover:text-white transition-colors shadow-sm">
-                            <Award className="w-4 h-4" />
-                          </div>
                           <div>
-                            <p className="text-sm font-black text-[#0B5E3C] group-hover:text-[#0B5E3C]">Undergraduate Programs</p>
+                            <p className="text-sm font-black text-[#0B5E3C] group-hover:text-[#0B5E3C]">Explore Programmes By Faculty</p>
                             <p className="text-[10px] font-bold text-slate-500">17 Bachelor Degrees · 4 Years</p>
                           </div>
                         </Link>
                         <Link 
-                          to="/ipam" 
+                          to="/login" 
                           onClick={() => setIsExploreOpen(false)}
                           className="flex items-center gap-3 p-3 rounded-xl hover:bg-emerald-50 group transition-colors border-t border-slate-100 mt-1"
                         >
-                          <div className="p-2.5 bg-[#0B5E3C] rounded-xl text-amber-400 group-hover:scale-105 transition-transform shadow-sm">
-                            <GraduationCap className="w-4 h-4" />
-                          </div>
                           <div>
-                            <p className="text-sm font-black text-[#0B5E3C]">IPAM Programmes</p>
-                            <p className="text-[10px] font-bold text-slate-500">All 5 Faculties · 39 Programmes</p>
+                            <p className="text-sm font-black text-[#0B5E3C]">Sign In And Access Repository</p>
+                            <p className="text-[10px] font-bold text-slate-500">Student Sign In</p>
                           </div>
                         </Link>
                       </div>
