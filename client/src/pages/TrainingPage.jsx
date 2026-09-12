@@ -72,6 +72,49 @@ const FACULTIES_CONFIG = [
   }
 ];
 
+const APPROVED_PROGRAMMES = {
+  "accounting-finance": [
+    "BSc (Hons) in Financial Economics",
+    "BSc in Applied Accounting",
+    "BSc in Auditing, Taxation and Internal Control",
+    "BSc in Banking and Finance",
+    "BSc In Financial Services"
+  ],
+  "info-systems-tech": [
+    "BSc Information Systems",
+    "BSc Information Technology",
+    "BSc In Computer Networking",
+    "Diploma in Information Systems"
+  ],
+  "business-admin-entrepreneurship": [
+    "BSc in Business Administration",
+    "BSc in Entrepreneurship and Innovation",
+    "BSc in Human Resource Management",
+    "BSc in Procurement,Logistics and Supply Chain Management",
+    "BSc of Science in Project Management",
+    "BSc of Science in Sales and Marketing"
+  ],
+  "leadership-governance": [
+    "BSc in Leadership and Sustainable Development",
+    "BSc of Science in Public Policy",
+    "BSc of Science in Public Sector Management"
+  ],
+  "extra-mural-studies": [
+    "Diploma in Applied Accounting",
+    "Diploma in Banking and Finance",
+    "Diploma in Business Administration",
+    "Diplomas in Financial Services",
+    "Diploma in Information Technology",
+    "Diploma in Procurement and Supply"
+  ]
+};
+
+const programmeKey = (name) => (name || "")
+  .toLowerCase()
+  .replace(/b\.sc\.?/g, "bsc")
+  .replace(/\bin\b/g, "")
+  .replace(/[^a-z0-9]/g, "");
+
 function TrainingPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const initialFaculty = searchParams.get("faculty") || "accounting-finance";
@@ -136,10 +179,33 @@ function TrainingPage() {
   }, [faculties, selectedFacultySlug]);
 
   const filteredProgrammes = useMemo(() => {
-    let list = allProgrammes.filter(p => {
+    const liveProgrammes = allProgrammes.filter(p => {
       const matchFaculty = p.faculty_slug === selectedFacultySlug || (activeFaculty && p.faculty_id === activeFaculty.id);
       return matchFaculty;
     });
+
+    const uniqueProgrammes = new Map();
+    liveProgrammes.forEach(programme => {
+      const key = programmeKey(programme.name);
+      if (key && !uniqueProgrammes.has(key)) uniqueProgrammes.set(key, programme);
+    });
+
+    const approvedNames = APPROVED_PROGRAMMES[selectedFacultySlug] || [];
+    approvedNames.forEach((name, index) => {
+      const key = programmeKey(name);
+      if (!uniqueProgrammes.has(key)) {
+        uniqueProgrammes.set(key, {
+          id: `approved-${selectedFacultySlug}-${index}`,
+          name,
+          level: name.startsWith("Diploma") || name.startsWith("Diplomas") ? "Diploma" : "Degree",
+          duration: name.startsWith("Diploma") || name.startsWith("Diplomas") ? "2 Years" : "4 Years",
+          description: `IPAM programme in ${name}.`,
+          career_areas: []
+        });
+      }
+    });
+
+    let list = Array.from(uniqueProgrammes.values());
 
     if (levelFilter !== "all") {
       if (levelFilter === "Degree") {
