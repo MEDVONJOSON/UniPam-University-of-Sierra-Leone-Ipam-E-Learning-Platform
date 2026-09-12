@@ -434,12 +434,6 @@ function TrainingPage() {
                 {activeFaculty?.description}
               </p>
             </div>
-            <Link
-              to={`/ipam/${selectedFacultySlug}`}
-              className="inline-flex items-center gap-2 px-6 py-3 bg-[#0B5E3C] text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-emerald-800 transition-all shadow-md self-start md:self-center"
-            >
-              Faculty Main Page <ArrowRight className="w-4 h-4" />
-            </Link>
           </div>
 
           {/* Programmes Grid */}
@@ -510,12 +504,6 @@ function TrainingPage() {
                       <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
                         {prog.mode || "In person"}
                       </span>
-                      <Link
-                        to={`/ipam/${selectedFacultySlug}/${prog.id}`}
-                        className="inline-flex items-center gap-1.5 text-xs font-black text-[#0B5E3C] group-hover:text-emerald-700 uppercase tracking-wider hover:underline"
-                      >
-                        View Details <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" />
-                      </Link>
                     </div>
                   </div>
                 );
