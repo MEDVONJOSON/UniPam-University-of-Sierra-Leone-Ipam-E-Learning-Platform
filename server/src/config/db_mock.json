@@ -422,7 +422,7 @@
       "name": "Leadership & Governance",
       "slug": "leadership-governance",
       "description": "Public Sector Leadership, Policy Studies, Public Administration, Development Management & Governance.",
-      "programme_count": 7
+      "programme_count": 3
     },
     {
       "id": "f5",
@@ -818,7 +818,7 @@
       "id": "p25",
       "faculty_id": "f4",
       "department_id": "d9",
-      "name": "BSc Leadership & Sustainable Development",
+      "name": "BSc in Leadership and Sustainable Development",
       "level": "Degree",
       "duration": "4 years",
       "mode": "In person",
@@ -836,7 +836,7 @@
       "id": "p26",
       "faculty_id": "f4",
       "department_id": "d9",
-      "name": "BSc Public Policy",
+      "name": "BSc of Science in Public Policy",
       "level": "Degree",
       "duration": "4 years",
       "mode": "In person",
@@ -855,7 +855,7 @@
       "id": "p27",
       "faculty_id": "f4",
       "department_id": "d9",
-      "name": "BSc Public Sector Management",
+      "name": "BSc of Science in Public Sector Management",
       "level": "Degree",
       "duration": "4 years",
       "mode": "In person",
@@ -871,86 +871,6 @@
         "NGO/development officer"
       ],
       "entry_requirements": "Five credits, C5 English, C6 Mathematics and C5 in three relevant liberal-arts subjects such as History, Government, CRK or Economics."
-    },
-    {
-      "id": "p28",
-      "faculty_id": "f4",
-      "department_id": "d9",
-      "name": "Master in Development Management (MDM)",
-      "level": "Postgraduate",
-      "duration": "2 years",
-      "mode": "In person",
-      "status": "Active",
-      "description": "Focuses on strategic planning, implementing, financing and evaluating socio-economic development projects and national programmes.",
-      "career_areas": [
-        "Development project manager",
-        "Policy analyst",
-        "M&E specialist",
-        "Community-development practitioner",
-        "NGO programme manager",
-        "Sustainability/CSR officer",
-        "Development consultant"
-      ]
-    },
-    {
-      "id": "p29",
-      "faculty_id": "f4",
-      "department_id": "d9",
-      "name": "Master in Governance and Leadership (MGL)",
-      "level": "Postgraduate",
-      "duration": "2 years",
-      "mode": "In person",
-      "status": "Active",
-      "description": "Directed toward advanced governance, leadership development, anti-corruption frameworks, and institutional leadership for senior public and private sector officials.",
-      "career_areas": [
-        "Senior government official",
-        "Policy director",
-        "Governance consultant",
-        "Leadership trainer",
-        "Executive manager"
-      ]
-    },
-    {
-      "id": "p30",
-      "faculty_id": "f4",
-      "department_id": "d9",
-      "name": "Master in Public Administration (MPA)",
-      "level": "Postgraduate",
-      "duration": "2 years",
-      "mode": "In person",
-      "status": "Active",
-      "description": "Premier postgraduate training in executive public-sector management, administrative reform, public financial management and state governance.",
-      "career_areas": [
-        "Public-sector manager",
-        "Policy analyst",
-        "Local-government officer",
-        "Public HR manager",
-        "Planning/M&E officer",
-        "Public-financial-management officer",
-        "Regulator/compliance officer",
-        "NGO programme manager"
-      ]
-    },
-    {
-      "id": "p31",
-      "faculty_id": "f4",
-      "department_id": "d9",
-      "name": "Masters of Research and Public Policy (MRPP)",
-      "level": "Postgraduate",
-      "duration": "2 years",
-      "mode": "In person",
-      "status": "Active",
-      "description": "Advanced collaborative postgraduate degree focusing on rigorous research methodologies, policy analysis and evidence-based decision-making in Africa.",
-      "career_areas": [
-        "Policy analyst",
-        "Researcher",
-        "Government planning officer",
-        "M&E specialist",
-        "NGO programme manager",
-        "Governance consultant",
-        "Policy-communication officer",
-        "Academic/research roles"
-      ]
     },
     {
       "id": "p33",

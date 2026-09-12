@@ -53,7 +53,7 @@ const FACULTY_META = {
     color: "from-[#85754E] via-[#6B5E3C] to-[#4F462B]",   
     bg: "bg-[#F5F2EB] text-[#5C4F3D]",    
     border: "border-[#D9D1C3]",
-    programme_count: 7,
+    programme_count: 3,
     description: "Public sector leadership, governance, public administration, public policy, development management and policy analysis."
   },
   "extra-mural-studies": { 
@@ -519,7 +519,7 @@ function IpamPage() {
                 { title: "Faculty of Accounting & Finance", progs: "5 Programmes" },
                 { title: "Faculty of Information Systems & Technology", progs: "3 Programmes (IS, IT & Networking degrees)" },
                 { title: "Faculty of Business Administration & Entrepreneurship", progs: "6 Programmes" },
-                { title: "Faculty of Leadership & Governance", progs: "7 Programmes (3 Undergraduate, 4 Postgraduate)" },
+                { title: "Faculty of Leadership & Governance", progs: "3 Programmes" },
                 { title: "Extra-Mural Studies / Continuing Education", progs: "6 Programmes" }
               ].map((item, i) => (
                 <div key={i} className="flex items-start gap-3.5 p-5 bg-white rounded-2xl border border-slate-200 shadow-sm">

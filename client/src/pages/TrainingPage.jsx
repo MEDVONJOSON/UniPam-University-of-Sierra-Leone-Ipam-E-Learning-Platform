@@ -56,7 +56,7 @@ const FACULTIES_CONFIG = [
     border: "border-[#D9D1C3]",
     activeTab: "bg-[#6B5E3C] text-white shadow-lg",
     description: "Focuses on leadership, governance, public administration, public policy, public-sector management and development.",
-    programme_count: 7
+    programme_count: 3
   },
   {
     id: "f5",

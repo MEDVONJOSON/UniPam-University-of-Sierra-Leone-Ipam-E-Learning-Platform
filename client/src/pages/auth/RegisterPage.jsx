@@ -45,13 +45,9 @@ const IPAM_FACULTIES = [
     id: "f4",
     name: "Faculty of Leadership & Governance",
     programs: [
-      "BSc Public Administration",
-      "BSc Public Policy & Development",
-      "BSc Governance & Leadership",
-      "Diploma in Public Administration",
-      "Diploma in Development Management",
-      "Certificate in Public Sector Leadership",
-      "Postgraduate Diploma in Public Administration"
+      "BSc in Leadership and Sustainable Development",
+      "BSc of Science in Public Policy",
+      "BSc of Science in Public Sector Management"
     ]
   },
   {

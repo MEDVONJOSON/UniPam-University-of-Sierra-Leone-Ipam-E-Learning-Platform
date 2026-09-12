@@ -150,7 +150,7 @@ function HomePage() {
                   id: "f4",
                   iconBg: "bg-[#F5F2EB] text-[#5C4F3D]",
                   borderAccent: "border-t-4 border-t-[#85754E]",
-                  badge: "7 Programmes"
+                  badge: "3 Programmes"
                },
                {
                   name: "Extra-Mural Studies",
