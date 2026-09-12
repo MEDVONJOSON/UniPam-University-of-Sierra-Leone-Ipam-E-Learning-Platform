@@ -174,3 +174,32 @@ exports.markMessageRead = async (req, res) => {
     res.status(500).json({ error: "Failed to mark message read." });
   }
 };
+
+exports.deleteMessage = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.auth.userId;
+    const message = await prisma.message.findFirst({
+      where: {
+        id,
+        OR: [
+          { from_user_id: userId },
+          { to_user_id: userId },
+          { to_user_id: "all" },
+          { to_user_id: "all_students" },
+          { to_user_id: "all_faculty_students" },
+          { to_user_id: "all_department_students" }
+        ]
+      },
+      select: { id: true }
+    });
+
+    if (!message) return res.status(404).json({ error: "Message not found or access denied." });
+
+    await prisma.message.delete({ where: { id: message.id } });
+    res.json({ data: { success: true } });
+  } catch (error) {
+    console.error("Delete message error:", error);
+    res.status(500).json({ error: "Failed to delete message." });
+  }
+};

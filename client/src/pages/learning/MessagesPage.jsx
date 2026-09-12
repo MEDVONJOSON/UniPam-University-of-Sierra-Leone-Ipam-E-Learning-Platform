@@ -1,11 +1,11 @@
 import { useEffect, useState } from "react";
 import { getCurrentUser } from "../../services/authService";
 import {
-  getEnrollments, getMessages, sendMessage, markMessageRead, getMyCourses
+  getEnrollments, getMessages, sendMessage, markMessageRead, deleteMessage, getMyCourses
 } from "../../services/platformService";
 import {
   MessageCircle, Bell, Send, CheckCircle2, AlertCircle,
-  Loader2, X, Clock, CheckCheck, ChevronDown
+  Loader2, X, Clock, CheckCheck, ChevronDown, Trash2
 } from "lucide-react";
 
 function MessagesPage() {
@@ -111,6 +111,17 @@ function MessagesPage() {
       await markMessageRead(id);
       setMessages(prev => prev.map(m => m.id === id ? { ...m, read_at: new Date().toISOString() } : m));
     } catch (_) {}
+  };
+
+  const handleDeleteMessage = async (msg) => {
+    if (!window.confirm(`Delete this message: "${msg.subject}"?`)) return;
+    try {
+      await deleteMessage(msg.id);
+      setMessages(prev => prev.filter(item => item.id !== msg.id));
+      setMsgSuccess("Message deleted successfully.");
+    } catch (err) {
+      setMsgError(err.message || "Failed to delete message.");
+    }
   };
 
   const unreadCount = messages.filter(m => !m.read_at && (isLecturer ? m.from_role !== "lecturer" && m.from_user_id !== "lecturer-uuid" : m.from_role === "lecturer" || m.from_user_id === "lecturer-uuid")).length;
@@ -388,6 +399,13 @@ function MessagesPage() {
                               <CheckCheck className="w-3.5 h-3.5 text-emerald-600" /> Mark as Read
                             </button>
                           )}
+                          <button
+                            onClick={() => handleDeleteMessage(msg)}
+                            className="inline-flex items-center gap-1.5 text-[10px] font-black text-red-600 hover:text-red-700 uppercase tracking-wider"
+                            title="Delete message"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" /> Delete
+                          </button>
                         </div>
                       </div>
                     );
@@ -487,6 +505,7 @@ function MessagesPage() {
                     <div className="mt-4 pt-3 border-t border-slate-200/60 flex items-center justify-between">
                       {isFromLecturer ? (<button onClick={() => handleReply(msg)} className="inline-flex items-center gap-1.5 text-xs font-black text-[#0B5E3C] hover:text-emerald-700 uppercase tracking-wider"><Send className="w-3.5 h-3.5" /> Reply to Lecturer</button>) : (<span className="text-[10px] font-bold text-slate-400 uppercase">Your Sent Inquiry</span>)}
                       {!msg.read_at && isFromLecturer && (<button onClick={() => handleMarkRead(msg.id)} className="text-[10px] font-bold text-slate-400 hover:text-slate-600 flex items-center gap-1"><CheckCheck className="w-3.5 h-3.5 text-emerald-600" /> Mark as Read</button>)}
+                      <button onClick={() => handleDeleteMessage(msg)} className="inline-flex items-center gap-1.5 text-[10px] font-black text-red-600 hover:text-red-700 uppercase tracking-wider" title="Delete message"><Trash2 className="w-3.5 h-3.5" /> Delete</button>
                     </div>
                   </div>
                 );

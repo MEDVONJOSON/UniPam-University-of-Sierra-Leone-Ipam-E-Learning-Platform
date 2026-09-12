@@ -320,3 +320,8 @@ export async function markMessageRead(id) {
   const res = await apiRequest(`/messages/${id}/read`, { method: "PATCH" });
   return res.data;
 }
+
+export async function deleteMessage(id) {
+  const res = await apiRequest(`/messages/${id}`, { method: "DELETE" });
+  return res.data;
+}
