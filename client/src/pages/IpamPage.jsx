@@ -41,7 +41,7 @@ const FACULTY_META = {
     color: "from-amber-500 via-yellow-500 to-amber-600",    
     bg: "bg-amber-50 text-amber-800",     
     border: "border-amber-300",
-    programme_count: 13,
+    programme_count: 6,
     dean: "Dr Ernest Udeh",
     description: "Business management, entrepreneurship, human resources, procurement, logistics, marketing and project management."
   },
@@ -518,7 +518,7 @@ function IpamPage() {
               {[
                 { title: "Faculty of Accounting & Finance", progs: "5 Programmes" },
                 { title: "Faculty of Information Systems & Technology", progs: "3 Programmes (IS, IT & Networking degrees)" },
-                { title: "Faculty of Business Administration & Entrepreneurship", progs: "13 Programmes (6 Undergraduate, 6 Masters/PhD, 1 PGDP)" },
+                { title: "Faculty of Business Administration & Entrepreneurship", progs: "6 Programmes" },
                 { title: "Faculty of Leadership & Governance", progs: "7 Programmes (3 Undergraduate, 4 Postgraduate)" },
                 { title: "Extra-Mural Studies / Continuing Education", progs: "8 Programmes (1 Certificate, 7 Professional Diplomas)" }
               ].map((item, i) => (

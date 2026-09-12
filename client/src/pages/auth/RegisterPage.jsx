@@ -33,19 +33,12 @@ const IPAM_FACULTIES = [
     id: "f3",
     name: "Faculty of Business Administration & Entrepreneurship",
     programs: [
-      "BSc Business Administration",
-      "BSc Human Resource Management",
-      "BSc Marketing Management",
-      "BSc Procurement & Supply Chain Management",
-      "BSc Project Management",
-      "BSc Entrepreneurship",
-      "Diploma in Business Administration",
-      "Diploma in Human Resource Management",
-      "Diploma in Marketing",
-      "Diploma in Procurement & Logistics",
-      "Certificate in Business Management",
-      "MBA (Master of Business Administration)",
-      "Postgraduate Diploma in Management"
+      "BSc in Business Administration",
+      "BSc in Entrepreneurship and Innovation",
+      "BSc in Human Resource Management",
+      "BSc in Procurement,Logistics and Supply Chain Management",
+      "BSc of Science in Project Management",
+      "BSc of Science in Sales and Marketing"
     ]
   },
   {

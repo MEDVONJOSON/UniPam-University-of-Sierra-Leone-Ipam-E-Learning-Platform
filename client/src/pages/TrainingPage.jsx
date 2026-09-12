@@ -43,7 +43,7 @@ const FACULTIES_CONFIG = [
     border: "border-amber-300",
     activeTab: "bg-amber-600 text-white shadow-lg",
     description: "Focuses on business management, entrepreneurship, human resources, procurement, logistics, marketing and project management.",
-    programme_count: 13,
+    programme_count: 6,
     dean: "Dr Ernest Udeh"
   },
   {

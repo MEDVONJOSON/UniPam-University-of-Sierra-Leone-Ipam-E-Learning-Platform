@@ -140,7 +140,7 @@ function HomePage() {
                   id: "f3",
                   iconBg: "bg-amber-50 text-amber-700",
                   borderAccent: "border-t-4 border-t-amber-400",
-                  badge: "13 Programmes"
+                  badge: "6 Programmes"
                },
                {
                   name: "Leadership & Governance",
