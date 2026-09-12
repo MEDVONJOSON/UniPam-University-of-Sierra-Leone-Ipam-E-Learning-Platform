@@ -27,12 +27,9 @@ const IPAM_FACULTIES = [
     name: "Faculty of Information Systems & Technology",
     programs: [
       "BSc Information Systems",
-      "BSc Computer Science",
-      "BSc Networking & Cybersecurity",
-      "Diploma in Information Technology",
-      "Diploma in Web Development",
-      "Certificate in Computer Applications",
-      "Postgraduate Diploma in Information Systems"
+      "BSc Information Technology",
+      "BSc In Computer Networking",
+      "Diploma in Information Systems"
     ]
   },
   {

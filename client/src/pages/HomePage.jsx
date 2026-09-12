@@ -130,7 +130,7 @@ function HomePage() {
                   id: "f2",
                   iconBg: "bg-blue-50 text-blue-700",
                   borderAccent: "border-t-4 border-t-blue-500",
-                  badge: "3 Programmes"
+                  badge: "4 Programmes"
                },
                {
                   name: "Business Administration & Entrepreneurship",

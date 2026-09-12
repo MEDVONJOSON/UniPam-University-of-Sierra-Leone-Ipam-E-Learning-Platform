@@ -31,7 +31,7 @@ const FACULTIES_CONFIG = [
     border: "border-blue-200",
     activeTab: "bg-blue-700 text-white shadow-lg",
     description: "Responsible for IPAM's computing, information systems, networking, cybersecurity, web development and IT education.",
-    programme_count: 3
+    programme_count: 4
   },
   {
     id: "f3",
