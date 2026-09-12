@@ -7,13 +7,20 @@ function ContactPage() {
 
   function onSubmit(event) {
     event.preventDefault();
-    setSubmitted(true);
+    const body = [
+      `Full Name: ${form.name}`,
+      `Email Address: ${form.email}`,
+      "",
+      form.message
+    ].join("\\n");
+    const mailtoUrl = `mailto:registrar@usl.edu.sl?subject=${encodeURIComponent(form.subject)}&body=${encodeURIComponent(body)}`;
+    window.location.href = mailtoUrl;
   }
 
   const inputClass = "block w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-semibold text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-[#0B5E3C]/20 focus:border-[#0B5E3C] transition-all";
 
   const contactInfo = [
-    { icon: <Mail className="w-5 h-5 text-emerald-600" />, label: "Official Email", value: "registrar@usl.edu.sl" },
+    { icon: <Mail className="w-5 h-5 text-emerald-600" />, label: "Official Email", value: "registrar@usl.edu.sl", href: "mailto:registrar@usl.edu.sl" },
     { icon: <Phone className="w-5 h-5 text-emerald-600" />, label: "Registry Office", value: "+23279688260 / +23272659157" },
     { icon: <MapPin className="w-5 h-5 text-emerald-600" />, label: "Main Campus", value: "Tower Hill, Freetown, SL" },
     { icon: <Clock className="w-5 h-5 text-emerald-600" />, label: "Registry Hours", value: "Mon – Fri, 8:30am – 4:30pm" }
@@ -126,7 +133,13 @@ function ContactPage() {
               </div>
               <div className="overflow-hidden">
                 <p className="text-[10px] font-black text-hover-500 uppercase tracking-widest leading-none mb-1">{item.label}</p>
-                <p className="text-sm font-black text-[#0B5E3C] truncate">{item.value}</p>
+                {item.href ? (
+                  <a href={item.href} className="text-sm font-black text-[#0B5E3C] truncate hover:underline">
+                    {item.value}
+                  </a>
+                ) : (
+                  <p className="text-sm font-black text-[#0B5E3C] truncate">{item.value}</p>
+                )}
               </div>
             </div>
           ))}
