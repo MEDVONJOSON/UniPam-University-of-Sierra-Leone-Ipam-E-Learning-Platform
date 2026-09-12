@@ -665,6 +665,14 @@ Please sign in at ${portalUrl} to manage your courses and access your teaching s
                               >
                                 <XCircle className="w-4 h-4" />
                               </button>
+                              <button
+                                onClick={() => setShowDeleteConfirm(user)}
+                                className="p-1.5 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg transition-colors"
+                                title="Delete pending account"
+                                aria-label={`Delete ${user.fullName || user.email}`}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
                             </div>
                           ) : (
                             <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">

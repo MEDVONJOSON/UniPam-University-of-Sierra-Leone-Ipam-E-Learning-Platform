@@ -5,7 +5,7 @@ import { getNotifications, markNotificationRead, markAllNotificationsRead } from
 import {
   LogOut, User, Menu, X, BookOpen, LayoutDashboard, Award,
   GraduationCap, Info, Mail, Search, ChevronDown, Facebook,
-  Twitter, Linkedin, Instagram, Phone, MapPin, Globe, Bell, ShoppingCart, ShieldCheck,
+  Twitter, Linkedin, Instagram, Phone, MapPin, Globe, Bell, ShieldCheck,
   CheckCircle2, Clock, FileText, CheckCheck, Loader2
 } from "lucide-react";
 
@@ -170,16 +170,8 @@ function AppLayout() {
             <div className="hidden lg:flex items-center gap-4">
               {currentUser ? (
                 <div className="flex items-center gap-3">
-                  {/* Action Icons */}
+                  {/* Notification Bell with Dropdown */}
                   <div className="flex items-center gap-1 mr-4">
-                    <button className="p-2.5 text-amber-400 hover:bg-white/10 rounded-xl transition-all relative">
-                      <GraduationCap className="w-5 h-5 text-amber-400" />
-                    </button>
-                    <button className="p-2.5 text-amber-400 hover:bg-white/10 rounded-xl transition-all relative">
-                      <ShoppingCart className="w-5 h-5 text-amber-400" />
-                      <span className="absolute top-2 right-2 w-4 h-4 bg-amber-400 text-brand-950 text-[10px] font-black rounded-full flex items-center justify-center">0</span>
-                    </button>
-                    {/* Notification Bell with Dropdown */}
                     <div className="relative" ref={notifRef}>
                       <button
                         onClick={() => setIsNotifOpen(v => !v)}
