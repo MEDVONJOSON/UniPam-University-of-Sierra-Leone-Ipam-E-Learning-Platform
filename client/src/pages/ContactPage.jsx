@@ -14,7 +14,7 @@ function ContactPage() {
 
   const contactInfo = [
     { icon: <Mail className="w-5 h-5 text-emerald-600" />, label: "Official Email", value: "registrar@usl.edu.sl" },
-    { icon: <Phone className="w-5 h-5 text-emerald-600" />, label: "Registry Office", value: "+232 00 000 000" },
+    { icon: <Phone className="w-5 h-5 text-emerald-600" />, label: "Registry Office", value: "+23279688260 / +23272659157" },
     { icon: <MapPin className="w-5 h-5 text-emerald-600" />, label: "Main Campus", value: "Tower Hill, Freetown, SL" },
     { icon: <Clock className="w-5 h-5 text-emerald-600" />, label: "Registry Hours", value: "Mon – Fri, 8:30am – 4:30pm" }
   ];
@@ -47,11 +47,11 @@ function ContactPage() {
       <div className="text-center pt-12 max-w-2xl mx-auto">
          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-50 text-[#0B5E3C] text-[10px] font-black uppercase tracking-widest mb-6 border border-emerald-200">
             <GraduationCap className="w-4 h-4 text-amber-500" />
-            Registry Support
+            IPAM Platform Support
          </div>
-         <h1 className="text-4xl md:text-5xl font-[900] text-[#0B5E3C] mb-4 uppercase tracking-tight">University Help Desk</h1>
+         <h1 className="text-4xl md:text-5xl font-[900] text-[#0B5E3C] mb-4 uppercase tracking-tight">IPAM-USL Support</h1>
          <p className="text-slate-600 text-base sm:text-lg font-medium leading-relaxed">
-           Connect with the University of Sierra Leone Digital Campus for admissions, technical support, or partnership inquiries.
+           Connect with the IPAM-USL platform team for technical support or academic communication assistance.
          </p>
       </div>
 
@@ -133,13 +133,13 @@ function ContactPage() {
 
           <div className="bg-[#0B5E3C] p-10 rounded-[2.5rem] text-white mt-10 shadow-2xl shadow-brand-900/10 relative overflow-hidden">
             <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
-            <h3 className="text-lg font-black uppercase mb-4 tracking-tight">Visit Freetown Campus</h3>
+            <h3 className="text-lg font-black uppercase mb-4 tracking-tight">Your Learning, One Platform</h3>
             <p className="text-sm text-brand-200 leading-relaxed font-bold italic">
-              "The University of Sierra Leone welcomes all prospective students to our historic campuses at Tower Hill, Mount Aureol, and beyond."
+              "Access your course materials, connect with your lecturers, and manage your learning — all in one secure place, built for IPAM-USL."
             </p>
             <div className="mt-8 flex items-center gap-4">
                <div className="w-12 h-px bg-brand-400" />
-               <span className="text-[10px] font-black uppercase tracking-widest text-brand-400">Oldest in West Africa</span>
+               <span className="text-[10px] font-black uppercase tracking-widest text-brand-400">UniPam</span>
             </div>
           </div>
         </div>
