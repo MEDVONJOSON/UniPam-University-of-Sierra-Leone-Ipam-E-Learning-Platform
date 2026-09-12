@@ -44,16 +44,26 @@ async function main() {
   });
   console.log(`Created Department: ${department.name}`);
 
-  // 4. Create University Program
-  const program = await prisma.universityProgram.create({
-    data: {
-      department_id: department.id,
-      name: "B.Sc. in Information Technology",
-      degree_level: "Degree",
-      duration_years: 4
+  // 4. Create the complete Information Systems & Technology program set
+  const programs = [
+    { name: "BSc Information Systems", degree_level: "Degree", duration_years: 4 },
+    { name: "BSc Information Technology", degree_level: "Degree", duration_years: 4 },
+    { name: "BSc In Computer Networking", degree_level: "Degree", duration_years: 4 },
+    { name: "Diploma in Information Systems", degree_level: "Diploma", duration_years: 2 }
+  ];
+
+  for (const programData of programs) {
+    const existingProgram = await prisma.universityProgram.findFirst({
+      where: { department_id: department.id, name: programData.name }
+    });
+
+    if (!existingProgram) {
+      const program = await prisma.universityProgram.create({
+        data: { department_id: department.id, ...programData }
+      });
+      console.log(`Created Program: ${program.name}`);
     }
-  });
-  console.log(`Created Program: ${program.name}`);
+  }
 
   // 5. Create default Admin User
   const adminPasswordHash = await bcrypt.hash("adminpassword123", 10);
