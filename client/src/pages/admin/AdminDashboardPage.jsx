@@ -44,7 +44,7 @@ function AdminSidebar({ activeTab, setActiveTab, isMobileMenuOpen, setIsMobileMe
           onClick={() => setIsMobileMenuOpen(false)}
         />
       )}
-      <div className={`w-80 flex-shrink-0 flex-col bg-[#0B5E3C] text-white min-h-[calc(100vh-100px)] rounded-[3rem] p-8 shadow-2xl transition-transform ${isMobileMenuOpen ? "fixed inset-y-4 left-4 z-50 flex overflow-y-auto max-h-[calc(100vh-32px)]" : "hidden lg:flex lg:relative lg:inset-0"}`}>
+      <div className={`w-[calc(100vw-2rem)] max-w-80 flex-shrink-0 flex-col bg-[#0B5E3C] text-white min-h-[calc(100vh-100px)] rounded-[2rem] lg:rounded-[3rem] p-5 lg:p-8 shadow-2xl transition-transform ${isMobileMenuOpen ? "fixed inset-y-4 left-4 z-[60] flex overflow-y-auto max-h-[calc(100vh-32px)]" : "hidden lg:flex lg:relative lg:inset-0"}`}>
         <div className="flex items-center justify-between mb-10 px-2">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-2xl bg-white p-1.5 shadow-md flex items-center justify-center flex-shrink-0">
@@ -120,8 +120,9 @@ function TabHeader({ icon, title, subtitle, action, onMenuClick }) {
   return (
     <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 bg-white p-6 md:p-8 rounded-[2.5rem] md:rounded-[3rem] border border-slate-100 shadow-sm">
       <div className="flex items-center gap-4 md:gap-5">
-        <button onClick={onMenuClick} className="lg:hidden p-3 bg-brand-50 text-[#0B5E3C] rounded-xl hover:bg-brand-100 transition-colors">
+        <button onClick={onMenuClick} className="lg:hidden inline-flex items-center gap-2 px-3 py-3 bg-brand-50 text-[#0B5E3C] rounded-xl hover:bg-brand-100 transition-colors font-black text-[10px] uppercase tracking-widest">
           <Menu className="w-6 h-6" />
+          <span>Admin Menu</span>
         </button>
         <div className="w-12 h-12 md:w-14 md:h-14 bg-brand-50 text-[#0B5E3C] rounded-2xl flex items-center justify-center shadow-inner hidden sm:flex">
           {icon}
