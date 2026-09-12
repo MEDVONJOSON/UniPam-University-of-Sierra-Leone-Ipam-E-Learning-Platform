@@ -12,14 +12,11 @@ const IPAM_FACULTIES = [
     id: "f1",
     name: "Faculty of Accounting & Finance",
     programs: [
-      "BSc Accounting",
-      "BSc Banking & Finance",
-      "BSc Financial Management",
-      "Diploma in Accounting",
-      "Diploma in Banking & Finance",
-      "Diploma in Taxation",
-      "Certificate in Financial Accounting",
-      "Postgraduate Diploma in Accounting"
+      "BSc (Hons) in Financial Economics",
+      "BSc in Applied Accounting",
+      "BSc in Auditing, Taxation and Internal Control",
+      "BSc in Banking and Finance",
+      "BSc In Financial Services"
     ]
   },
   {

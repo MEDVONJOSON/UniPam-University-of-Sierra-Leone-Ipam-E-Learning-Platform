@@ -120,7 +120,7 @@ function HomePage() {
                   id: "f1",
                   iconBg: "bg-emerald-50 text-emerald-700",
                   borderAccent: "border-t-4 border-t-emerald-500",
-                  badge: "8 Programmes"
+                  badge: "5 Programmes"
                },
                {
                   name: "Information Systems & Technology",

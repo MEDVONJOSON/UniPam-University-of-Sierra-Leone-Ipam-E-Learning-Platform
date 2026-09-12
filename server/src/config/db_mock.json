@@ -399,7 +399,7 @@
       "name": "Accounting & Finance",
       "slug": "accounting-finance",
       "description": "Financial Accounting, Auditing, Taxation, Banking, Investment, Financial Services & Financial Economics.",
-      "programme_count": 8,
+      "programme_count": 5,
       "dean": "Dr James Kollie"
     },
     {
@@ -407,7 +407,7 @@
       "name": "Information Systems & Technology",
       "slug": "info-systems-tech",
       "description": "Database Systems, Software Engineering, Networks, Cybersecurity, Web/Mobile Development & Data Analytics.",
-      "programme_count": 3
+      "programme_count": 4
     },
     {
       "id": "f3",
@@ -490,7 +490,7 @@
       "id": "p1",
       "faculty_id": "f1",
       "department_id": "d2",
-      "name": "BSc (Hons) Financial Economics",
+      "name": "BSc (Hons) in Financial Economics",
       "level": "Degree",
       "duration": "4 years",
       "mode": "In person",
@@ -512,7 +512,7 @@
       "id": "p2",
       "faculty_id": "f1",
       "department_id": "d1",
-      "name": "BSc Applied Accounting",
+      "name": "BSc in Applied Accounting",
       "level": "Degree",
       "duration": "4 years",
       "mode": "In person",
@@ -530,7 +530,7 @@
       "id": "p3",
       "faculty_id": "f1",
       "department_id": "d1",
-      "name": "BSc Auditing, Taxation and Internal Controls",
+      "name": "BSc in Auditing, Taxation and Internal Control",
       "level": "Degree",
       "duration": "4 years",
       "mode": "In person",
@@ -551,7 +551,7 @@
       "id": "p4",
       "faculty_id": "f1",
       "department_id": "d3",
-      "name": "BSc Banking and Finance",
+      "name": "BSc in Banking and Finance",
       "level": "Degree",
       "duration": "4 years",
       "mode": "In person",
@@ -573,7 +573,7 @@
       "id": "p5",
       "faculty_id": "f1",
       "department_id": "d2",
-      "name": "BSc Financial Services",
+      "name": "BSc In Financial Services",
       "level": "Degree",
       "duration": "4 years",
       "mode": "In person",
@@ -587,60 +587,6 @@
         "Regulatory compliance officer"
       ],
       "entry_requirements": "Five O-Level/WASSCE credits, with C6 or better in English and Mathematics plus C6 or better in Cost Accounting, Financial Accounting or Economics, within two sittings."
-    },
-    {
-      "id": "p6",
-      "faculty_id": "f1",
-      "department_id": "d3",
-      "name": "Executive Masters in Banking and Finance",
-      "level": "Postgraduate",
-      "duration": "2 years",
-      "mode": "In person",
-      "status": "Active",
-      "description": "An advanced executive programme for professionals seeking senior leadership in banking and financial services, covering strategy, risk, and financial innovation.",
-      "career_areas": [
-        "Senior banking officer",
-        "Branch manager",
-        "Treasury manager",
-        "Risk director",
-        "Financial institution executive"
-      ]
-    },
-    {
-      "id": "p7",
-      "faculty_id": "f1",
-      "department_id": "d2",
-      "name": "Master in Financial Economics",
-      "level": "Postgraduate",
-      "duration": "2 years",
-      "mode": "In person",
-      "status": "Active",
-      "description": "Advanced finance/economics analysis, financial-market analysis, economic-policy evaluation and data-driven financial decision-making.",
-      "career_areas": [
-        "Financial economist",
-        "Economic policy analyst",
-        "Research analyst",
-        "Central bank officer",
-        "Investment strategist"
-      ]
-    },
-    {
-      "id": "p8",
-      "faculty_id": "f1",
-      "department_id": "d1",
-      "name": "Masters of Finance and Accounting (MFA)",
-      "level": "Postgraduate",
-      "duration": "2 years",
-      "mode": "In person",
-      "status": "Active",
-      "description": "Advanced finance, accounting and financial-management knowledge, including analysis of complex financial information and strategic financial decision-making.",
-      "career_areas": [
-        "Finance director",
-        "Senior accountant",
-        "CFO",
-        "Financial controller",
-        "Investment manager"
-      ]
     },
     {
       "id": "p9",

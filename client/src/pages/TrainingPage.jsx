@@ -18,7 +18,7 @@ const FACULTIES_CONFIG = [
     border: "border-emerald-200",
     activeTab: "bg-emerald-700 text-white shadow-lg",
     description: "Focuses on accounting, financial management, banking, investment, taxation, auditing and financial economics.",
-    programme_count: 8,
+    programme_count: 5,
     dean: "Dr James Kollie"
   },
   {

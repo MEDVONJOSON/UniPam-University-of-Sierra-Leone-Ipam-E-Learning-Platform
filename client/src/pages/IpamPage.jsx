@@ -18,7 +18,7 @@ const FACULTY_META = {
     color: "from-emerald-600 to-teal-700",    
     bg: "bg-emerald-50 text-emerald-700",   
     border: "border-emerald-200",
-    programme_count: 8,
+    programme_count: 5,
     dean: "Dr James Kollie",
     description: "Financial Accounting, Auditing, Taxation, Banking, Investment, Financial Services and Financial Economics."
   },
@@ -30,7 +30,7 @@ const FACULTY_META = {
     color: "from-blue-600 to-indigo-700",     
     bg: "bg-blue-50 text-blue-700",      
     border: "border-blue-200",
-    programme_count: 3,
+    programme_count: 4,
     description: "Responsible for IPAM's computing, information systems, networking, cybersecurity, web development and IT education."
   },
   "business-admin-entrepreneurship": { 
@@ -516,7 +516,7 @@ function IpamPage() {
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {[
-                { title: "Faculty of Accounting & Finance", progs: "8 Programmes (5 Undergraduate, 3 Postgraduate)" },
+                { title: "Faculty of Accounting & Finance", progs: "5 Programmes" },
                 { title: "Faculty of Information Systems & Technology", progs: "3 Programmes (IS, IT & Networking degrees)" },
                 { title: "Faculty of Business Administration & Entrepreneurship", progs: "13 Programmes (6 Undergraduate, 6 Masters/PhD, 1 PGDP)" },
                 { title: "Faculty of Leadership & Governance", progs: "7 Programmes (3 Undergraduate, 4 Postgraduate)" },
