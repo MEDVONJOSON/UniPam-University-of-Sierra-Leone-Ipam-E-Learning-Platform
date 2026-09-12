@@ -336,8 +336,8 @@ function AppLayout() {
           <div className="lg:hidden bg-[#0B5E3C] border-t border-brand-900/50 p-4">
             <div className="space-y-1 mb-6">
               <NavLink to="/" className={mobileNavItemClass} onClick={() => setIsMenuOpen(false)}>Home</NavLink>
-              <NavLink to="/ipam" className={mobileNavItemClass} onClick={() => setIsMenuOpen(false)}>IPAM Faculties & Programmes</NavLink>
-              <NavLink to="/ipam?level=Degree" className={mobileNavItemClass} onClick={() => setIsMenuOpen(false)}>Undergraduate Programs</NavLink>
+              <NavLink to="/training" className={mobileNavItemClass} onClick={() => setIsMenuOpen(false)}>Explore Programmes By Faculty</NavLink>
+              <NavLink to="/login" className={mobileNavItemClass} onClick={() => setIsMenuOpen(false)}>Sign In And Access Repository</NavLink>
               <NavLink to="/training" className={mobileNavItemClass} onClick={() => setIsMenuOpen(false)}>Specializations</NavLink>
               <NavLink to="/about" className={mobileNavItemClass} onClick={() => setIsMenuOpen(false)}>About</NavLink>
               <NavLink to="/contact" className={mobileNavItemClass} onClick={() => setIsMenuOpen(false)}>Contact</NavLink>
