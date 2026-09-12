@@ -284,17 +284,6 @@ function UserDashboardPage() {
          />
       </div>
 
-      {/* Credit Summary - Desktop Row View */}
-      <div className="hidden lg:grid grid-cols-4 gap-6 -mt-4">
-         <div className="col-start-4">
-            <DashboardStat
-              label="Degree Credits"
-              value={summary.credits || 0}
-              color="text-[#0B5E3C]"
-            />
-         </div>
-      </div>
-
       {/* Navigation Pivot */}
       <div className="flex justify-center -mb-5 relative z-10">
          <div className="bg-white border border-slate-200 px-10 py-3 rounded-full shadow-lg flex items-center gap-3">
