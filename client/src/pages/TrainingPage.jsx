@@ -173,19 +173,18 @@ function TrainingPage() {
         <div className="relative z-10 max-w-4xl mx-auto space-y-6">
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 border border-white/20 text-brand-200 text-[10px] font-black uppercase tracking-[0.2em]">
             <Compass className="w-4 h-4 text-amber-400" />
-            IPAM Academic Specializations & Pathways
+            IPAM E-Learning Resources
           </div>
           <h1 className="text-4xl sm:text-6xl font-[900] leading-tight uppercase tracking-tight">
             Academic <span className="text-amber-400">Specializations</span>
           </h1>
           <p className="text-base sm:text-lg text-brand-100 leading-relaxed max-w-2xl mx-auto font-medium">
-            Explore all 39 accredited university programmes across IPAM's 5 specialized faculties.
-            Designed by the University of Sierra Leone to bridge the skills gap and drive national development.
+            Explore learning resources organized by module, built for IPAM-USL's students and lecturers.
           </p>
           <div className="flex flex-wrap justify-center gap-4 pt-2">
             <div className="bg-white/10 backdrop-blur-md px-6 py-3 rounded-2xl border border-white/20 flex items-center gap-2.5">
               <CheckCircle2 className="w-4 h-4 text-amber-400" />
-              <span className="text-xs font-black uppercase tracking-widest">TEC Accredited</span>
+              <span className="text-xs font-black uppercase tracking-widest">Downloadable Materials</span>
             </div>
             <div className="bg-white/10 backdrop-blur-md px-6 py-3 rounded-2xl border border-white/20 flex items-center gap-2.5">
               <Building2 className="w-4 h-4 text-amber-400" />
@@ -206,19 +205,19 @@ function TrainingPage() {
               <div>
                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Prior Learning Pathway</span>
                 <h2 className="text-2xl sm:text-3xl font-[900] text-[#0B5E3C] uppercase tracking-tight leading-none">
-                  Experience <br />into Credits
+                  Secure, Role-Based <br />Access
                 </h2>
               </div>
             </div>
             <p className="text-slate-600 leading-relaxed text-base font-medium italic">
-              "The University of Sierra Leone recognizes the value of professional experience. Our APEL program allows working professionals to fast-track their degree based on their years in the workforce."
+              "IPAM-USL's e-learning platform gives students and lecturers secure, role-based access — so each user sees only what's relevant to them."
             </p>
             <div className="space-y-3">
               {[
-                "Accreditation of Prior Experiential Learning (APEL)",
-                "Partial exemptions for MBA and Master tracks",
-                "Official certification of professional years",
-                "Reduced tuition burden for verified experts"
+                "Secure user authentication",
+                "Course learning materials in one place",
+                "Academic communication through notifications",
+                "Distinct student and lecturer roles"
               ].map((text, i) => (
                 <div key={i} className="flex items-center gap-3">
                   <CheckCircle2 className="w-4 h-4 text-emerald-600 flex-shrink-0" />
@@ -230,7 +229,7 @@ function TrainingPage() {
               to="/contact" 
               className="inline-flex items-center justify-center px-8 py-4 bg-[#0B5E3C] text-white rounded-2xl font-black text-xs uppercase tracking-widest shadow-xl hover:bg-emerald-800 transition-all hover:scale-105"
             >
-              Check APEL Eligibility
+              Contact
             </Link>
           </div>
           <div className="lg:w-1/2 bg-[#0B5E3C] relative p-10 flex items-center justify-center">
@@ -242,7 +241,7 @@ function TrainingPage() {
               </div>
               <div className="p-8 bg-amber-500 rounded-[2rem] shadow-2xl text-slate-950">
                 <p className="text-4xl font-[900]">100%</p>
-                <p className="text-[10px] font-black uppercase tracking-widest mt-2">TEC Accredited</p>
+                <p className="text-[10px] font-black uppercase tracking-widest mt-2">Downloadable Materials</p>
               </div>
             </div>
           </div>
@@ -460,23 +459,20 @@ function TrainingPage() {
       {/* ── Career Guidance Advisory CTA ── */}
       <section className="container mx-auto px-6 py-8 text-center max-w-4xl">
         <div className="bg-slate-50 border border-slate-200 p-10 rounded-[3rem] space-y-6">
-          <h2 className="text-3xl font-[900] text-[#0B5E3C] uppercase tracking-tight">University Career Guidance</h2>
+          <h2 className="text-3xl font-[900] text-[#0B5E3C] uppercase tracking-tight">UniPam E-Learning IPAM</h2>
           <p className="text-slate-600 text-sm sm:text-base leading-relaxed font-medium max-w-2xl mx-auto">
-            Need advice selecting your degree program or specialization? The USL & IPAM Academic Advisory team is available to guide your admissions journey.
+            Everything you need to access course materials and manage your learning is right here.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-2">
             <Link 
               to="/contact" 
               className="px-8 py-4 bg-[#0B5E3C] text-white rounded-full font-black text-xs uppercase tracking-widest shadow-xl hover:bg-emerald-800 transition-all hover:scale-105"
             >
-              Consult Academic Advisor
+              Contact Support
             </Link>
-            <Link 
-              to="/ipam" 
-              className="px-8 py-4 bg-white text-[#0B5E3C] border border-slate-200 rounded-full font-black text-xs uppercase tracking-widest hover:bg-slate-100 transition-all"
-            >
-              All 39 Programmes
-            </Link>
+            <span className="px-8 py-4 bg-white text-[#0B5E3C] border border-slate-200 rounded-full font-black text-xs uppercase tracking-widest">
+              40 Programmes
+            </span>
           </div>
         </div>
       </section>
