@@ -316,13 +316,6 @@ function ProfilePage() {
                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">TOTAL MATERIALS UPLOADED</p>
                 <p className="text-3xl font-[900] text-[#0B5E3C] mt-1">{totalMaterialsCount} Files</p>
               </div>
-              <div className="h-px bg-slate-200" />
-              <div>
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">TEACHING EXPERIENCE</p>
-                <p className="text-sm font-black text-slate-700 mt-0.5">
-                  {profile?.enrollmentYear ? `${new Date().getFullYear() - parseInt(profile.enrollmentYear)} Years Experience` : (profile?.designation || "Senior Academic Staff")}
-                </p>
-              </div>
             </div>
 
           </div>

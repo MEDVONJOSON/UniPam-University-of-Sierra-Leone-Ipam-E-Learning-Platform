@@ -552,31 +552,31 @@ function TeachingPage() {
 
 
       {/* ════════════════════════════════════════════════════════════════════════
-          SECTION 5 (LAST): ACADEMIC RESOURCES & LECTURER GUIDELINES
+          SECTION 5 (LAST): COURSE MATERIALS
       ════════════════════════════════════════════════════════════════════════ */}
       <section className="bg-[#0B5E3C] rounded-[2.5rem] p-10 lg:p-12 text-white relative overflow-hidden shadow-xl">
         <div className="relative z-10 max-w-3xl">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-amber-400 text-[10px] font-black uppercase tracking-widest mb-4">
-            <GraduationCap className="w-3.5 h-3.5" /> University of Sierra Leone eLearning Standards
+            <GraduationCap className="w-3.5 h-3.5" /> IPAM-USL E-Learning
           </div>
           <h2 className="text-2xl sm:text-3xl font-[900] uppercase tracking-tight mb-3">
-            Academic Delivery Guidelines
+            Your Course Materials
           </h2>
           <p className="text-brand-100 text-xs sm:text-sm font-medium leading-relaxed mb-6">
-            Ensure all uploaded course syllabus materials comply with the Tertiary Education Commission (TEC) accreditation benchmarks. Lecture notes and continuous assessments must be published at least 48 hours prior to scheduled class sessions.
+            Upload and manage your course materials so students can access them, and stay connected through notifications.
           </p>
           <div className="flex flex-wrap gap-4">
             <Link
-              to="/app/repository"
+              to="/app/teach"
               className="px-6 py-3 bg-white text-[#0B5E3C] rounded-xl text-xs font-black uppercase tracking-widest shadow-md hover:bg-slate-50 transition-all"
             >
-              Browse Central Repository
+              My Materials
             </Link>
             <Link
               to="/contact"
               className="px-6 py-3 border border-white/30 text-white rounded-xl text-xs font-black uppercase tracking-widest hover:bg-white/10 transition-all"
             >
-              Contact Academic Secretariat
+              Contact Support
             </Link>
           </div>
         </div>

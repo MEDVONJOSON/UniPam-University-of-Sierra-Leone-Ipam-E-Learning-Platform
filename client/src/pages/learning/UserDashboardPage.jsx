@@ -386,21 +386,21 @@ function UserDashboardPage() {
             )}
          </div>
 
-         {/* ════════════════════════════════════════════════════════════════════
-             SECTION 5 (LAST): OFFICIAL INSTITUTIONAL DIGITAL EXAMS BANNER
-         ════════════════════════════════════════════════════════════════════ */}
+          {/* ════════════════════════════════════════════════════════════════════
+             SECTION 5 (LAST): UNIPAM E-LEARNING BANNER
+          ════════════════════════════════════════════════════════════════════ */}
          <div className="bg-[#0B5E3C] rounded-[3.5rem] p-12 lg:p-20 relative overflow-hidden flex flex-col lg:flex-row items-center gap-12 text-center lg:text-left text-white shadow-2xl">
             <div className="absolute top-0 right-0 w-96 h-96 bg-brand-400/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
             <div className="relative z-10 flex-grow max-w-2xl">
                <div className="inline-block px-4 py-1.5 bg-white/10 border border-white/20 rounded-full text-[10px] font-black uppercase tracking-widest mb-6">Digital Transformation</div>
                <h2 className="text-3xl lg:text-5xl font-black leading-tight mb-6 uppercase tracking-tight">
-                  Official <br /><span className="text-amber-400 font-black">Digital Exams</span> Portal
+                  UniPam E-Learning
                </h2>
                <p className="text-lg text-brand-100 font-medium leading-relaxed mb-10 opacity-80">
-                  Prepare for your end-of-semester assessments through our proctored digital examination environment. Access past papers and mock exams today.
+                  Access course materials and communicate with lecturers and student.
                </p>
                <button className="px-12 py-5 bg-white text-[#0B5E3C] rounded-2xl font-black uppercase tracking-widest shadow-xl hover:bg-slate-50 transition-all hover:scale-105 active:scale-95">
-                  Academic Portal
+                  UniPam
                </button>
             </div>
             <div className="relative z-10 w-full lg:w-1/3 flex justify-center">
