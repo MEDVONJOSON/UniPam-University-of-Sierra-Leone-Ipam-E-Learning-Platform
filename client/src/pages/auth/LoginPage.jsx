@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { loginUser } from "../../services/authService";
-import { Lock, AlertCircle, Loader2, User, GraduationCap, BadgeCheck, Mail, BookOpen } from "lucide-react";
+import { Lock, AlertCircle, Loader2, GraduationCap, BadgeCheck, Mail, BookOpen } from "lucide-react";
 
 function LoginPage() {
   const [loginMode, setLoginMode] = useState("student"); // "student" | "lecturer"
@@ -60,7 +60,7 @@ function LoginPage() {
             UniPam Portal
           </h2>
           <p className="mt-2 text-sm text-slate-400 font-black uppercase tracking-[0.2em]">
-            University of Sierra Leone eLearning
+            IPAM University of Sierra Leone eLearning
           </p>
         </div>
 
@@ -232,60 +232,6 @@ function LoginPage() {
             </div>
           )}
 
-          {/* Divider */}
-          <div className="relative my-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-slate-100" />
-            </div>
-            <div className="relative flex justify-center">
-              <span className="bg-white px-3 text-[10px] font-black text-slate-300 uppercase tracking-widest">
-                Quick Access
-              </span>
-            </div>
-          </div>
-
-          {/* Quick Demo Login Buttons */}
-          <div className="space-y-3">
-            <button
-              type="button"
-              id="demo-student-login-btn"
-              onClick={() => {
-                localStorage.setItem("currentUser", JSON.stringify({
-                  id: "261102433",
-                  name: "Alhaji Koroma",
-                  email: "a.koroma@usl.edu.sl",
-                  role: "learner",
-                  studentIdNumber: "261102433"
-                }));
-                localStorage.setItem("idwAuthToken", "usl-demo-token");
-                navigate("/app/dashboard");
-              }}
-              className="w-full flex items-center justify-center gap-3 h-14 text-[10px] font-black rounded-2xl text-[#0B5E3C] bg-slate-50 hover:bg-slate-100 transition-all border border-slate-100 uppercase tracking-widest"
-            >
-              <User className="w-4 h-4" />
-              Quick Demo — Student Login
-            </button>
-
-            <button
-              type="button"
-              id="demo-lecturer-login-btn"
-              onClick={() => {
-                localStorage.setItem("currentUser", JSON.stringify({
-                  id: "lecturer-uuid",
-                  name: "Dr. Ernest Udeh, Ph.D.",
-                  email: "lecturer@usl.edu.sl",
-                  role: "lecturer",
-                  studentIdNumber: ""
-                }));
-                localStorage.setItem("idwAuthToken", "usl-demo-lecturer-token");
-                navigate("/app/teach");
-              }}
-              className="w-full flex items-center justify-center gap-3 h-14 text-[10px] font-black rounded-2xl text-white bg-emerald-700 hover:bg-emerald-800 transition-all shadow-md shadow-emerald-700/20 uppercase tracking-widest"
-            >
-              <BookOpen className="w-4 h-4" />
-              Quick Demo — Lecturer Login
-            </button>
-          </div>
         </form>
       </div>
     </div>
