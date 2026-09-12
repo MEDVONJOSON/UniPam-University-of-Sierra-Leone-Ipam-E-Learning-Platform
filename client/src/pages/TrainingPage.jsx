@@ -175,13 +175,14 @@ function TrainingPage() {
   };
 
   const activeFaculty = useMemo(() => {
-    return faculties.find(f => f.slug === selectedFacultySlug) || faculties[0];
-  }, [faculties, selectedFacultySlug]);
+    return FACULTIES_CONFIG.find(f => f.slug === selectedFacultySlug) || FACULTIES_CONFIG[0];
+  }, [selectedFacultySlug]);
 
   const filteredProgrammes = useMemo(() => {
+    const approvedNames = APPROVED_PROGRAMMES[selectedFacultySlug] || [];
+    const approvedKeys = new Set(approvedNames.map(programmeKey));
     const liveProgrammes = allProgrammes.filter(p => {
-      const matchFaculty = p.faculty_slug === selectedFacultySlug || (activeFaculty && p.faculty_id === activeFaculty.id);
-      return matchFaculty;
+      return approvedKeys.has(programmeKey(p.name));
     });
 
     const uniqueProgrammes = new Map();
@@ -190,7 +191,6 @@ function TrainingPage() {
       if (key && !uniqueProgrammes.has(key)) uniqueProgrammes.set(key, programme);
     });
 
-    const approvedNames = APPROVED_PROGRAMMES[selectedFacultySlug] || [];
     approvedNames.forEach((name, index) => {
       const key = programmeKey(name);
       if (!uniqueProgrammes.has(key)) {
@@ -229,7 +229,7 @@ function TrainingPage() {
     }
 
     return list;
-  }, [allProgrammes, selectedFacultySlug, activeFaculty, levelFilter, searchQuery]);
+  }, [allProgrammes, selectedFacultySlug, levelFilter, searchQuery]);
 
   return (
     <div className="space-y-20 pb-24">
