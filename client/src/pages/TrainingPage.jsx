@@ -270,12 +270,15 @@ function TrainingPage() {
             return (
               <button
                 key={fac.id}
+                type="button"
                 onClick={() => handleFacultyClick(fac.slug)}
+                aria-pressed={isSelected}
+                aria-label={`View ${fac.name} programmes`}
                 className={`p-5 rounded-2xl text-left border transition-all duration-300 flex flex-col justify-between group ${
                   isSelected
                     ? "bg-[#0B5E3C] text-white border-[#0B5E3C] shadow-xl scale-[1.02]"
                     : "bg-white text-slate-800 border-slate-200 hover:border-emerald-400 hover:shadow-md"
-                }`}
+                } cursor-pointer`}
               >
                 <div className="flex items-center justify-between mb-3">
                   <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
