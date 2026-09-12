@@ -58,14 +58,12 @@ const IPAM_FACULTIES = [
     id: "f5",
     name: "Faculty of Extra-Mural Studies",
     programs: [
-      "Diploma in Community Development",
-      "Diploma in Adult Education",
-      "Diploma in Gender Studies",
-      "Certificate in NGO Management",
-      "Certificate in Social Work",
-      "Certificate in Environmental Studies",
-      "Certificate in Peace & Conflict Resolution",
-      "Certificate in Rural Development"
+      "Diploma in Applied Accounting",
+      "Diploma in Banking and Finance",
+      "Diploma in Business Administration",
+      "Diplomas in Financial Services",
+      "Diploma in Information Technology",
+      "Diploma in Procurement and Supply"
     ]
   }
 ];

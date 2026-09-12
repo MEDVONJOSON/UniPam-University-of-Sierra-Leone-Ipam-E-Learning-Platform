@@ -68,7 +68,7 @@ const FACULTIES_CONFIG = [
     border: "border-rose-200",
     activeTab: "bg-rose-700 text-white shadow-lg",
     description: "Extends university education into provincial communities with professional diplomas and certificate programmes.",
-    programme_count: 8
+    programme_count: 6
   }
 ];
 

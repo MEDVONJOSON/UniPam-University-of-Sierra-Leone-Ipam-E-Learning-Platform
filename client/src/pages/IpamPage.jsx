@@ -64,7 +64,7 @@ const FACULTY_META = {
     color: "from-rose-600 to-pink-700",       
     bg: "bg-rose-50 text-rose-700",      
     border: "border-rose-200",
-    programme_count: 8,
+    programme_count: 6,
     description: "Extending university learning into provincial communities through accredited professional diploma and certificate education."
   }
 };
@@ -520,7 +520,7 @@ function IpamPage() {
                 { title: "Faculty of Information Systems & Technology", progs: "3 Programmes (IS, IT & Networking degrees)" },
                 { title: "Faculty of Business Administration & Entrepreneurship", progs: "6 Programmes" },
                 { title: "Faculty of Leadership & Governance", progs: "7 Programmes (3 Undergraduate, 4 Postgraduate)" },
-                { title: "Extra-Mural Studies / Continuing Education", progs: "8 Programmes (1 Certificate, 7 Professional Diplomas)" }
+                { title: "Extra-Mural Studies / Continuing Education", progs: "6 Programmes" }
               ].map((item, i) => (
                 <div key={i} className="flex items-start gap-3.5 p-5 bg-white rounded-2xl border border-slate-200 shadow-sm">
                   <CheckCircle2 className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />

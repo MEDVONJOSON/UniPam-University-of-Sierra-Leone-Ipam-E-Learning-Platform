@@ -160,7 +160,7 @@ function HomePage() {
                   id: "f5",
                   iconBg: "bg-rose-50 text-rose-700",
                   borderAccent: "border-t-4 border-t-rose-500",
-                  badge: "8 Programmes"
+                  badge: "6 Programmes"
                }
             ].map((faculty, i) => (
                <div

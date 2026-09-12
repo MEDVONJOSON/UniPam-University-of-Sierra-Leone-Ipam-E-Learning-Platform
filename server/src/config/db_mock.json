@@ -953,24 +953,6 @@
       ]
     },
     {
-      "id": "p32",
-      "faculty_id": "f5",
-      "department_id": "d10",
-      "name": "Certificate in Business and Finance",
-      "level": "Certificate",
-      "duration": "1 year",
-      "mode": "In person",
-      "status": "Active",
-      "description": "A one-year foundational certificate introducing business, finance, accounting, and commerce fundamentals for workforce entry or progressive study.",
-      "career_areas": [
-        "Junior business assistant",
-        "Finance clerk",
-        "Customer service representative",
-        "Administrative trainee"
-      ],
-      "entry_requirements": "Four GCE O-Level/WASSCE credits, with C6 or better in English or Mathematics plus three other subjects."
-    },
-    {
       "id": "p33",
       "faculty_id": "f5",
       "department_id": "d10",
@@ -1031,7 +1013,7 @@
       "id": "p36",
       "faculty_id": "f5",
       "department_id": "d10",
-      "name": "Diploma in Financial Services",
+      "name": "Diplomas in Financial Services",
       "level": "Diploma",
       "duration": "2 years",
       "mode": "In person",
@@ -1083,24 +1065,5 @@
       ],
       "entry_requirements": "Four GCE O-Level/WASSCE credits, with C6 or better in English or Mathematics plus three other subjects."
     },
-    {
-      "id": "p39",
-      "faculty_id": "f5",
-      "department_id": "d10",
-      "name": "Diploma in Public Sector Management",
-      "level": "Diploma",
-      "duration": "2 years",
-      "mode": "In person",
-      "status": "Active",
-      "description": "A professional diploma in government administration, public service ethics, civil service procedures, and local administrative management.",
-      "career_areas": [
-        "Civil service officer",
-        "Administrative officer",
-        "Government clerk",
-        "Local government officer",
-        "Registry officer"
-      ],
-      "entry_requirements": "Four GCE O-Level/WASSCE credits, with C6 or better in English or Mathematics plus three other subjects."
-    }
   ]
 }
