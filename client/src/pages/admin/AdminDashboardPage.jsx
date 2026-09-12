@@ -647,8 +647,8 @@ Please sign in at ${portalUrl} to manage your courses and access your teaching s
                         )}
                       </td>
                       <td className="py-4 text-[10px] text-slate-400 font-bold">{new Date(user.created_at).toLocaleDateString()}</td>
-                      <td className="py-4 text-right pr-4">
-                        <div className="flex items-center justify-end gap-1.5">
+                      <td className="py-4 text-right pr-4 sticky right-0 bg-white group-hover:bg-slate-50/50">
+                        <div className="flex items-center justify-end gap-1.5 min-w-max">
                           {isPending ? (
                             <div className="flex items-center gap-1">
                               <button
@@ -667,11 +667,11 @@ Please sign in at ${portalUrl} to manage your courses and access your teaching s
                               </button>
                               <button
                                 onClick={() => setShowDeleteConfirm(user)}
-                                className="p-1.5 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg transition-colors"
+                                className="flex items-center gap-1.5 px-2.5 py-1.5 bg-red-50 hover:bg-red-100 text-red-600 rounded-lg text-[10px] font-black uppercase tracking-wider transition-colors"
                                 title="Delete pending account"
                                 aria-label={`Delete ${user.fullName || user.email}`}
                               >
-                                <Trash2 className="w-4 h-4" />
+                                <Trash2 className="w-3.5 h-3.5" /> <span>Delete</span>
                               </button>
                             </div>
                           ) : (
