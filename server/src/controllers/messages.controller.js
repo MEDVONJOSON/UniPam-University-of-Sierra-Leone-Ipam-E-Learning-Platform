@@ -179,7 +179,7 @@ exports.deleteMessage = async (req, res) => {
   try {
     const { id } = req.params;
     const userId = req.auth.userId;
-    const canDeleteAnyVisibleMessage = req.auth.role === "lecturer" || req.auth.role === "admin";
+    const canDeleteAnyVisibleMessage = req.auth.role === "admin";
     const message = await prisma.message.findFirst({
       where: {
         id,

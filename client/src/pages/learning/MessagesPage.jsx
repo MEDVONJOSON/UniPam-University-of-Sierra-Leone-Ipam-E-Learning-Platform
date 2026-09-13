@@ -335,6 +335,7 @@ function MessagesPage() {
                 <div className="space-y-4">
                   {messages.map((msg) => {
                     const isSentByMe = msg.from_user_id === user?.id || msg.from_role === "lecturer";
+                    const canDeleteMessage = user?.role === "admin" || msg.from_user_id === user?.id;
                     return (
                       <div
                         key={msg.id}
@@ -399,13 +400,15 @@ function MessagesPage() {
                               <CheckCheck className="w-3.5 h-3.5 text-emerald-600" /> Mark as Read
                             </button>
                           )}
-                          <button
-                            onClick={() => handleDeleteMessage(msg)}
-                            className="inline-flex items-center gap-1.5 text-[10px] font-black text-red-600 hover:text-red-700 uppercase tracking-wider"
-                            title="Delete message"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" /> Delete
-                          </button>
+                          {canDeleteMessage && (
+                            <button
+                              onClick={() => handleDeleteMessage(msg)}
+                              className="inline-flex items-center gap-1.5 text-[10px] font-black text-red-600 hover:text-red-700 uppercase tracking-wider"
+                              title="Delete your message"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" /> Delete
+                            </button>
+                          )}
                         </div>
                       </div>
                     );
