@@ -3,7 +3,7 @@ import { Link, Navigate } from "react-router-dom";
 import { getCurrentUser } from "../../services/authService";
 import {
   getMyCourses, getCourseMaterials,
-  uploadCourseMaterial, getCourseModules, createCourseModule
+  uploadCourseMaterial, createCourseModule
 } from "../../services/platformService";
 import {
   BookOpen, Plus, Loader2, AlertCircle, X,
@@ -66,10 +66,6 @@ function StatPill({ value, label, color }) {
 // ─── Upload Learning Materials Form ──────────────────────────────────────────
 function UploadMaterialsForm({ courses, onSuccess, onCancel }) {
   const [selectedCourseId, setSelectedCourseId] = useState("");
-  const [modules, setModules]           = useState([]);
-  const [loadingModules, setLoadingModules] = useState(false);
-  const [newModuleTitle, setNewModuleTitle] = useState("");
-  const [addingModule, setAddingModule] = useState(false);
   const [dragOver, setDragOver]         = useState(false);
   const [uploading, setUploading]       = useState(false);
   const [error, setError]               = useState("");
@@ -78,32 +74,10 @@ function UploadMaterialsForm({ courses, onSuccess, onCancel }) {
 
   const [form, setForm] = useState({
     title: "", description: "", materialCategory: "lecture_notes",
-    moduleId: "", lectureNoteNumber: "", weekLabel: "",
+    moduleTopic: "", lectureNoteNumber: "", weekLabel: "",
     semester: "", academicYear: "", isPublished: true,
     file: null, externalUrl: ""
   });
-
-  // Load modules when course changes
-  useEffect(() => {
-    if (!selectedCourseId) { setModules([]); return; }
-    setLoadingModules(true);
-    getCourseModules(selectedCourseId)
-      .then(setModules)
-      .catch(() => setModules([]))
-      .finally(() => setLoadingModules(false));
-  }, [selectedCourseId]);
-
-  const handleAddModule = async () => {
-    if (!newModuleTitle.trim() || !selectedCourseId) return;
-    setAddingModule(true);
-    try {
-      const mod = await createCourseModule(selectedCourseId, { title: newModuleTitle.trim() });
-      setModules(prev => [...prev, mod]);
-      setForm(f => ({ ...f, moduleId: mod.id }));
-      setNewModuleTitle("");
-    } catch (_) {}
-    finally { setAddingModule(false); }
-  };
 
   const handleFile = (file) => {
     if (file) setForm(f => ({ ...f, file, externalUrl: "" }));
@@ -126,9 +100,13 @@ function UploadMaterialsForm({ courses, onSuccess, onCancel }) {
     setError("");
     setSuccess("");
     try {
-      await uploadCourseMaterial(selectedCourseId, form);
+      const moduleTopic = form.moduleTopic.trim();
+      const module = moduleTopic
+        ? await createCourseModule(selectedCourseId, { title: moduleTopic })
+        : null;
+      await uploadCourseMaterial(selectedCourseId, { ...form, moduleId: module?.id || "" });
       setSuccess("Learning material uploaded successfully!");
-      setForm(f => ({ ...f, title: "", description: "", lectureNoteNumber: "", weekLabel: "", file: null, externalUrl: "" }));
+      setForm(f => ({ ...f, title: "", description: "", moduleTopic: "", lectureNoteNumber: "", weekLabel: "", file: null, externalUrl: "" }));
       if (fileRef.current) fileRef.current.value = "";
       onSuccess?.();
     } catch (err) {
@@ -187,7 +165,7 @@ function UploadMaterialsForm({ courses, onSuccess, onCancel }) {
               <div className="relative">
                 <select
                   value={selectedCourseId}
-                  onChange={e => { setSelectedCourseId(e.target.value); setForm(f => ({ ...f, moduleId: "" })); }}
+                  onChange={e => setSelectedCourseId(e.target.value)}
                   className={`${inp} appearance-none pr-10`}
                 >
                   <option value="">— Select a course —</option>
@@ -199,20 +177,13 @@ function UploadMaterialsForm({ courses, onSuccess, onCancel }) {
 
             <div>
               <label className={lbl}>Module / Topic</label>
-              <div className="flex gap-2">
-                <div className="relative flex-grow">
-                  <select
-                    value={form.moduleId}
-                    onChange={e => setForm(f => ({ ...f, moduleId: e.target.value }))}
-                    disabled={!selectedCourseId || loadingModules}
-                    className={`${inp} appearance-none pr-10 disabled:opacity-50`}
-                  >
-                    <option value="">— General (no specific module) —</option>
-                    {modules.map(m => <option key={m.id} value={m.id}>{m.title}</option>)}
-                  </select>
-                  <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
-                </div>
-              </div>
+              <input
+                type="text"
+                value={form.moduleTopic}
+                onChange={e => setForm(f => ({ ...f, moduleTopic: e.target.value }))}
+                placeholder="e.g. Data Analysis - Lecture One"
+                className={inp}
+              />
             </div>
           </div>
         </div>
