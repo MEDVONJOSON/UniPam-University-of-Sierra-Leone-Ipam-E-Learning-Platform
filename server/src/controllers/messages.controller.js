@@ -179,17 +179,22 @@ exports.deleteMessage = async (req, res) => {
   try {
     const { id } = req.params;
     const userId = req.auth.userId;
+    const canDeleteAnyVisibleMessage = req.auth.role === "lecturer" || req.auth.role === "admin";
     const message = await prisma.message.findFirst({
       where: {
         id,
-        OR: [
-          { from_user_id: userId },
-          { to_user_id: userId },
-          { to_user_id: "all" },
-          { to_user_id: "all_students" },
-          { to_user_id: "all_faculty_students" },
-          { to_user_id: "all_department_students" }
-        ]
+        ...(canDeleteAnyVisibleMessage
+          ? {
+              OR: [
+                { from_user_id: userId },
+                { to_user_id: userId },
+                { to_user_id: "all" },
+                { to_user_id: "all_students" },
+                { to_user_id: "all_faculty_students" },
+                { to_user_id: "all_department_students" }
+              ]
+            }
+          : { from_user_id: userId })
       },
       select: { id: true }
     });

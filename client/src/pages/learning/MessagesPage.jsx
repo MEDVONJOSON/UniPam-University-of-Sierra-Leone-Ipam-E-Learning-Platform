@@ -505,7 +505,9 @@ function MessagesPage() {
                     <div className="mt-4 pt-3 border-t border-slate-200/60 flex items-center justify-between">
                       {isFromLecturer ? (<button onClick={() => handleReply(msg)} className="inline-flex items-center gap-1.5 text-xs font-black text-[#0B5E3C] hover:text-emerald-700 uppercase tracking-wider"><Send className="w-3.5 h-3.5" /> Reply to Lecturer</button>) : (<span className="text-[10px] font-bold text-slate-400 uppercase">Your Sent Inquiry</span>)}
                       {!msg.read_at && isFromLecturer && (<button onClick={() => handleMarkRead(msg.id)} className="text-[10px] font-bold text-slate-400 hover:text-slate-600 flex items-center gap-1"><CheckCheck className="w-3.5 h-3.5 text-emerald-600" /> Mark as Read</button>)}
-                      <button onClick={() => handleDeleteMessage(msg)} className="inline-flex items-center gap-1.5 text-[10px] font-black text-red-600 hover:text-red-700 uppercase tracking-wider" title="Delete message"><Trash2 className="w-3.5 h-3.5" /> Delete</button>
+                      {!isFromLecturer && msg.from_user_id === user?.id && (
+                        <button onClick={() => handleDeleteMessage(msg)} className="inline-flex items-center gap-1.5 text-[10px] font-black text-red-600 hover:text-red-700 uppercase tracking-wider" title="Delete your message"><Trash2 className="w-3.5 h-3.5" /> Delete</button>
+                      )}
                     </div>
                   </div>
                 );
