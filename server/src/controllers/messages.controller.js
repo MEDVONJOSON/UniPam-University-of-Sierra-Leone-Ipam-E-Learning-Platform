@@ -49,60 +49,13 @@ exports.listMessages = async (req, res) => {
 
       orConditions.push(studentCondition);
     } else {
-      // For students, first find lecturers who teach courses matching student's Year, Faculty, Department
-      const user = await prisma.user.findUnique({
-        where: { id: userId },
-        include: { profile: { select: { faculty_id: true, department_id: true, current_academic_year: true } } }
-      });
-      const studentFacultyId = user?.profile?.faculty_id;
-      const studentFacultyText = user?.profile?.faculty;
-      const studentDeptId = user?.profile?.department_id;
-      const studentDeptText = user?.profile?.department;
-      
-      const hasFaculty = studentFacultyId || studentFacultyText;
-      const hasDept = studentDeptId || studentDeptText;
-      
-      let validLecturerIds = [];
-      if (hasFaculty && hasDept) {
-        const validLecturerProfiles = await prisma.profile.findMany({
-          where: {
-            user: { role: { in: ["lecturer", "admin"] } }
-          },
-          select: { user_id: true, faculty_id: true, faculty: true, department_id: true, department: true }
-        });
-        
-        const validSet = new Set();
-        for (const instProfile of validLecturerProfiles) {
-          const facultyMatch = 
-            (studentFacultyId && instProfile.faculty_id === studentFacultyId) ||
-            (studentFacultyText && instProfile.faculty?.toLowerCase() === studentFacultyText.toLowerCase());
-            
-          const deptMatch = 
-            (studentDeptId && instProfile.department_id === studentDeptId) ||
-            (studentDeptText && instProfile.department?.toLowerCase() === studentDeptText.toLowerCase());
-          
-          if (facultyMatch && deptMatch) {
-            validSet.add(instProfile.user_id);
-          }
-        }
-        validLecturerIds = [...validSet];
-      }
-      
-      // If validLecturerIds is empty, we must ensure they don't see ANY lecturer messages.
-      // So if a message is from a lecturer, its from_user_id must be in validLecturerIds.
       orConditions = [
         { from_user_id: userId },
-        {
-          AND: [
-            { to_user_id: { in: [userId, "all", "all_students", "all_faculty_students", "all_department_students"] } },
-            {
-              OR: [
-                { from_role: { not: "lecturer" } }, // not from a lecturer
-                { from_user_id: { in: validLecturerIds.length > 0 ? validLecturerIds : ["none"] } } // if from lecturer, must be valid
-              ]
-            }
-          ]
-        }
+        { to_user_id: userId },
+        { to_user_id: "all" },
+        { to_user_id: "all_students" },
+        { to_user_id: "all_faculty_students" },
+        { to_user_id: "all_department_students" }
       ];
     }
 
@@ -265,54 +218,12 @@ exports.sendMessage = async (req, res) => {
             targetUsers = allStudents;
           }
         } else {
-          // Inquiry from student -> notify ONLY valid lecturers for this student (and admins)
-          const studentProfile = await prisma.profile.findUnique({
-            where: { user_id: userId },
-            select: { faculty_id: true, faculty: true, department_id: true, department: true, current_academic_year: true }
-          });
-          
-          const studentFacultyId = studentProfile?.faculty_id;
-          const studentFacultyText = studentProfile?.faculty;
-          const studentDeptId = studentProfile?.department_id;
-          const studentDeptText = studentProfile?.department;
-          
-          const hasFaculty = studentFacultyId || studentFacultyText;
-          const hasDept = studentDeptId || studentDeptText;
-          
-          let validLecturerIds = [];
-          if (hasFaculty && hasDept) {
-            const validLecturerProfiles = await prisma.profile.findMany({
-              where: {
-                user: { role: { in: ["lecturer", "admin"] } }
-              },
-              select: { user_id: true, faculty_id: true, faculty: true, department_id: true, department: true }
-            });
-            
-            for (const instProfile of validLecturerProfiles) {
-              const facultyMatch = 
-                (studentFacultyId && instProfile.faculty_id === studentFacultyId) ||
-                (studentFacultyText && instProfile.faculty?.toLowerCase() === studentFacultyText.toLowerCase());
-                
-              const deptMatch = 
-                (studentDeptId && instProfile.department_id === studentDeptId) ||
-                (studentDeptText && instProfile.department?.toLowerCase() === studentDeptText.toLowerCase());
-              
-              if (facultyMatch && deptMatch) {
-                validLecturerIds.push(instProfile.user_id);
-              }
-            }
-          }
-          
-          const targetRoleLecturers = await prisma.user.findMany({
-            where: { 
-              OR: [
-                { role: "admin" },
-                { role: "lecturer", id: { in: validLecturerIds.length > 0 ? validLecturerIds : ["none"] } }
-              ]
-            },
+          // Inquiry from student -> notify lecturers/admins
+          const lecturers = await prisma.user.findMany({
+            where: { role: { in: ["lecturer", "admin"] } },
             select: { id: true }
           });
-          targetUsers = targetRoleLecturers;
+          targetUsers = lecturers;
         }
 
         if (targetUsers.length > 0) {

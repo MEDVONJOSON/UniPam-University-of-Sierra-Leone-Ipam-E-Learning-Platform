@@ -191,69 +191,42 @@ exports.downloadMaterial = async (req, res) => {
     return res.status(404).json({ error: "Material not found." });
   }
 
-  // Verify user is enrolled (or is a lecturer/admin or in matching faculty+department)
-  if (req.auth.role === "student" || req.auth.role === "learner") {
-    const { prisma } = require("../config/db");
-    const enroll = await prisma.enrollment.findUnique({
-      where: {
-        user_id_course_id: {
-          user_id: req.auth.userId,
-          course_id: material.course_id
-        }
-      }
-    });
-    if (!enroll) {
-      // Check faculty + department match via course instructor
-      const course = await prisma.course.findUnique({
-        where: { id: material.course_id },
-        select: { is_internal: true, instructor_id: true }
-      });
-
-      let isAllowed = false;
-
-      if (course?.is_internal && course.instructor_id) {
-        const user = await prisma.user.findUnique({
-          where: { id: req.auth.userId },
-          include: { profile: { select: { faculty_id: true, department_id: true, current_academic_year: true } } }
-        });
-
-        const studentFacultyId = user?.profile?.faculty_id || null;
-        const studentDeptId = user?.profile?.department_id || null;
-
-        if (studentFacultyId && studentDeptId) {
-          const instructorProfile = await prisma.profile.findUnique({
-            where: { user_id: course.instructor_id },
-            select: { faculty_id: true, department_id: true }
-          });
-
-          const facultyMatch = instructorProfile?.faculty_id === studentFacultyId;
-          const deptMatch = instructorProfile?.department_id === studentDeptId;
-          
-          let yearMatch = true;
-          const fullCourse = await prisma.course.findUnique({ where: { id: material.course_id }, select: { skill_level: true } });
-          if (user?.profile?.current_academic_year && fullCourse?.skill_level) {
-             const studentYearString = `Year ${user.profile.current_academic_year}`;
-             if (fullCourse.skill_level.toLowerCase().trim() !== studentYearString.toLowerCase().trim()) {
-                 yearMatch = false;
-             }
+    // Verify user is enrolled (or is a lecturer/admin or in matching faculty+department)
+    if (req.auth.role === "student" || req.auth.role === "learner") {
+      const { prisma } = require("../config/db");
+      const enroll = await prisma.enrollment.findUnique({
+        where: {
+          user_id_course_id: {
+            user_id: req.auth.userId,
+            course_id: material.course_id
           }
-
-          isAllowed = facultyMatch && deptMatch && yearMatch;
         }
-      }
-
-      if (isAllowed) {
-        // Auto-enroll for continuous access
-        await prisma.enrollment.upsert({
-          where: { user_id_course_id: { user_id: req.auth.userId, course_id: material.course_id } },
-          create: { user_id: req.auth.userId, course_id: material.course_id, status: "enrolled" },
-          update: {}
-        }).catch(() => {});
-      } else {
-        return res.status(403).json({ error: "You are not enrolled in this course." });
+      });
+      if (!enroll) {
+        // If it's an internal course, allow them access
+        const course = await prisma.course.findUnique({
+          where: { id: material.course_id },
+          select: { is_internal: true }
+        });
+  
+        let isAllowed = false;
+  
+        if (course?.is_internal) {
+          isAllowed = true;
+        }
+  
+        if (isAllowed) {
+          // Auto-enroll for continuous access
+          await prisma.enrollment.upsert({
+            where: { user_id_course_id: { user_id: req.auth.userId, course_id: material.course_id } },
+            create: { user_id: req.auth.userId, course_id: material.course_id, status: "enrolled" },
+            update: {}
+          }).catch(() => {});
+        } else {
+          return res.status(403).json({ error: "You are not enrolled in this course." });
+        }
       }
     }
-  }
 
   await Material.incrementDownloadCount(materialId);
 

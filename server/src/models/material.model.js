@@ -53,47 +53,16 @@ class Material {
       where: { user_id_course_id: { user_id: userId, course_id: courseId } }
     });
 
-    // If student is not explicitly enrolled, check faculty + department match via instructor
+    // If student is not explicitly enrolled, allow them to view materials if it's an internal course
     if (!enrollment && !isStaff) {
       const course = await prisma.course.findUnique({
         where: { id: courseId },
-        select: { id: true, is_internal: true, instructor_id: true }
+        select: { id: true, is_internal: true }
       });
 
-      if (course?.is_internal && course.instructor_id) {
-        const studentFacultyId = user?.profile?.faculty_id || null;
-        const studentDeptId = user?.profile?.department_id || null;
-
-        // Only match if student has both faculty and department set
-        if (studentFacultyId && studentDeptId) {
-          const instructorProfile = await prisma.profile.findUnique({
-            where: { user_id: course.instructor_id },
-            select: { faculty_id: true, department_id: true }
-          });
-
-          const facultyMatch = instructorProfile?.faculty_id === studentFacultyId;
-          const deptMatch = instructorProfile?.department_id === studentDeptId;
-          
-          let yearMatch = true;
-          // We need course.skill_level to check yearMatch. We didn't fetch it, so let's refetch if needed.
-          // Since we didn't fetch it in the parent query, we can just fetch it here or modify the parent query.
-          const fullCourse = await prisma.course.findUnique({ where: { id: courseId }, select: { skill_level: true } });
-          if (user?.profile?.current_academic_year && fullCourse?.skill_level) {
-             const studentYearString = `Year ${user.profile.current_academic_year}`;
-             if (fullCourse.skill_level.toLowerCase().trim() !== studentYearString.toLowerCase().trim()) {
-                 yearMatch = false;
-             }
-          }
-
-          if (facultyMatch && deptMatch && yearMatch) {
-            // Auto-enroll so student has continuous access
-            enrollment = await prisma.enrollment.upsert({
-              where: { user_id_course_id: { user_id: userId, course_id: courseId } },
-              create: { user_id: userId, course_id: courseId, status: "enrolled" },
-              update: {}
-            }).catch(() => null);
-          }
-        }
+      if (course?.is_internal) {
+        // We consider them temporarily "enrolled" for the purpose of viewing this internal course
+        enrollment = { course_id: courseId };
       }
     }
 
@@ -157,69 +126,13 @@ class Material {
       });
       const enrolledCourseIds = new Set(enrollments.map(e => e.course_id));
 
-      // 2. Faculty + Department matching via instructor profile (structured IDs)
-      const studentFacultyId = user?.profile?.faculty_id || null;
-      const studentDeptId = user?.profile?.department_id || null;
+      const internalCourses = await prisma.course.findMany({
+        where: { is_internal: true },
+        select: { id: true }
+      });
+      const internalCourseIds = internalCourses.map(c => c.id);
 
-      const deptMatchedCourseIds = [];
-
-      // Only attempt matching if student has both faculty and department set
-      if (studentFacultyId && studentDeptId) {
-        const internalCourses = await prisma.course.findMany({
-          where: { is_internal: true },
-          select: { id: true, instructor_id: true, skill_level: true }
-        });
-
-        // Batch-fetch all instructor profiles in one query for efficiency
-        const instructorIds = [...new Set(
-          internalCourses
-            .filter(c => c.instructor_id && !enrolledCourseIds.has(c.id))
-            .map(c => c.instructor_id)
-        )];
-
-        const instructorProfiles = await prisma.profile.findMany({
-          where: { user_id: { in: instructorIds } },
-          select: { user_id: true, faculty_id: true, department_id: true }
-        });
-        const instructorProfileMap = Object.fromEntries(
-          instructorProfiles.map(p => [p.user_id, p])
-        );
-
-        for (const c of internalCourses) {
-          if (enrolledCourseIds.has(c.id)) continue;
-          if (!c.instructor_id) continue;
-
-          const instProfile = instructorProfileMap[c.instructor_id];
-          if (!instProfile) continue;
-
-          // Match requires BOTH faculty AND department to be the same
-          const facultyMatch = instProfile.faculty_id === studentFacultyId;
-          const deptMatch = instProfile.department_id === studentDeptId;
-          
-          let yearMatch = true;
-          if (user?.profile?.current_academic_year && c.skill_level) {
-             const studentYearString = `Year ${user.profile.current_academic_year}`;
-             if (c.skill_level.toLowerCase().trim() !== studentYearString.toLowerCase().trim()) {
-                 yearMatch = false;
-             }
-          }
-
-          if (facultyMatch && deptMatch && yearMatch) {
-            deptMatchedCourseIds.push(c.id);
-          }
-        }
-      }
-
-      targetCourseIds = [...new Set([...enrolledCourseIds, ...deptMatchedCourseIds])];
-
-      // Auto-enroll in background for newly discovered department courses
-      for (const cId of deptMatchedCourseIds) {
-        prisma.enrollment.upsert({
-          where: { user_id_course_id: { user_id: userId, course_id: cId } },
-          create: { user_id: userId, course_id: cId, status: "enrolled" },
-          update: {}
-        }).catch(() => {});
-      }
+      targetCourseIds = [...new Set([...enrolledCourseIds, ...internalCourseIds])];
     }
 
     if (targetCourseIds.length === 0) return [];
