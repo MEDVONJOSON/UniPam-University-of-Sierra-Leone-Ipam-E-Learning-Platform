@@ -55,19 +55,24 @@ exports.listMessages = async (req, res) => {
         include: { profile: { select: { faculty_id: true, department_id: true, current_academic_year: true } } }
       });
       const studentFacultyId = user?.profile?.faculty_id;
+      const studentFacultyText = user?.profile?.faculty;
       const studentDeptId = user?.profile?.department_id;
+      const studentDeptText = user?.profile?.department;
+      
+      const hasFaculty = studentFacultyId || studentFacultyText;
+      const hasDept = studentDeptId || studentDeptText;
       
       let validLecturerIds = [];
-      if (studentFacultyId && studentDeptId) {
+      if (hasFaculty && hasDept) {
         const internalCourses = await prisma.course.findMany({
           where: { is_internal: true },
-          select: { id: true, instructor_id: true, skill_level: true }
+          select: { id: true, instructor_id: true }
         });
         
         const instructorIds = [...new Set(internalCourses.map(c => c.instructor_id).filter(Boolean))];
         const instructorProfiles = await prisma.profile.findMany({
           where: { user_id: { in: instructorIds } },
-          select: { user_id: true, faculty_id: true, department_id: true }
+          select: { user_id: true, faculty_id: true, faculty: true, department_id: true, department: true }
         });
         const instMap = Object.fromEntries(instructorProfiles.map(p => [p.user_id, p]));
         
@@ -76,8 +81,13 @@ exports.listMessages = async (req, res) => {
           const instProfile = instMap[c.instructor_id];
           if (!instProfile) continue;
           
-          const facultyMatch = instProfile.faculty_id === studentFacultyId;
-          const deptMatch = instProfile.department_id === studentDeptId;
+          const facultyMatch = 
+            (studentFacultyId && instProfile.faculty_id === studentFacultyId) ||
+            (studentFacultyText && instProfile.faculty?.toLowerCase() === studentFacultyText.toLowerCase());
+            
+          const deptMatch = 
+            (studentDeptId && instProfile.department_id === studentDeptId) ||
+            (studentDeptText && instProfile.department?.toLowerCase() === studentDeptText.toLowerCase());
           
           if (facultyMatch && deptMatch) {
             validSet.add(c.instructor_id);
@@ -266,20 +276,28 @@ exports.sendMessage = async (req, res) => {
           // Inquiry from student -> notify ONLY valid lecturers for this student (and admins)
           const studentProfile = await prisma.profile.findUnique({
             where: { user_id: userId },
-            select: { faculty_id: true, department_id: true, current_academic_year: true }
+            select: { faculty_id: true, faculty: true, department_id: true, department: true, current_academic_year: true }
           });
           
+          const studentFacultyId = studentProfile?.faculty_id;
+          const studentFacultyText = studentProfile?.faculty;
+          const studentDeptId = studentProfile?.department_id;
+          const studentDeptText = studentProfile?.department;
+          
+          const hasFaculty = studentFacultyId || studentFacultyText;
+          const hasDept = studentDeptId || studentDeptText;
+          
           let validLecturerIds = [];
-          if (studentProfile?.faculty_id && studentProfile?.department_id) {
+          if (hasFaculty && hasDept) {
             const internalCourses = await prisma.course.findMany({
               where: { is_internal: true },
-              select: { id: true, instructor_id: true, skill_level: true }
+              select: { id: true, instructor_id: true }
             });
             
             const instructorIds = [...new Set(internalCourses.map(c => c.instructor_id).filter(Boolean))];
             const instructorProfiles = await prisma.profile.findMany({
               where: { user_id: { in: instructorIds } },
-              select: { user_id: true, faculty_id: true, department_id: true }
+              select: { user_id: true, faculty_id: true, faculty: true, department_id: true, department: true }
             });
             const instMap = Object.fromEntries(instructorProfiles.map(p => [p.user_id, p]));
             
@@ -287,8 +305,13 @@ exports.sendMessage = async (req, res) => {
               const instProfile = instMap[c.instructor_id];
               if (!instProfile) continue;
               
-              const facultyMatch = instProfile.faculty_id === studentProfile.faculty_id;
-              const deptMatch = instProfile.department_id === studentProfile.department_id;
+              const facultyMatch = 
+                (studentFacultyId && instProfile.faculty_id === studentFacultyId) ||
+                (studentFacultyText && instProfile.faculty?.toLowerCase() === studentFacultyText.toLowerCase());
+                
+              const deptMatch = 
+                (studentDeptId && instProfile.department_id === studentDeptId) ||
+                (studentDeptText && instProfile.department?.toLowerCase() === studentDeptText.toLowerCase());
               
               if (facultyMatch && deptMatch) {
                 validLecturerIds.push(c.instructor_id);
