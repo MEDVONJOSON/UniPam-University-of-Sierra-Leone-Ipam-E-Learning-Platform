@@ -79,15 +79,7 @@ exports.listMessages = async (req, res) => {
           const facultyMatch = instProfile.faculty_id === studentFacultyId;
           const deptMatch = instProfile.department_id === studentDeptId;
           
-          let yearMatch = true;
-          if (user?.profile?.current_academic_year && c.skill_level) {
-            const studentYearString = `Year ${user.profile.current_academic_year}`;
-            if (c.skill_level.toLowerCase().trim() !== studentYearString.toLowerCase().trim()) {
-                yearMatch = false;
-            }
-          }
-          
-          if (facultyMatch && deptMatch && yearMatch) {
+          if (facultyMatch && deptMatch) {
             validSet.add(c.instructor_id);
           }
         }
@@ -298,15 +290,7 @@ exports.sendMessage = async (req, res) => {
               const facultyMatch = instProfile.faculty_id === studentProfile.faculty_id;
               const deptMatch = instProfile.department_id === studentProfile.department_id;
               
-              let yearMatch = true;
-              if (studentProfile.current_academic_year && c.skill_level) {
-                const studentYearString = `Year ${studentProfile.current_academic_year}`;
-                if (c.skill_level.toLowerCase().trim() !== studentYearString.toLowerCase().trim()) {
-                    yearMatch = false;
-                }
-              }
-              
-              if (facultyMatch && deptMatch && yearMatch) {
+              if (facultyMatch && deptMatch) {
                 validLecturerIds.push(c.instructor_id);
               }
             }
