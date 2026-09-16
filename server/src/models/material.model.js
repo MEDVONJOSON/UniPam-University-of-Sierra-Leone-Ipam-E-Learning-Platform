@@ -1,4 +1,5 @@
 const { prisma } = require("../config/db");
+const { findMatchingLecturerIds } = require("../utils/org-scope");
 
 function sanitizeLectureNoteNumber(val) {
   if (val === null || val === undefined) return null;
@@ -53,15 +54,17 @@ class Material {
       where: { user_id_course_id: { user_id: userId, course_id: courseId } }
     });
 
-    // If student is not explicitly enrolled, check department / faculty match
+    // If student is not explicitly enrolled, allow only when uploader/instructor matches org scope
     if (!enrollment && !isStaff) {
       const course = await prisma.course.findUnique({
         where: { id: courseId },
         select: { id: true, is_internal: true, category: true, instructor_id: true }
       });
 
-      if (course?.is_internal) {
-        // Auto-enroll so student has continuous access
+      const { materialAccessibleToStudent } = require("../utils/org-scope");
+      const probe = { course_id: courseId, uploaded_by: course?.instructor_id || null };
+      const allowed = await materialAccessibleToStudent(userId, probe);
+      if (allowed) {
         enrollment = await prisma.enrollment.upsert({
           where: { user_id_course_id: { user_id: userId, course_id: courseId } },
           create: { user_id: userId, course_id: courseId, status: "enrolled" },
@@ -117,92 +120,22 @@ class Material {
 
     const isStaff = user?.role === "admin" || user?.role === "lecturer";
 
-    let targetCourseIds = [];
-
-    if (isStaff) {
-      const allCourses = await prisma.course.findMany({ select: { id: true } });
-      targetCourseIds = allCourses.map(c => c.id);
-    } else {
-      // 1. Explicit enrollments
-      const enrollments = await prisma.enrollment.findMany({
-        where: { user_id: userId },
-        select: { course_id: true }
-      });
-      const enrolledCourseIds = new Set(enrollments.map(e => e.course_id));
-
-      // 2. Department & Faculty matching for university courses
-      const studentFaculty = (user?.profile?.faculty || "").toLowerCase();
-      const studentDept = (user?.profile?.department || "").toLowerCase();
-      const studentProg = (user?.profile?.university_program_id || "").toLowerCase();
-
-      const internalCourses = await prisma.course.findMany({
-        where: { is_internal: true },
-        select: {
-          id: true,
-          title: true,
-          category: true,
-          instructor_id: true
-        }
-      });
-
-      const deptMatchedCourseIds = [];
-      for (const c of internalCourses) {
-        if (enrolledCourseIds.has(c.id)) {
-          continue;
-        }
-
-        const cat = (c.category || "").toLowerCase();
-        const facultyMatch = studentFaculty && (cat.includes(studentFaculty) || studentFaculty.includes(cat));
-        const deptMatch = studentDept && (cat.includes(studentDept) || studentDept.includes(cat));
-
-        let progMatch = false;
-        if (studentProg.includes("information systems") || studentProg.startsWith("f2::")) {
-          if (cat.includes("information systems") || cat.includes("technology")) {
-            progMatch = true;
-          }
-        }
-
-        let instructorMatch = false;
-        if (c.instructor_id) {
-          const instProfile = await prisma.profile.findUnique({
-            where: { user_id: c.instructor_id },
-            select: { faculty: true, department: true }
-          });
-          const instFac = (instProfile?.faculty || "").toLowerCase();
-          const instDept = (instProfile?.department || "").toLowerCase();
-          if (studentFaculty && instFac && (studentFaculty.includes(instFac) || instFac.includes(studentFaculty))) {
-            instructorMatch = true;
-          }
-          if (studentDept && instDept && (studentDept.includes(instDept) || instDept.includes(studentDept))) {
-            instructorMatch = true;
-          }
-        }
-
-        const generalMatch = !studentFaculty && !studentDept && c.category?.includes("Faculty");
-
-        if (facultyMatch || deptMatch || progMatch || instructorMatch || generalMatch) {
-          deptMatchedCourseIds.push(c.id);
-        }
-      }
-
-      targetCourseIds = [...new Set([...enrolledCourseIds, ...deptMatchedCourseIds])];
-
-      // Auto-enroll in background for newly discovered department courses
-      for (const cId of deptMatchedCourseIds) {
-        prisma.enrollment.upsert({
-          where: { user_id_course_id: { user_id: userId, course_id: cId } },
-          create: { user_id: userId, course_id: cId, status: "enrolled" },
-          update: {}
-        }).catch(() => {});
-      }
-    }
-
-    if (targetCourseIds.length === 0) return [];
-
     const where = {
-      course_id: { in: targetCourseIds },
       is_published: true
     };
+
+    if (isStaff) {
+      // Staff can browse all published materials
+    } else {
+      const matchingLecturerIds = await findMatchingLecturerIds(userId);
+      if (matchingLecturerIds.length === 0) return [];
+
+      // See notes only from lecturers in the student's faculty (and department when set)
+      where.OR = [
+        { uploaded_by: { in: matchingLecturerIds } },
+        { course: { instructor_id: { in: matchingLecturerIds } } }
+      ];
+    }
 
     if (courseId) {
       where.course_id = courseId;
@@ -226,7 +159,7 @@ class Material {
     const list = await prisma.courseMaterial.findMany({
       where,
       include: {
-        course: { select: { title: true, category: true } },
+        course: { select: { title: true, category: true, instructor_id: true } },
         module: { select: { title: true } },
         saved_materials: { where: { user_id: userId } }
       },
@@ -234,31 +167,45 @@ class Material {
       take: 500
     });
 
+    if (!isStaff) {
+      const courseIds = [...new Set(list.map((cm) => cm.course_id).filter(Boolean))];
+      for (const cId of courseIds) {
+        prisma.enrollment.upsert({
+          where: { user_id_course_id: { user_id: userId, course_id: cId } },
+          create: { user_id: userId, course_id: cId, status: "enrolled" },
+          update: {}
+        }).catch(() => {});
+      }
+    }
+
     const uploaderIds = [...new Set(list.map(cm => cm.uploaded_by).filter(Boolean))];
     const profiles = await prisma.profile.findMany({
       where: { user_id: { in: uploaderIds } },
-      select: { user_id: true, full_name: true }
+      select: { user_id: true, full_name: true, faculty: true, department: true }
     });
-    const profileMap = Object.fromEntries(profiles.map(p => [p.user_id, p.full_name]));
+    const profileMap = Object.fromEntries(profiles.map(p => [p.user_id, p]));
 
     let result = list.map(cm => {
-      const uName = cm.uploaded_by ? profileMap[cm.uploaded_by] || null : null;
+      const uploader = cm.uploaded_by ? profileMap[cm.uploaded_by] : null;
+      const uName = uploader?.full_name || null;
       return {
         ...cm,
         file_size_bytes: cm.file_size_bytes ? Number(cm.file_size_bytes) : null,
         file_size: cm.file_size_bytes ? Number(cm.file_size_bytes) : null,
         course_title: cm.course.title,
-        course_department: cm.course.category || null,
+        course_department: cm.course.category || uploader?.department || uploader?.faculty || null,
         module_title: cm.module?.title || null,
         uploader_name: uName,
         lecturer_name: uName,
+        lecturer_faculty: uploader?.faculty || null,
+        lecturer_department: uploader?.department || null,
         is_saved: cm.saved_materials.length > 0
       };
     });
 
     if (search) {
       const q = search.toLowerCase();
-      result = result.filter(cm => 
+      result = result.filter(cm =>
         (cm.title || "").toLowerCase().includes(q) ||
         (cm.description || "").toLowerCase().includes(q) ||
         (cm.course_title || "").toLowerCase().includes(q) ||
@@ -266,13 +213,15 @@ class Material {
         (cm.week_label || "").toLowerCase().includes(q) ||
         (cm.original_filename || "").toLowerCase().includes(q) ||
         (cm.uploader_name || "").toLowerCase().includes(q) ||
-        (cm.lecturer_name || "").toLowerCase().includes(q)
+        (cm.lecturer_name || "").toLowerCase().includes(q) ||
+        (cm.lecturer_faculty || "").toLowerCase().includes(q) ||
+        (cm.lecturer_department || "").toLowerCase().includes(q)
       );
     }
 
     if (lecturer) {
       const l = lecturer.toLowerCase();
-      result = result.filter(cm => 
+      result = result.filter(cm =>
         (cm.uploader_name || "").toLowerCase().includes(l) ||
         (cm.lecturer_name || "").toLowerCase().includes(l)
       );

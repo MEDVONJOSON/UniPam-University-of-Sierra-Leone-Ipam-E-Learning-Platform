@@ -107,27 +107,36 @@ exports.createMaterial = async (req, res) => {
     isPublished:       isPublished !== "false" && isPublished !== false
   });
 
-  // Notify all students enrolled in this course if published
+  // Notify faculty/department students when a note is published
   if (material.is_published) {
     try {
       const { prisma } = require("../config/db");
-      const enrollResult = await prisma.enrollment.findMany({
+      const { findStudentsMatchingLecturer } = require("../utils/org-scope");
+
+      const matchingStudentIds = await findStudentsMatchingLecturer(req.auth.userId);
+      const enrolled = await prisma.enrollment.findMany({
         where: { course_id: courseId },
         select: { user_id: true }
       });
-      const notifTitle = "New Learning Material Available";
+
+      const recipientIds = [...new Set([
+        ...matchingStudentIds,
+        ...enrolled.map((row) => row.user_id)
+      ])].filter((id) => id !== req.auth.userId);
+
+      const notifTitle = "New Lecture Note Available";
       const itemDesc = material.week_label ? `${material.week_label} – ${material.title}` : material.title;
       const notifMsg = `${course.title}: ${itemDesc} has been uploaded by your lecturer.`;
 
-      for (const row of enrollResult) {
-        await prisma.notification.create({
-          data: {
-            user_id: row.user_id,
+      if (recipientIds.length > 0) {
+        await prisma.notification.createMany({
+          data: recipientIds.map((userId) => ({
+            user_id: userId,
             title: notifTitle,
             message: notifMsg,
             type: "info",
             link: "/app/repository"
-          }
+          }))
         }).catch(() => {});
       }
     } catch (notifErr) {
@@ -164,9 +173,16 @@ exports.downloadMaterial = async (req, res) => {
     return res.status(404).json({ error: "Material not found." });
   }
 
-  // Verify user is enrolled (or is a lecturer/admin or in matching department/faculty)
+  // Students may download notes only from lecturers in their faculty/department
   if (req.auth.role === "student" || req.auth.role === "learner") {
     const { prisma } = require("../config/db");
+    const { materialAccessibleToStudent } = require("../utils/org-scope");
+
+    const allowed = await materialAccessibleToStudent(req.auth.userId, material);
+    if (!allowed) {
+      return res.status(403).json({ error: "This material is outside your faculty/department." });
+    }
+
     const enroll = await prisma.enrollment.findUnique({
       where: {
         user_id_course_id: {
@@ -175,32 +191,13 @@ exports.downloadMaterial = async (req, res) => {
         }
       }
     });
+
     if (!enroll) {
-      const user = await prisma.user.findUnique({
-        where: { id: req.auth.userId },
-        include: { profile: true }
-      });
-      const course = await prisma.course.findUnique({
-        where: { id: material.course_id }
-      });
-
-      const userFaculty = (user?.profile?.faculty || "").toLowerCase();
-      const userDept = (user?.profile?.department || "").toLowerCase();
-      const courseCat = (course?.category || "").toLowerCase();
-
-      const isAllowed = course?.is_internal ||
-        (userFaculty && courseCat.includes(userFaculty)) ||
-        (userDept && courseCat.includes(userDept));
-
-      if (isAllowed) {
-        await prisma.enrollment.upsert({
-          where: { user_id_course_id: { user_id: req.auth.userId, course_id: material.course_id } },
-          create: { user_id: req.auth.userId, course_id: material.course_id, status: "enrolled" },
-          update: {}
-        }).catch(() => {});
-      } else {
-        return res.status(403).json({ error: "You are not enrolled in this course." });
-      }
+      await prisma.enrollment.upsert({
+        where: { user_id_course_id: { user_id: req.auth.userId, course_id: material.course_id } },
+        create: { user_id: req.auth.userId, course_id: material.course_id, status: "enrolled" },
+        update: {}
+      }).catch(() => {});
     }
   }
 
