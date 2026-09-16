@@ -561,17 +561,36 @@ function MessagesPage() {
       {/* INBOX FOR STUDENT */}
       {msgTab === "inbox" && (
         <div className="bg-white rounded-[2rem] border border-slate-200 shadow-sm p-8">
+          {/* Message Type Filter for Students */}
+          <div className="mb-6 flex justify-end">
+            <div className="w-full sm:w-64">
+              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5">Message Type</label>
+              <div className="relative">
+                <select
+                  value={typeFilter}
+                  onChange={(e) => setTypeFilter(e.target.value)}
+                  className="block w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all outline-none appearance-none pr-10"
+                >
+                  <option value="All">All Messages</option>
+                  <option value="Sent">Sent by Me</option>
+                  <option value="Received">Received from Lecturer</option>
+                </select>
+                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+              </div>
+            </div>
+          </div>
+
           {loading ? (<div className="text-center py-16"><Loader2 className="w-8 h-8 text-emerald-600 animate-spin mx-auto" /></div>
-          ) : messages.length === 0 ? (
+          ) : filteredMessages.length === 0 ? (
             <div className="text-center py-20 bg-slate-50 rounded-3xl border border-dashed border-slate-200">
               <MessageCircle className="w-12 h-12 text-slate-300 mx-auto mb-3" />
-              <p className="font-black text-slate-500 text-sm uppercase tracking-wider">No Messages Yet</p>
+              <p className="font-black text-slate-500 text-sm uppercase tracking-wider">No Messages Found</p>
               <p className="text-xs text-slate-400 mt-1">Announcements and replies from your lecturers will appear here.</p>
               <button onClick={() => setMsgTab("compose")} className="mt-5 px-6 py-2.5 bg-[#0B5E3C] text-white text-xs font-black uppercase tracking-wider rounded-xl shadow-sm">Ask a Question</button>
             </div>
           ) : (
             <div className="space-y-4">
-              {messages.map((msg) => {
+              {filteredMessages.map((msg) => {
                 const isFromLecturer = msg.from_role === "lecturer" || msg.from_user_id === "lecturer-uuid";
                 return (
                   <div key={msg.id} className={`p-6 rounded-2xl border transition-all ${!msg.read_at && isFromLecturer ? "bg-emerald-50/40 border-emerald-300 shadow-sm" : "bg-slate-50/70 border-slate-200/80 hover:bg-white hover:border-slate-300"}`}>
