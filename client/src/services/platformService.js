@@ -308,6 +308,11 @@ export async function getMessages() {
   return res.data || [];
 }
 
+export async function getFacultyLecturers() {
+  const res = await apiRequest("/messages/lecturers");
+  return res.data || [];
+}
+
 export async function sendMessage(payload) {
   const res = await apiRequest("/messages", {
     method: "POST",

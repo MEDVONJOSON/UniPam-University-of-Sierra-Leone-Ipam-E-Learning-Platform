@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { getCurrentUser } from "../../services/authService";
 import {
-  getEnrollments, getMessages, sendMessage, markMessageRead, deleteMessage, getMyCourses
+  getEnrollments, getMessages, sendMessage, markMessageRead, deleteMessage, getMyCourses, getFacultyLecturers
 } from "../../services/platformService";
 import {
   MessageCircle, Bell, Send, CheckCircle2, AlertCircle,
@@ -15,6 +15,7 @@ function MessagesPage() {
   const [messages, setMessages]       = useState([]);
   const [enrollments, setEnrollments] = useState([]);
   const [courses, setCourses]         = useState([]);
+  const [lecturers, setLecturers]     = useState([]);
   const [loading, setLoading]         = useState(true);
   const [msgTab, setMsgTab]           = useState("inbox");
   const [msgSending, setMsgSending]   = useState(false);
@@ -23,8 +24,8 @@ function MessagesPage() {
   const [replyTo, setReplyTo]         = useState(null);
 
   const [composeForm, setComposeForm] = useState({
-    to_user_id: isLecturer ? "all_faculty_students" : "lecturer-uuid",
-    to_name: isLecturer ? "All Students Enrolled in this Faculty" : "Course Lecturer",
+    to_user_id: isLecturer ? "all_faculty_students" : "",
+    to_name: isLecturer ? "All Students Enrolled in this Faculty" : "",
     course_id: "General (All Modules)", course_title: "General (All Modules)", subject: "", message: "",
     category: isLecturer ? "announcement" : "inquiry"
   });
@@ -33,14 +34,16 @@ function MessagesPage() {
     async function load() {
       setLoading(true);
       try {
-        const [msgs, enrols, fetchedCourses] = await Promise.all([
+        const [msgs, enrols, fetchedCourses, facultyLecturers] = await Promise.all([
           getMessages().catch(() => []),
           !isLecturer ? getEnrollments().catch(() => []) : Promise.resolve([]),
-          isLecturer ? getMyCourses().catch(() => []) : Promise.resolve([])
+          isLecturer ? getMyCourses().catch(() => []) : Promise.resolve([]),
+          !isLecturer ? getFacultyLecturers().catch(() => []) : Promise.resolve([])
         ]);
         setMessages(msgs || []);
         setEnrollments(enrols || []);
         setCourses(fetchedCourses || []);
+        setLecturers(facultyLecturers || []);
       } finally {
         setLoading(false);
       }
@@ -48,10 +51,24 @@ function MessagesPage() {
     load();
   }, [isLecturer]);
 
+  const resetStudentCompose = () => ({
+    to_user_id: "",
+    to_name: "",
+    course_id: "General (All Modules)",
+    course_title: "General (All Modules)",
+    subject: "",
+    message: "",
+    category: "inquiry"
+  });
+
   const handleSendMessage = async (e) => {
     e.preventDefault();
     if (!composeForm.subject.trim() || !composeForm.message.trim()) {
       setMsgError("Subject and message are required.");
+      return;
+    }
+    if (!isLecturer && !composeForm.to_user_id) {
+      setMsgError("Please select a lecturer from your faculty.");
       return;
     }
     setMsgSending(true); setMsgError(""); setMsgSuccess("");
@@ -62,7 +79,8 @@ function MessagesPage() {
       if (!isLecturer) {
         const sel = enrollments.find(e => e.course_id === composeForm.course_id);
         courseTitle = sel ? sel.title : (composeForm.course_title || "General Academic Inquiry");
-        toName = replyTo ? replyTo.from_name : (sel ? `${sel.provider_name || "Faculty"} Lecturer` : "Course Lecturer");
+        const selectedLecturer = lecturers.find(l => l.id === composeForm.to_user_id);
+        toName = replyTo?.from_name || selectedLecturer?.fullName || composeForm.to_name || "Course Lecturer";
       } else {
         courseTitle = composeForm.course_id || "General (All Modules)";
         if (composeForm.to_user_id === "all_faculty_students") toName = "All Students Enrolled in this Faculty";
@@ -77,12 +95,12 @@ function MessagesPage() {
       });
 
       setMsgSuccess(isLecturer ? "Notification dispatched to students successfully!" : "Inquiry dispatched directly to your lecturer!");
-      setComposeForm({
-        to_user_id: isLecturer ? "all_faculty_students" : "lecturer-uuid",
-        to_name: isLecturer ? "All Students Enrolled in this Faculty" : "Course Lecturer",
+      setComposeForm(isLecturer ? {
+        to_user_id: "all_faculty_students",
+        to_name: "All Students Enrolled in this Faculty",
         course_id: "General (All Modules)", course_title: "General (All Modules)", subject: "", message: "",
-        category: isLecturer ? "announcement" : "inquiry"
-      });
+        category: "announcement"
+      } : resetStudentCompose());
       setReplyTo(null);
       const updated = await getMessages().catch(() => []);
       setMessages(updated || []);
@@ -124,7 +142,7 @@ function MessagesPage() {
     }
   };
 
-  const unreadCount = messages.filter(m => !m.read_at && (isLecturer ? m.from_role !== "lecturer" && m.from_user_id !== "lecturer-uuid" : m.from_role === "lecturer" || m.from_user_id === "lecturer-uuid")).length;
+  const unreadCount = messages.filter(m => !m.read_at && (isLecturer ? m.from_role !== "lecturer" : m.from_role === "lecturer")).length;
 
   if (isLecturer) {
     return (
@@ -444,7 +462,7 @@ function MessagesPage() {
           <button onClick={() => setMsgTab("inbox")} className={`px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all ${msgTab === "inbox" ? "bg-white text-[#0B5E3C] shadow-sm" : "text-white/80 hover:text-white"}`}>
             Inbox {unreadCount > 0 ? <span className="ml-1 bg-red-500 text-white text-[9px] px-1.5 py-0.5 rounded-full">{unreadCount}</span> : `(${messages.length})`}
           </button>
-          <button onClick={() => { setReplyTo(null); setMsgTab("compose"); setComposeForm(f => ({ ...f, to_user_id: "lecturer-uuid", to_name: "Course Lecturer" })); }} className={`flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all ${msgTab === "compose" ? "bg-amber-400 text-slate-950 shadow-sm" : "text-white/80 hover:text-white"}`}>
+          <button onClick={() => { setReplyTo(null); setMsgTab("compose"); setComposeForm(f => ({ ...f, ...resetStudentCompose() })); }} className={`flex items-center gap-1.5 px-5 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all ${msgTab === "compose" ? "bg-amber-400 text-slate-950 shadow-sm" : "text-white/80 hover:text-white"}`}>
             <Send className="w-3.5 h-3.5" /> Message Lecturer
           </button>
         </div>
@@ -458,9 +476,39 @@ function MessagesPage() {
         <form onSubmit={handleSendMessage} className="bg-white rounded-[2rem] border border-slate-200 shadow-sm p-8 space-y-6">
           <div className="flex items-center justify-between pb-4 border-b border-slate-100">
             <div className="flex items-center gap-2"><Send className="w-4 h-4 text-[#0B5E3C]" /><span className="font-black text-slate-800 text-sm uppercase tracking-tight">{replyTo ? `Replying to: ${replyTo.from_name}` : "Compose Academic Inquiry to Lecturer"}</span></div>
-            {replyTo && (<button type="button" onClick={() => { setReplyTo(null); setComposeForm(f => ({ ...f, to_user_id: "lecturer-uuid", to_name: "Course Lecturer" })); }} className="text-[10px] font-bold text-slate-400 hover:text-red-500 uppercase">Cancel Reply</button>)}
+            {replyTo && (<button type="button" onClick={() => { setReplyTo(null); setComposeForm(f => ({ ...f, ...resetStudentCompose() })); }} className="text-[10px] font-bold text-slate-400 hover:text-red-500 uppercase">Cancel Reply</button>)}
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5">Select Lecturer *</label>
+              <div className="relative">
+                <select
+                  value={composeForm.to_user_id}
+                  onChange={e => {
+                    const selected = lecturers.find(l => l.id === e.target.value);
+                    setComposeForm(f => ({
+                      ...f,
+                      to_user_id: e.target.value,
+                      to_name: selected?.fullName || ""
+                    }));
+                  }}
+                  disabled={!!replyTo}
+                  className="block w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all outline-none appearance-none pr-10"
+                  required
+                >
+                  <option value="">Choose a lecturer in your faculty...</option>
+                  {lecturers.map(l => (
+                    <option key={l.id} value={l.id}>
+                      {l.fullName}{l.department ? ` — ${l.department}` : ""}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+              </div>
+              {lecturers.length === 0 && (
+                <p className="mt-1.5 text-[10px] font-bold text-amber-700">No lecturers found for your faculty/department yet.</p>
+              )}
+            </div>
             <div><label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5">Select Enrolled Course</label><div className="relative"><select value={composeForm.course_id} onChange={e => setComposeForm(f => ({ ...f, course_id: e.target.value }))} className="block w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all outline-none appearance-none pr-10"><option value="">General (Departmental Inquiry)</option>{enrollments.map(e => <option key={e.id} value={e.course_id}>{e.title}</option>)}</select><ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" /></div></div>
             <div><label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5">Inquiry Type</label><div className="relative"><select value={composeForm.category} onChange={e => setComposeForm(f => ({ ...f, category: e.target.value }))} className="block w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all outline-none appearance-none pr-10"><option value="inquiry">Question on Lecture Material</option><option value="feedback">General Academic Advice</option></select><ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" /></div></div>
           </div>
@@ -490,7 +538,7 @@ function MessagesPage() {
           ) : (
             <div className="space-y-4">
               {messages.map((msg) => {
-                const isFromLecturer = msg.from_role === "lecturer" || msg.from_user_id === "lecturer-uuid";
+                const isFromLecturer = msg.from_role === "lecturer";
                 return (
                   <div key={msg.id} className={`p-6 rounded-2xl border transition-all ${!msg.read_at && isFromLecturer ? "bg-emerald-50/40 border-emerald-300 shadow-sm" : "bg-slate-50/70 border-slate-200/80 hover:bg-white hover:border-slate-300"}`}>
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
