@@ -64,23 +64,15 @@ exports.listMessages = async (req, res) => {
       
       let validLecturerIds = [];
       if (hasFaculty && hasDept) {
-        const internalCourses = await prisma.course.findMany({
-          where: { is_internal: true },
-          select: { id: true, instructor_id: true }
-        });
-        
-        const instructorIds = [...new Set(internalCourses.map(c => c.instructor_id).filter(Boolean))];
-        const instructorProfiles = await prisma.profile.findMany({
-          where: { user_id: { in: instructorIds } },
+        const validLecturerProfiles = await prisma.profile.findMany({
+          where: {
+            user: { role: { in: ["lecturer", "admin"] } }
+          },
           select: { user_id: true, faculty_id: true, faculty: true, department_id: true, department: true }
         });
-        const instMap = Object.fromEntries(instructorProfiles.map(p => [p.user_id, p]));
         
         const validSet = new Set();
-        for (const c of internalCourses) {
-          const instProfile = instMap[c.instructor_id];
-          if (!instProfile) continue;
-          
+        for (const instProfile of validLecturerProfiles) {
           const facultyMatch = 
             (studentFacultyId && instProfile.faculty_id === studentFacultyId) ||
             (studentFacultyText && instProfile.faculty?.toLowerCase() === studentFacultyText.toLowerCase());
@@ -90,7 +82,7 @@ exports.listMessages = async (req, res) => {
             (studentDeptText && instProfile.department?.toLowerCase() === studentDeptText.toLowerCase());
           
           if (facultyMatch && deptMatch) {
-            validSet.add(c.instructor_id);
+            validSet.add(instProfile.user_id);
           }
         }
         validLecturerIds = [...validSet];
@@ -289,22 +281,14 @@ exports.sendMessage = async (req, res) => {
           
           let validLecturerIds = [];
           if (hasFaculty && hasDept) {
-            const internalCourses = await prisma.course.findMany({
-              where: { is_internal: true },
-              select: { id: true, instructor_id: true }
-            });
-            
-            const instructorIds = [...new Set(internalCourses.map(c => c.instructor_id).filter(Boolean))];
-            const instructorProfiles = await prisma.profile.findMany({
-              where: { user_id: { in: instructorIds } },
+            const validLecturerProfiles = await prisma.profile.findMany({
+              where: {
+                user: { role: { in: ["lecturer", "admin"] } }
+              },
               select: { user_id: true, faculty_id: true, faculty: true, department_id: true, department: true }
             });
-            const instMap = Object.fromEntries(instructorProfiles.map(p => [p.user_id, p]));
             
-            for (const c of internalCourses) {
-              const instProfile = instMap[c.instructor_id];
-              if (!instProfile) continue;
-              
+            for (const instProfile of validLecturerProfiles) {
               const facultyMatch = 
                 (studentFacultyId && instProfile.faculty_id === studentFacultyId) ||
                 (studentFacultyText && instProfile.faculty?.toLowerCase() === studentFacultyText.toLowerCase());
@@ -314,7 +298,7 @@ exports.sendMessage = async (req, res) => {
                 (studentDeptText && instProfile.department?.toLowerCase() === studentDeptText.toLowerCase());
               
               if (facultyMatch && deptMatch) {
-                validLecturerIds.push(c.instructor_id);
+                validLecturerIds.push(instProfile.user_id);
               }
             }
           }
