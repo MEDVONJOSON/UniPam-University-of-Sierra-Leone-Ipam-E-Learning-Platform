@@ -214,7 +214,7 @@ exports.downloadMaterial = async (req, res) => {
       if (course?.is_internal && course.instructor_id) {
         const user = await prisma.user.findUnique({
           where: { id: req.auth.userId },
-          include: { profile: { select: { faculty_id: true, department_id: true } } }
+          include: { profile: { select: { faculty_id: true, department_id: true, current_academic_year: true } } }
         });
 
         const studentFacultyId = user?.profile?.faculty_id || null;
@@ -228,7 +228,17 @@ exports.downloadMaterial = async (req, res) => {
 
           const facultyMatch = instructorProfile?.faculty_id === studentFacultyId;
           const deptMatch = instructorProfile?.department_id === studentDeptId;
-          isAllowed = facultyMatch && deptMatch;
+          
+          let yearMatch = true;
+          const fullCourse = await prisma.course.findUnique({ where: { id: material.course_id }, select: { skill_level: true } });
+          if (user?.profile?.current_academic_year && fullCourse?.skill_level) {
+             const studentYearString = `Year ${user.profile.current_academic_year}`;
+             if (fullCourse.skill_level.toLowerCase().trim() !== studentYearString.toLowerCase().trim()) {
+                 yearMatch = false;
+             }
+          }
+
+          isAllowed = facultyMatch && deptMatch && yearMatch;
         }
       }
 

@@ -73,8 +73,19 @@ class Material {
 
           const facultyMatch = instructorProfile?.faculty_id === studentFacultyId;
           const deptMatch = instructorProfile?.department_id === studentDeptId;
+          
+          let yearMatch = true;
+          // We need course.skill_level to check yearMatch. We didn't fetch it, so let's refetch if needed.
+          // Since we didn't fetch it in the parent query, we can just fetch it here or modify the parent query.
+          const fullCourse = await prisma.course.findUnique({ where: { id: courseId }, select: { skill_level: true } });
+          if (user?.profile?.current_academic_year && fullCourse?.skill_level) {
+             const studentYearString = `Year ${user.profile.current_academic_year}`;
+             if (fullCourse.skill_level.toLowerCase().trim() !== studentYearString.toLowerCase().trim()) {
+                 yearMatch = false;
+             }
+          }
 
-          if (facultyMatch && deptMatch) {
+          if (facultyMatch && deptMatch && yearMatch) {
             // Auto-enroll so student has continuous access
             enrollment = await prisma.enrollment.upsert({
               where: { user_id_course_id: { user_id: userId, course_id: courseId } },
@@ -156,7 +167,7 @@ class Material {
       if (studentFacultyId && studentDeptId) {
         const internalCourses = await prisma.course.findMany({
           where: { is_internal: true },
-          select: { id: true, instructor_id: true }
+          select: { id: true, instructor_id: true, skill_level: true }
         });
 
         // Batch-fetch all instructor profiles in one query for efficiency
@@ -184,8 +195,16 @@ class Material {
           // Match requires BOTH faculty AND department to be the same
           const facultyMatch = instProfile.faculty_id === studentFacultyId;
           const deptMatch = instProfile.department_id === studentDeptId;
+          
+          let yearMatch = true;
+          if (user?.profile?.current_academic_year && c.skill_level) {
+             const studentYearString = `Year ${user.profile.current_academic_year}`;
+             if (c.skill_level.toLowerCase().trim() !== studentYearString.toLowerCase().trim()) {
+                 yearMatch = false;
+             }
+          }
 
-          if (facultyMatch && deptMatch) {
+          if (facultyMatch && deptMatch && yearMatch) {
             deptMatchedCourseIds.push(c.id);
           }
         }
