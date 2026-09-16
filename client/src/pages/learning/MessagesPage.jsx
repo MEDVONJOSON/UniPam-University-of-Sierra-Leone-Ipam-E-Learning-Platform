@@ -24,6 +24,7 @@ function MessagesPage() {
 
   const [departmentFilter, setDepartmentFilter] = useState("All Departments");
   const [moduleFilter, setModuleFilter]         = useState("All Modules");
+  const [typeFilter, setTypeFilter]             = useState("All");
   const [lecturerFilters, setLecturerFilters]   = useState({ faculty: "", departments: [], modules: [] });
   const [openDropdownId, setOpenDropdownId]     = useState(null);
 
@@ -135,6 +136,14 @@ function MessagesPage() {
   };
 
   const unreadCount = messages.filter(m => !m.read_at && (isLecturer ? m.from_role !== "lecturer" && m.from_user_id !== "lecturer-uuid" : m.from_role === "lecturer" || m.from_user_id === "lecturer-uuid")).length;
+
+  const filteredMessages = messages.filter(msg => {
+    if (!isLecturer) return true;
+    const isSentByMe = msg.from_user_id === user?.id || msg.from_role === "lecturer";
+    if (typeFilter === "Sent") return isSentByMe;
+    if (typeFilter === "Received") return !isSentByMe;
+    return true;
+  });
 
   if (isLecturer) {
     return (
@@ -356,13 +365,28 @@ function MessagesPage() {
                     <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
                   </div>
                 </div>
+                <div className="flex-1">
+                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5">Message Type</label>
+                  <div className="relative">
+                    <select
+                      value={typeFilter}
+                      onChange={(e) => setTypeFilter(e.target.value)}
+                      className="block w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all outline-none appearance-none pr-10"
+                    >
+                      <option value="All">All Messages</option>
+                      <option value="Sent">Sent by Me</option>
+                      <option value="Received">Received from Students</option>
+                    </select>
+                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                  </div>
+                </div>
               </div>
 
               {loading ? (
                 <div className="text-center py-16">
                   <Loader2 className="w-8 h-8 text-emerald-600 animate-spin mx-auto" />
                 </div>
-              ) : messages.length === 0 ? (
+              ) : filteredMessages.length === 0 ? (
                 <div className="text-center py-16 bg-slate-50 rounded-3xl border border-dashed border-slate-200 p-8">
                   <MessageCircle className="w-12 h-12 text-slate-300 mx-auto mb-3" />
                   <p className="font-black text-slate-500 text-sm uppercase tracking-wider">No Messages Yet</p>
@@ -376,7 +400,7 @@ function MessagesPage() {
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {messages.map((msg) => {
+                  {filteredMessages.map((msg) => {
                     const isSentByMe = msg.from_user_id === user?.id || msg.from_role === "lecturer";
                     const canDeleteMessage = user?.role === "admin" || msg.from_user_id === user?.id;
                     return (
