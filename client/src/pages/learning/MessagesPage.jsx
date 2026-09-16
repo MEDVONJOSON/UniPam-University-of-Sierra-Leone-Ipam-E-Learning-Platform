@@ -5,7 +5,7 @@ import {
 } from "../../services/platformService";
 import {
   MessageCircle, Bell, Send, CheckCircle2, AlertCircle,
-  Loader2, X, Clock, CheckCheck, ChevronDown, Trash2
+  Loader2, X, Clock, CheckCheck, ChevronDown, Trash2, MoreVertical
 } from "lucide-react";
 
 function MessagesPage() {
@@ -25,6 +25,7 @@ function MessagesPage() {
   const [departmentFilter, setDepartmentFilter] = useState("All Departments");
   const [moduleFilter, setModuleFilter]         = useState("All Modules");
   const [lecturerFilters, setLecturerFilters]   = useState({ faculty: "", departments: [], modules: [] });
+  const [openDropdownId, setOpenDropdownId]     = useState(null);
 
   const [composeForm, setComposeForm] = useState({
     to_user_id: isLecturer ? "all_faculty_students" : "lecturer-uuid",
@@ -423,34 +424,49 @@ function MessagesPage() {
                         <p className="text-slate-600 text-xs font-medium leading-relaxed whitespace-pre-wrap">{msg.message}</p>
 
                         <div className="mt-4 pt-3 border-t border-slate-200/60 flex items-center justify-between">
-                          {!isSentByMe ? (
-                            <button
-                              onClick={() => handleReply(msg)}
-                              className="inline-flex items-center gap-1.5 text-xs font-black text-[#0B5E3C] hover:text-emerald-700 uppercase tracking-wider"
-                            >
-                              <Send className="w-3.5 h-3.5" /> Reply to Student
-                            </button>
-                          ) : (
+                          {isSentByMe ? (
                             <span className="text-[10px] font-bold text-slate-400 uppercase">Broadcasted Announcement</span>
+                          ) : (
+                            <span className="text-[10px] font-bold text-slate-400 uppercase">Student Inquiry</span>
                           )}
 
-                          {!msg.read_at && !isSentByMe && (
+                          <div className="relative">
                             <button
-                              onClick={() => handleMarkRead(msg.id)}
-                              className="text-[10px] font-bold text-slate-400 hover:text-slate-600 flex items-center gap-1"
+                              onClick={() => setOpenDropdownId(openDropdownId === msg.id ? null : msg.id)}
+                              className="p-1.5 rounded-lg hover:bg-slate-200 text-slate-500 transition-colors"
                             >
-                              <CheckCheck className="w-3.5 h-3.5 text-emerald-600" /> Mark as Read
+                              <MoreVertical className="w-4 h-4" />
                             </button>
-                          )}
-                          {canDeleteMessage && (
-                            <button
-                              onClick={() => handleDeleteMessage(msg)}
-                              className="inline-flex items-center gap-1.5 text-[10px] font-black text-red-600 hover:text-red-700 uppercase tracking-wider"
-                              title="Delete your message"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" /> Delete
-                            </button>
-                          )}
+                            
+                            {openDropdownId === msg.id && (
+                              <div className="absolute right-0 mt-2 w-48 bg-white border border-slate-200 shadow-xl rounded-xl overflow-hidden z-20 py-1">
+                                {!isSentByMe && (
+                                  <button
+                                    onClick={() => { handleReply(msg); setOpenDropdownId(null); }}
+                                    className="w-full text-left px-4 py-2.5 text-xs font-black text-[#0B5E3C] hover:bg-emerald-50 flex items-center gap-2 transition-colors"
+                                  >
+                                    <Send className="w-3.5 h-3.5" /> Reply to Student
+                                  </button>
+                                )}
+                                {!msg.read_at && !isSentByMe && (
+                                  <button
+                                    onClick={() => { handleMarkRead(msg.id); setOpenDropdownId(null); }}
+                                    className="w-full text-left px-4 py-2.5 text-xs font-bold text-slate-700 hover:bg-slate-50 flex items-center gap-2 transition-colors"
+                                  >
+                                    <CheckCheck className="w-3.5 h-3.5 text-emerald-600" /> Mark as Read
+                                  </button>
+                                )}
+                                {canDeleteMessage && (
+                                  <button
+                                    onClick={() => { handleDeleteMessage(msg); setOpenDropdownId(null); }}
+                                    className="w-full text-left px-4 py-2.5 text-[11px] font-black text-red-600 hover:bg-red-50 flex items-center gap-2 transition-colors"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" /> Delete
+                                  </button>
+                                )}
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </div>
                     );
