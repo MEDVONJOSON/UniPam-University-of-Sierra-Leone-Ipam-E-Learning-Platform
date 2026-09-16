@@ -16,7 +16,6 @@ const STUDENT_NAV_ITEMS = [
 const LECTURER_NAV_ITEMS = [
   { to: "/app/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/app/teach", label: "Manage Learning Materials", icon: GraduationCap },
-  { to: "/app/repository", label: "Repository", icon: Library },
   { to: "/app/messages", label: "Messages", icon: MessageCircle },
   { to: "/app/profile", label: "Profile", icon: User }
 ];
