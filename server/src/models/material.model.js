@@ -53,20 +53,36 @@ class Material {
       where: { user_id_course_id: { user_id: userId, course_id: courseId } }
     });
 
-    // If student is not explicitly enrolled, check department / faculty match
+    // If student is not explicitly enrolled, check faculty + department match via instructor
     if (!enrollment && !isStaff) {
       const course = await prisma.course.findUnique({
         where: { id: courseId },
-        select: { id: true, is_internal: true, category: true, instructor_id: true }
+        select: { id: true, is_internal: true, instructor_id: true }
       });
 
-      if (course?.is_internal) {
-        // Auto-enroll so student has continuous access
-        enrollment = await prisma.enrollment.upsert({
-          where: { user_id_course_id: { user_id: userId, course_id: courseId } },
-          create: { user_id: userId, course_id: courseId, status: "enrolled" },
-          update: {}
-        }).catch(() => null);
+      if (course?.is_internal && course.instructor_id) {
+        const studentFacultyId = user?.profile?.faculty_id || null;
+        const studentDeptId = user?.profile?.department_id || null;
+
+        // Only match if student has both faculty and department set
+        if (studentFacultyId && studentDeptId) {
+          const instructorProfile = await prisma.profile.findUnique({
+            where: { user_id: course.instructor_id },
+            select: { faculty_id: true, department_id: true }
+          });
+
+          const facultyMatch = instructorProfile?.faculty_id === studentFacultyId;
+          const deptMatch = instructorProfile?.department_id === studentDeptId;
+
+          if (facultyMatch && deptMatch) {
+            // Auto-enroll so student has continuous access
+            enrollment = await prisma.enrollment.upsert({
+              where: { user_id_course_id: { user_id: userId, course_id: courseId } },
+              create: { user_id: userId, course_id: courseId, status: "enrolled" },
+              update: {}
+            }).catch(() => null);
+          }
+        }
       }
     }
 
@@ -130,58 +146,48 @@ class Material {
       });
       const enrolledCourseIds = new Set(enrollments.map(e => e.course_id));
 
-      // 2. Department & Faculty matching for university courses
-      const studentFaculty = (user?.profile?.faculty || "").toLowerCase();
-      const studentDept = (user?.profile?.department || "").toLowerCase();
-      const studentProg = (user?.profile?.university_program_id || "").toLowerCase();
-
-      const internalCourses = await prisma.course.findMany({
-        where: { is_internal: true },
-        select: {
-          id: true,
-          title: true,
-          category: true,
-          instructor_id: true
-        }
-      });
+      // 2. Faculty + Department matching via instructor profile (structured IDs)
+      const studentFacultyId = user?.profile?.faculty_id || null;
+      const studentDeptId = user?.profile?.department_id || null;
 
       const deptMatchedCourseIds = [];
-      for (const c of internalCourses) {
-        if (enrolledCourseIds.has(c.id)) {
-          continue;
-        }
 
-        const cat = (c.category || "").toLowerCase();
-        const facultyMatch = studentFaculty && (cat.includes(studentFaculty) || studentFaculty.includes(cat));
-        const deptMatch = studentDept && (cat.includes(studentDept) || studentDept.includes(cat));
+      // Only attempt matching if student has both faculty and department set
+      if (studentFacultyId && studentDeptId) {
+        const internalCourses = await prisma.course.findMany({
+          where: { is_internal: true },
+          select: { id: true, instructor_id: true }
+        });
 
-        let progMatch = false;
-        if (studentProg.includes("information systems") || studentProg.startsWith("f2::")) {
-          if (cat.includes("information systems") || cat.includes("technology")) {
-            progMatch = true;
+        // Batch-fetch all instructor profiles in one query for efficiency
+        const instructorIds = [...new Set(
+          internalCourses
+            .filter(c => c.instructor_id && !enrolledCourseIds.has(c.id))
+            .map(c => c.instructor_id)
+        )];
+
+        const instructorProfiles = await prisma.profile.findMany({
+          where: { user_id: { in: instructorIds } },
+          select: { user_id: true, faculty_id: true, department_id: true }
+        });
+        const instructorProfileMap = Object.fromEntries(
+          instructorProfiles.map(p => [p.user_id, p])
+        );
+
+        for (const c of internalCourses) {
+          if (enrolledCourseIds.has(c.id)) continue;
+          if (!c.instructor_id) continue;
+
+          const instProfile = instructorProfileMap[c.instructor_id];
+          if (!instProfile) continue;
+
+          // Match requires BOTH faculty AND department to be the same
+          const facultyMatch = instProfile.faculty_id === studentFacultyId;
+          const deptMatch = instProfile.department_id === studentDeptId;
+
+          if (facultyMatch && deptMatch) {
+            deptMatchedCourseIds.push(c.id);
           }
-        }
-
-        let instructorMatch = false;
-        if (c.instructor_id) {
-          const instProfile = await prisma.profile.findUnique({
-            where: { user_id: c.instructor_id },
-            select: { faculty: true, department: true }
-          });
-          const instFac = (instProfile?.faculty || "").toLowerCase();
-          const instDept = (instProfile?.department || "").toLowerCase();
-          if (studentFaculty && instFac && (studentFaculty.includes(instFac) || instFac.includes(studentFaculty))) {
-            instructorMatch = true;
-          }
-          if (studentDept && instDept && (studentDept.includes(instDept) || instDept.includes(studentDept))) {
-            instructorMatch = true;
-          }
-        }
-
-        const generalMatch = !studentFaculty && !studentDept && c.category?.includes("Faculty");
-
-        if (facultyMatch || deptMatch || progMatch || instructorMatch || generalMatch) {
-          deptMatchedCourseIds.push(c.id);
         }
       }
 

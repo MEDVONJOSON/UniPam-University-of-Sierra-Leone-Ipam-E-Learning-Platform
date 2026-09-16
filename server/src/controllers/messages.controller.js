@@ -3,16 +3,61 @@ const { prisma } = require("../config/db");
 exports.listMessages = async (req, res) => {
   try {
     const userId = req.auth.userId;
-    const isStudent = req.auth.role !== "lecturer" && req.auth.role !== "admin";
+    const isLecturer = req.auth.role === "lecturer" || req.auth.role === "admin";
+    const { departmentFilter, moduleFilter } = req.query;
 
-    const orConditions = [
-      { from_user_id: userId },
-      { to_user_id: userId },
-      { to_user_id: "all" },
-      { to_user_id: "all_students" },
-      { to_user_id: "all_faculty_students" },
-      { to_user_id: "all_department_students" }
-    ];
+    let orConditions = [];
+
+    if (isLecturer) {
+      const profile = await prisma.profile.findUnique({
+        where: { user_id: userId }
+      });
+      
+      const facultyId = profile?.faculty_id;
+      const facultyText = profile?.faculty;
+
+      orConditions.push({ from_user_id: userId });
+      orConditions.push({ to_user_id: userId });
+
+      let studentCondition = { from_role: "learner" };
+      let profileFilters = {};
+
+      if (facultyId) {
+        profileFilters.faculty_id = facultyId;
+      } else if (facultyText) {
+        profileFilters.faculty = { contains: facultyText, mode: "insensitive" };
+      }
+      
+      if (departmentFilter && departmentFilter !== "All Departments") {
+        const program = await prisma.universityProgram.findFirst({
+          where: { name: departmentFilter }
+        });
+        if (program) {
+          profileFilters.university_program_id = program.id;
+        } else {
+          profileFilters.department = { contains: departmentFilter, mode: "insensitive" };
+        }
+      }
+
+      if (Object.keys(profileFilters).length > 0) {
+        studentCondition.sender = { profile: profileFilters };
+      }
+
+      if (moduleFilter && moduleFilter !== "All Modules") {
+        studentCondition.course_title = { contains: moduleFilter, mode: "insensitive" };
+      }
+
+      orConditions.push(studentCondition);
+    } else {
+      orConditions = [
+        { from_user_id: userId },
+        { to_user_id: userId },
+        { to_user_id: "all" },
+        { to_user_id: "all_students" },
+        { to_user_id: "all_faculty_students" },
+        { to_user_id: "all_department_students" }
+      ];
+    }
 
     const list = await prisma.message.findMany({
       where: {
@@ -25,6 +70,49 @@ exports.listMessages = async (req, res) => {
   } catch (error) {
     console.error("List messages error:", error);
     res.status(500).json({ error: "Failed to list messages." });
+  }
+};
+
+exports.getLecturerFilters = async (req, res) => {
+  try {
+    const userId = req.auth.userId;
+
+    const profile = await prisma.profile.findUnique({
+      where: { user_id: userId },
+      include: { faculty_rel: true }
+    });
+
+    let departments = [];
+    if (profile?.faculty_id) {
+      const programs = await prisma.universityProgram.findMany({
+        where: { department: { faculty_id: profile.faculty_id } },
+        orderBy: { name: "asc" }
+      });
+      departments = programs.map(p => p.name);
+    } else if (profile?.faculty) {
+      departments = [profile.faculty];
+    }
+
+    const courses = await prisma.course.findMany({
+      where: { instructor_id: userId },
+      select: { id: true, title: true, external_id: true },
+      orderBy: { title: "asc" }
+    });
+
+    res.json({
+      data: {
+        faculty: profile?.faculty_rel?.name || profile?.faculty || "Unknown Faculty",
+        departments: [...new Set(departments)],
+        modules: courses.map(c => ({
+          id: c.id,
+          title: c.title,
+          code: c.external_id
+        }))
+      }
+    });
+  } catch (error) {
+    console.error("Get lecturer filters error:", error);
+    res.status(500).json({ error: "Failed to fetch filters." });
   }
 };
 

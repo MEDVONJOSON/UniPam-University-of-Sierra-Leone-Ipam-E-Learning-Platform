@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { getCurrentUser } from "../../services/authService";
 import {
-  getEnrollments, getMessages, sendMessage, markMessageRead, deleteMessage, getMyCourses
+  getEnrollments, getMessages, sendMessage, markMessageRead, deleteMessage, getMyCourses, getLecturerMessageFilters
 } from "../../services/platformService";
 import {
   MessageCircle, Bell, Send, CheckCircle2, AlertCircle,
@@ -22,6 +22,10 @@ function MessagesPage() {
   const [msgError, setMsgError]       = useState("");
   const [replyTo, setReplyTo]         = useState(null);
 
+  const [departmentFilter, setDepartmentFilter] = useState("All Departments");
+  const [moduleFilter, setModuleFilter]         = useState("All Modules");
+  const [lecturerFilters, setLecturerFilters]   = useState({ faculty: "", departments: [], modules: [] });
+
   const [composeForm, setComposeForm] = useState({
     to_user_id: isLecturer ? "all_faculty_students" : "lecturer-uuid",
     to_name: isLecturer ? "All Students Enrolled in this Faculty" : "Course Lecturer",
@@ -33,20 +37,25 @@ function MessagesPage() {
     async function load() {
       setLoading(true);
       try {
-        const [msgs, enrols, fetchedCourses] = await Promise.all([
-          getMessages().catch(() => []),
+        const filters = isLecturer ? { departmentFilter, moduleFilter } : {};
+        const [msgs, enrols, fetchedCourses, filtersData] = await Promise.all([
+          getMessages(filters).catch(() => []),
           !isLecturer ? getEnrollments().catch(() => []) : Promise.resolve([]),
-          isLecturer ? getMyCourses().catch(() => []) : Promise.resolve([])
+          isLecturer ? getMyCourses().catch(() => []) : Promise.resolve([]),
+          isLecturer ? getLecturerMessageFilters().catch(() => ({})) : Promise.resolve({})
         ]);
         setMessages(msgs || []);
         setEnrollments(enrols || []);
         setCourses(fetchedCourses || []);
+        if (isLecturer && filtersData && Object.keys(filtersData).length > 0) {
+          setLecturerFilters(filtersData);
+        }
       } finally {
         setLoading(false);
       }
     }
     load();
-  }, [isLecturer]);
+  }, [isLecturer, departmentFilter, moduleFilter]);
 
   const handleSendMessage = async (e) => {
     e.preventDefault();
@@ -84,7 +93,7 @@ function MessagesPage() {
         category: isLecturer ? "announcement" : "inquiry"
       });
       setReplyTo(null);
-      const updated = await getMessages().catch(() => []);
+      const updated = await getMessages(isLecturer ? { departmentFilter, moduleFilter } : {}).catch(() => []);
       setMessages(updated || []);
       setTimeout(() => setMsgTab("inbox"), 1500);
     } catch (err) {
@@ -229,19 +238,16 @@ function MessagesPage() {
                   <div className="relative">
                     <select
                       value={composeForm.course_id}
-                      onChange={e => setComposeForm(f => ({ ...f, course_id: e.target.value, course_title: e.target.value }))}
+                      onChange={e => {
+                        const title = e.target.value === "General (All Modules)" ? "General (All Modules)" : e.target.options[e.target.selectedIndex].text;
+                        setComposeForm(f => ({ ...f, course_id: e.target.value, course_title: title }));
+                      }}
                       className="block w-full px-4 py-3 bg-white border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all outline-none appearance-none pr-10"
                     >
                       <option value="General (All Modules)">General (All Modules)</option>
-                      <option value="Networking">Networking</option>
-                      <option value="Database">Database</option>
-                      <option value="Data Analysis">Data Analysis</option>
-                      <option value="Cyber Security">Cyber Security</option>
-                      <option value="Programming">Programming</option>
-                      <option value="Web Development">Web Development</option>
-                      <option value="Research">Research</option>
-                      <option value="Software Development">Software Development</option>
-                      <option value="Others">Others</option>
+                      {lecturerFilters.modules.map(m => (
+                        <option key={m.id} value={m.id}>{m.title}</option>
+                      ))}
                     </select>
                     <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
                   </div>
@@ -315,6 +321,42 @@ function MessagesPage() {
           {/* ── INBOX TAB ── */}
           {msgTab === "inbox" && (
             <div>
+              {/* Lecturer Filters */}
+              <div className="flex flex-col sm:flex-row gap-4 mb-6">
+                <div className="flex-1">
+                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5">Department / Program</label>
+                  <div className="relative">
+                    <select
+                      value={departmentFilter}
+                      onChange={(e) => setDepartmentFilter(e.target.value)}
+                      className="block w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all outline-none appearance-none pr-10"
+                    >
+                      <option value="All Departments">All Departments in {lecturerFilters.faculty || "Faculty"}</option>
+                      {lecturerFilters.departments.map(dept => (
+                        <option key={dept} value={dept}>{dept}</option>
+                      ))}
+                    </select>
+                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5">Assigned Module</label>
+                  <div className="relative">
+                    <select
+                      value={moduleFilter}
+                      onChange={(e) => setModuleFilter(e.target.value)}
+                      className="block w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all outline-none appearance-none pr-10"
+                    >
+                      <option value="All Modules">All Assigned Modules</option>
+                      {lecturerFilters.modules.map(mod => (
+                        <option key={mod.title} value={mod.title}>{mod.title}</option>
+                      ))}
+                    </select>
+                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                  </div>
+                </div>
+              </div>
+
               {loading ? (
                 <div className="text-center py-16">
                   <Loader2 className="w-8 h-8 text-emerald-600 animate-spin mx-auto" />

@@ -303,8 +303,21 @@ export async function markAllNotificationsRead() {
 }
 
 // ─── Messages & Communication Hub ───────────────────────────────────────────
-export async function getMessages() {
-  const res = await apiRequest("/messages");
+export async function getLecturerMessageFilters() {
+  const res = await apiRequest("/messages/lecturer-filters");
+  return res.data || {};
+}
+
+export async function getMessages(filters = {}) {
+  const params = new URLSearchParams();
+  if (filters.departmentFilter && filters.departmentFilter !== "All Departments") {
+    params.set("departmentFilter", filters.departmentFilter);
+  }
+  if (filters.moduleFilter && filters.moduleFilter !== "All Modules") {
+    params.set("moduleFilter", filters.moduleFilter);
+  }
+  const qs = params.toString();
+  const res = await apiRequest(`/messages${qs ? `?${qs}` : ""}`);
   return res.data || [];
 }
 
