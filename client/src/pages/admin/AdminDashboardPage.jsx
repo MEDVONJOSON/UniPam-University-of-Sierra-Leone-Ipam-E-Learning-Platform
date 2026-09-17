@@ -467,7 +467,10 @@ Please sign in at ${portalUrl} to manage your courses and access your teaching s
     "Marketing and Sales",
     "Procurement, Logistics & Supply Chain",
     "Department of Public Administration",
-    "Extra-Mural Studies Department"
+    "Extra-Mural Studies Department",
+    "BSc in Leadership and Sustainable Development",
+    "BSc of Science in Public Policy",
+    "BSc of Science in Public Sector Management"
   ];
 
   const academicYears = [
@@ -498,7 +501,9 @@ Please sign in at ${portalUrl} to manage your courses and access your teaching s
       "Procurement, Logistics & Supply Chain"
     ],
     "Faculty of Leadership & Governance": [
-      "Department of Public Administration"
+      "BSc in Leadership and Sustainable Development",
+      "BSc of Science in Public Policy",
+      "BSc of Science in Public Sector Management"
     ],
     "Faculty of Extra-Mural Studies": [
       "Extra-Mural Studies Department"
@@ -604,7 +609,7 @@ Please sign in at ${portalUrl} to manage your courses and access your teaching s
                   <th className="pb-3 pl-4">ID / Code</th>
                   <th className="pb-3">Full Name</th>
                   <th className="pb-3">Email</th>
-                  <th className="pb-3">Faculty / Department</th>
+                  <th className="pb-3">Faculty / Department / Program</th>
                   <th className="pb-3">Module & Year</th>
                   <th className="pb-3">Role</th>
                   <th className="pb-3">Status</th>
@@ -873,7 +878,7 @@ Please sign in at ${portalUrl} to manage your courses and access your teaching s
 
               {/* Department & Faculty */}
               <div className="bg-slate-50 rounded-2xl p-5 border border-slate-100">
-                <p className="text-[10px] font-black text-brand-600 uppercase tracking-widest mb-4">Department & Faculty Assignment</p>
+                <p className="text-[10px] font-black text-brand-600 uppercase tracking-widest mb-4">Department, Program & Faculty Assignment</p>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className={labelClass}>Faculty *</label>
@@ -889,13 +894,13 @@ Please sign in at ${portalUrl} to manage your courses and access your teaching s
                     </div>
                   </div>
                   <div>
-                    <label className={labelClass}>Department *</label>
+                    <label className={labelClass}>Department / Program *</label>
                     <div className="relative">
                       <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                       <select required value={createForm.department}
                         onChange={e => setCreateForm({ ...createForm, department: e.target.value })}
                         className={`${inputClass} appearance-none`}>
-                        <option value="">Select Department</option>
+                        <option value="">Select Department / Program</option>
                         {(createForm.faculty && facultyDepartments[createForm.faculty] ? facultyDepartments[createForm.faculty] : departments).map(d => <option key={d} value={d}>{d}</option>)}
                       </select>
                       <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
@@ -1008,7 +1013,7 @@ Please sign in at ${portalUrl} to manage your courses and access your teaching s
                 ["Role", showViewModal.role === "learner" ? "Student" : showViewModal.role],
                 ["Student / ID Number", showViewModal.studentIdNumber || "N/A"],
                 ["Faculty", showViewModal.faculty || "N/A"],
-                ["Department", showViewModal.department || "N/A"],
+                ["Department / Program", showViewModal.department || "N/A"],
                 ["Assigned Module", showViewModal.moduleTitle || "N/A"],
                 ["Module Code", showViewModal.moduleCode || "N/A"],
                 ["Academic Year", showViewModal.academicYear || "N/A"],
@@ -1094,12 +1099,12 @@ Please sign in at ${portalUrl} to manage your courses and access your teaching s
                   </div>
                 </div>
                 <div>
-                  <label className={labelClass}>Department</label>
+                  <label className={labelClass}>Department / Program</label>
                   <div className="relative">
                     <select value={editForm.department}
                       onChange={e => setEditForm({ ...editForm, department: e.target.value })}
                       className={`${inputClass} appearance-none`}>
-                      <option value="">Select Department</option>
+                      <option value="">Select Department / Program</option>
                       {(editForm.faculty && facultyDepartments[editForm.faculty] ? facultyDepartments[editForm.faculty] : departments).map(d => <option key={d} value={d}>{d}</option>)}
                     </select>
                     <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
