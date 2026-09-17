@@ -8,6 +8,7 @@ import {
   downloadCourseMaterial,
   getMyCourses
 } from "../../services/platformService";
+import { hydrateCurrentUser } from "../../services/authService";
 import {
   BookOpen, Award, Loader2, ChevronRight,
   GraduationCap, PlayCircle, User,
@@ -37,7 +38,7 @@ function formatBytes(bytes) {
 const INITIAL_SUMMARY = { enrolled_courses: 0, completed_courses: 0, average_progress: 0, rewards: 0, eligible_certs: 0, credits: 0, weekly_progress: 0 };
 
 function UserDashboardPage() {
-  const user = getCurrentUser();
+  const [user, setUser] = useState(() => getCurrentUser());
   const isLecturer = user?.role === "lecturer" || user?.role === "admin";
 
   const [summary, setSummary] = useState(INITIAL_SUMMARY);
@@ -53,12 +54,16 @@ function UserDashboardPage() {
     setLoading(true);
     setError("");
     try {
-      const [summaryData, enrollmentData, repositoryMaterialsData, myCoursesData] = await Promise.all([
+      const [summaryData, enrollmentData, repositoryMaterialsData, myCoursesData, freshUser] = await Promise.all([
         getDashboardSummary(),
         !isLecturer ? getEnrollments() : Promise.resolve([]),
         getRepositoryMaterials(),
-        isLecturer ? getMyCourses() : Promise.resolve([])
+        isLecturer ? getMyCourses() : Promise.resolve([]),
+        hydrateCurrentUser().catch(() => null)
       ]);
+      if (freshUser) {
+        setUser(getCurrentUser());
+      }
       setSummary({ ...INITIAL_SUMMARY, ...(summaryData || {}) });
       setEnrollments(enrollmentData || []);
       setRepositoryMaterials(repositoryMaterialsData || []);

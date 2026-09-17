@@ -301,10 +301,10 @@ function UserManagementTab() {
     e.preventDefault();
     setError(""); setMessage("");
     try {
-      await updateAdminUser(showEditModal.id, editForm);
+      const updatedUser = await updateAdminUser(showEditModal.id, editForm);
       setMessage("User account updated successfully.");
       setShowEditModal(null);
-      loadUsers();
+      setUsers(prev => prev.map(u => u.id === updatedUser.id ? { ...u, ...updatedUser } : u));
     } catch (err) { setError(err.message); }
   };
 
