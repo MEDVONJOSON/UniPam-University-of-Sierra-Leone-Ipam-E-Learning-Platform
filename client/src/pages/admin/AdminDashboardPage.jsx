@@ -474,17 +474,36 @@ Please sign in at ${portalUrl} to manage your courses and access your teaching s
     "Year 1",
     "Year 2",
     "Year 3",
-    "Year 4",
-    "Postgraduate",
-    "Diploma Year 1",
-    "Diploma Year 2"
+    "Year 4"
   ];
 
   const semesters = [
     "Semester 1",
-    "Semester 2",
-    "Year-Round"
+    "Semester 2"
   ];
+
+  const facultyDepartments = {
+    "Faculty of Accounting & Finance": [
+      "Department of Accountancy",
+      "Department of Financial Services",
+      "Department of Banking and Finance"
+    ],
+    "Faculty of Information Systems & Technology": [
+      "Department of Information Systems",
+      "Department of Information Technology"
+    ],
+    "Faculty of Business Administration & Entrepreneurship": [
+      "Business Administration",
+      "Marketing and Sales",
+      "Procurement, Logistics & Supply Chain"
+    ],
+    "Faculty of Leadership & Governance": [
+      "Department of Public Administration"
+    ],
+    "Faculty of Extra-Mural Studies": [
+      "Extra-Mural Studies Department"
+    ]
+  };
 
   const inputClass = "block w-full pl-12 pr-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-bold text-[#0B5E3C] placeholder-slate-400 focus:outline-none focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 transition-all";
   const labelClass = "text-[10px] font-black text-slate-500 uppercase tracking-widest ml-1 mb-1.5 block";
@@ -708,7 +727,9 @@ Please sign in at ${portalUrl} to manage your courses and access your teaching s
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
                 <div className="w-2 h-8 bg-emerald-600 rounded-full" />
-                <h2 className="text-xl font-black text-[#0B5E3C] uppercase tracking-tight">Approve Student Account</h2>
+                <h2 className="text-xl font-black text-[#0B5E3C] uppercase tracking-tight">
+                  Approve {showApproveModal.role === "lecturer" ? "Lecturer" : "Student"} Account
+                </h2>
               </div>
               <button onClick={() => setShowApproveModal(null)} className="p-2 rounded-xl hover:bg-slate-100 transition-colors">
                 <X className="w-5 h-5 text-slate-400" />
@@ -718,7 +739,9 @@ Please sign in at ${portalUrl} to manage your courses and access your teaching s
             <div className="space-y-4 mb-6">
               <div className="bg-slate-50 rounded-2xl p-5 border border-slate-100 space-y-2.5">
                 <div className="flex justify-between items-center text-xs">
-                  <span className="font-bold text-slate-400 uppercase tracking-wider">Student Name:</span>
+                  <span className="font-bold text-slate-400 uppercase tracking-wider">
+                    {showApproveModal.role === "lecturer" ? "Lecturer" : "Student"} Name:
+                  </span>
                   <span className="font-black text-[#0B5E3C]">{showApproveModal.fullName || "—"}</span>
                 </div>
                 <div className="flex justify-between items-center text-xs">
@@ -726,7 +749,9 @@ Please sign in at ${portalUrl} to manage your courses and access your teaching s
                   <span className="font-bold text-slate-600">{showApproveModal.email}</span>
                 </div>
                 <div className="flex justify-between items-center text-xs">
-                  <span className="font-bold text-slate-400 uppercase tracking-wider">Student ID:</span>
+                  <span className="font-bold text-slate-400 uppercase tracking-wider">
+                    {showApproveModal.role === "lecturer" ? "Lecturer ID" : "Student ID"}:
+                  </span>
                   <span className="font-black text-[#0B5E3C] bg-emerald-50 px-2 py-0.5 rounded text-emerald-800">
                     {showApproveModal.studentIdNumber || "N/A"}
                   </span>
@@ -751,7 +776,7 @@ Please sign in at ${portalUrl} to manage your courses and access your teaching s
                   />
                 </div>
                 <p className="text-[10px] text-slate-400 font-semibold mt-2 ml-1">
-                  The student will log in using their <strong>Student ID</strong> and this default password.
+                  The {showApproveModal.role === "lecturer" ? "lecturer" : "student"} will log in using their <strong>{showApproveModal.role === "lecturer" ? "Email / ID" : "Student ID"}</strong> and this default password.
                 </p>
               </div>
             </div>
@@ -871,7 +896,7 @@ Please sign in at ${portalUrl} to manage your courses and access your teaching s
                         onChange={e => setCreateForm({ ...createForm, department: e.target.value })}
                         className={`${inputClass} appearance-none`}>
                         <option value="">Select Department</option>
-                        {departments.map(d => <option key={d} value={d}>{d}</option>)}
+                        {(createForm.faculty && facultyDepartments[createForm.faculty] ? facultyDepartments[createForm.faculty] : departments).map(d => <option key={d} value={d}>{d}</option>)}
                       </select>
                       <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
                     </div>
@@ -1075,7 +1100,7 @@ Please sign in at ${portalUrl} to manage your courses and access your teaching s
                       onChange={e => setEditForm({ ...editForm, department: e.target.value })}
                       className={`${inputClass} appearance-none`}>
                       <option value="">Select Department</option>
-                      {departments.map(d => <option key={d} value={d}>{d}</option>)}
+                      {(editForm.faculty && facultyDepartments[editForm.faculty] ? facultyDepartments[editForm.faculty] : departments).map(d => <option key={d} value={d}>{d}</option>)}
                     </select>
                     <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
                   </div>
