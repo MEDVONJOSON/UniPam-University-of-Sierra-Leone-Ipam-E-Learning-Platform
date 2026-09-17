@@ -126,8 +126,28 @@ class Material {
       });
       const enrolledCourseIds = new Set(enrollments.map(e => e.course_id));
 
+      let internalCourseWhere = { is_internal: true };
+
+      if (user?.profile?.faculty && user?.profile?.department && user?.profile?.current_academic_year) {
+        const matchingLecturers = await prisma.profile.findMany({
+          where: {
+            faculty: user.profile.faculty,
+            department: user.profile.department,
+            current_academic_year: user.profile.current_academic_year,
+            user: { role: "lecturer", is_active: true }
+          },
+          select: { user_id: true }
+        });
+        const matchingLecturerIds = matchingLecturers.map(p => p.user_id);
+        
+        internalCourseWhere.instructor_id = { in: matchingLecturerIds };
+      } else {
+        // If student has incomplete profile, don't match any internal courses
+        internalCourseWhere.id = "no-match-impossible-id"; 
+      }
+
       const internalCourses = await prisma.course.findMany({
-        where: { is_internal: true },
+        where: internalCourseWhere,
         select: { id: true }
       });
       const internalCourseIds = internalCourses.map(c => c.id);

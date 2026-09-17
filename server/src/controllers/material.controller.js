@@ -119,17 +119,18 @@ exports.createMaterial = async (req, res) => {
       });
       const notifiedUserIds = new Set(enrollResult.map(e => e.user_id));
 
-      // 2. Students in the same faculty + department as the uploader
+      // 2. Students in the same faculty + department + academic year as the uploader
       const uploaderProfile = await prisma.profile.findUnique({
         where: { user_id: req.auth.userId },
-        select: { faculty_id: true, department_id: true }
+        select: { faculty: true, department: true, current_academic_year: true }
       });
 
-      if (uploaderProfile?.faculty_id && uploaderProfile?.department_id) {
+      if (uploaderProfile?.faculty && uploaderProfile?.department && uploaderProfile?.current_academic_year) {
         const deptStudents = await prisma.profile.findMany({
           where: {
-            faculty_id: uploaderProfile.faculty_id,
-            department_id: uploaderProfile.department_id,
+            faculty: uploaderProfile.faculty,
+            department: uploaderProfile.department,
+            current_academic_year: uploaderProfile.current_academic_year,
             user: { role: "learner", is_active: true }
           },
           select: { user_id: true }
