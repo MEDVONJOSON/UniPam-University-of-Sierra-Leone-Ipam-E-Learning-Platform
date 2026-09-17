@@ -38,6 +38,28 @@ function ProfileInput({ label, value, name, onChange, type = "text", disabled = 
   );
 }
 
+function ProfileSelect({ label, value, name, onChange, options = [], disabled = false }) {
+  return (
+    <div className="space-y-2">
+      <label className="text-[10px] font-black text-hover-500 uppercase tracking-widest leading-none block ml-1">{label}</label>
+      <select 
+        name={name}
+        value={value || ""} 
+        onChange={onChange}
+        disabled={disabled}
+        className="block w-full px-5 py-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm font-black text-[#0B5E3C] focus:ring-4 focus:ring-brand-500/10 focus:border-brand-500 transition-all disabled:opacity-60 disabled:cursor-not-allowed appearance-none"
+      >
+        <option value="" disabled>Select {label}</option>
+        {options.map((opt, idx) => (
+          <option key={idx} value={opt.value !== undefined ? opt.value : opt}>
+            {opt.label !== undefined ? opt.label : opt}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
 function ProfilePage() {
   const navigate = useNavigate();
   const [sessionUser, setSessionUser] = useState(() => getCurrentUser());
@@ -439,19 +461,27 @@ function ProfilePage() {
                           value={profile?.program} 
                           onChange={handleChange} 
                         />
-                        <ProfileInput 
+                        <ProfileSelect 
                           label="Academic Year" 
                           name="currentAcademicYear" 
                           value={profile?.currentAcademicYear} 
                           onChange={handleChange} 
-                          placeholder="2" 
+                          options={[
+                            { label: 'Year 1', value: 1 },
+                            { label: 'Year 2', value: 2 },
+                            { label: 'Year 3', value: 3 },
+                            { label: 'Year 4', value: 4 }
+                          ]} 
                         />
-                        <ProfileInput 
+                        <ProfileSelect 
                           label="Current Semester" 
                           name="currentSemester" 
                           value={profile?.currentSemester} 
                           onChange={handleChange} 
-                          placeholder="1" 
+                          options={[
+                            { label: 'Semester 1', value: 1 },
+                            { label: 'Semester 2', value: 2 }
+                          ]} 
                         />
                      </div>
                   </ProfileSection>
