@@ -283,8 +283,8 @@ exports.createUser = async (req, res) => {
             department: department || "",
             enrollment_year: new Date().getFullYear().toString(),
             designation: role === "lecturer" ? "Lecturer & Module Coordinator" : "",
-            current_academic_year: academicYear ? parseInt(academicYear, 10) : null,
-            current_semester: semester ? parseInt(semester, 10) : null
+            current_academic_year: academicYear ? parseInt(academicYear.toString().replace(/\\D/g, ''), 10) || 1 : null,
+            current_semester: semester ? parseInt(semester.toString().replace(/\\D/g, ''), 10) || 1 : null
           }
         }
       },
@@ -388,8 +388,8 @@ exports.updateUser = async (req, res) => {
             faculty: faculty !== undefined ? faculty : undefined,
             department: department !== undefined ? department : undefined,
             designation: moduleTitle !== undefined ? moduleTitle : undefined,
-            current_academic_year: academicYear !== undefined && academicYear !== "" ? parseInt(academicYear, 10) : undefined,
-            current_semester: semester !== undefined && semester !== "" ? parseInt(semester, 10) : undefined
+            current_academic_year: academicYear !== undefined && academicYear !== "" ? parseInt(academicYear.toString().replace(/\\D/g, ''), 10) || 1 : undefined,
+            current_semester: semester !== undefined && semester !== "" ? parseInt(semester.toString().replace(/\\D/g, ''), 10) || 1 : undefined
           }
         }
       },

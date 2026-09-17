@@ -428,8 +428,8 @@ Please sign in at ${portalUrl} to manage your courses and access your teaching s
       is_active: user.is_active !== false,
       moduleTitle: user.moduleTitle || "",
       moduleCode: user.moduleCode || "",
-      academicYear: user.academicYear || "Year 1",
-      semester: user.semester || "Semester 1"
+      academicYear: user.academicYear ? (user.academicYear.toString().startsWith("Year") ? user.academicYear : `Year ${user.academicYear}`) : "Year 1",
+      semester: user.semester ? (user.semester.toString().startsWith("Semester") ? user.semester : `Semester ${user.semester}`) : "Semester 1"
     });
     setShowEditModal(user);
   };
@@ -642,12 +642,14 @@ Please sign in at ${portalUrl} to manage your courses and access your teaching s
                                 </span>
                               )}
                               <span className="text-[9px] text-slate-400 font-bold">
-                                {user.academicYear || "Year 1"} · {user.semester || "Semester 1"}
+                                {user.academicYear?.toString().startsWith("Year") ? user.academicYear : `Year ${user.academicYear || 1}`} · {user.semester?.toString().startsWith("Semester") ? user.semester : `Semester ${user.semester || 1}`}
                               </span>
                             </div>
                           </div>
                         ) : (
-                          <span className="text-slate-400 text-xs">—</span>
+                          <span className="text-[10px] text-slate-500 font-bold">
+                            {user.academicYear?.toString().startsWith("Year") ? user.academicYear : `Year ${user.academicYear || 1}`} · {user.semester?.toString().startsWith("Semester") ? user.semester : `Semester ${user.semester || 1}`}
+                          </span>
                         )}
                       </td>
                       <td className="py-4">
