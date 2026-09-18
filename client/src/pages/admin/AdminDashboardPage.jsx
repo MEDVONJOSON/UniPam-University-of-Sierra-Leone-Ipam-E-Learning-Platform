@@ -458,19 +458,30 @@ Please sign in at ${portalUrl} to manage your courses and access your teaching s
   ];
 
   const departments = [
-    "Department of Accountancy",
-    "Department of Financial Services",
-    "Department of Banking and Finance",
-    "Department of Information Systems",
-    "Department of Information Technology",
-    "Business Administration",
-    "Marketing and Sales",
-    "Procurement, Logistics & Supply Chain",
-    "Department of Public Administration",
-    "Extra-Mural Studies Department",
+    "BSc (Hons) in Financial Economics",
+    "BSc in Applied Accounting",
+    "BSc in Auditing, Taxation and Internal Control",
+    "BSc in Banking and Finance",
+    "BSc In Financial Services",
+    "BSc Information Systems",
+    "BSc Information Technology",
+    "BSc In Computer Networking",
+    "Diploma in Information Systems",
+    "BSc in Business Administration",
+    "BSc in Entrepreneurship and Innovation",
+    "BSc in Human Resource Management",
+    "BSc in Procurement,Logistics and Supply Chain Management",
+    "BSc of Science in Project Management",
+    "BSc of Science in Sales and Marketing",
     "BSc in Leadership and Sustainable Development",
     "BSc of Science in Public Policy",
-    "BSc of Science in Public Sector Management"
+    "BSc of Science in Public Sector Management",
+    "Diploma in Applied Accounting",
+    "Diploma in Banking and Finance",
+    "Diploma in Business Administration",
+    "Diplomas in Financial Services",
+    "Diploma in Information Technology",
+    "Diploma in Procurement and Supply"
   ];
 
   const academicYears = [
@@ -487,18 +498,25 @@ Please sign in at ${portalUrl} to manage your courses and access your teaching s
 
   const facultyDepartments = {
     "Faculty of Accounting & Finance": [
-      "Department of Accountancy",
-      "Department of Financial Services",
-      "Department of Banking and Finance"
+      "BSc (Hons) in Financial Economics",
+      "BSc in Applied Accounting",
+      "BSc in Auditing, Taxation and Internal Control",
+      "BSc in Banking and Finance",
+      "BSc In Financial Services"
     ],
     "Faculty of Information Systems & Technology": [
-      "Department of Information Systems",
-      "Department of Information Technology"
+      "BSc Information Systems",
+      "BSc Information Technology",
+      "BSc In Computer Networking",
+      "Diploma in Information Systems"
     ],
     "Faculty of Business Administration & Entrepreneurship": [
-      "Business Administration",
-      "Marketing and Sales",
-      "Procurement, Logistics & Supply Chain"
+      "BSc in Business Administration",
+      "BSc in Entrepreneurship and Innovation",
+      "BSc in Human Resource Management",
+      "BSc in Procurement,Logistics and Supply Chain Management",
+      "BSc of Science in Project Management",
+      "BSc of Science in Sales and Marketing"
     ],
     "Faculty of Leadership & Governance": [
       "BSc in Leadership and Sustainable Development",
@@ -506,7 +524,12 @@ Please sign in at ${portalUrl} to manage your courses and access your teaching s
       "BSc of Science in Public Sector Management"
     ],
     "Faculty of Extra-Mural Studies": [
-      "Extra-Mural Studies Department"
+      "Diploma in Applied Accounting",
+      "Diploma in Banking and Finance",
+      "Diploma in Business Administration",
+      "Diplomas in Financial Services",
+      "Diploma in Information Technology",
+      "Diploma in Procurement and Supply"
     ]
   };
 
