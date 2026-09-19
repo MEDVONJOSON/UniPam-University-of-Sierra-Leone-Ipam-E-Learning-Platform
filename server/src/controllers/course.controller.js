@@ -1,9 +1,92 @@
 const Course = require("../models/course.model");
-const { pool } = require("../config/db");
+const { pool, prisma } = require("../config/db");
+
+function normalizeFaculty(f) {
+  if (!f) return "";
+  return f.toLowerCase().replace(/^faculty\s+of\s+/i, '').replace(/&/g, 'and').trim();
+}
+
+function normalizeDept(d) {
+  if (!d) return "";
+  return d.toLowerCase().replace(/\s+/g, ' ').trim();
+}
+
+function normalizeYear(y) {
+  if (y == null || y === "") return null;
+  const parsed = parseInt(String(y).replace(/\D/g, ''), 10);
+  return isNaN(parsed) ? null : parsed;
+}
 
 exports.getAllCourses = async (req, res) => {
   const { provider, category, level, q, isInternal } = req.query;
-  const courses = await Course.findAll({ provider, category, level, query: q, isInternal });
+  const user = req.auth;
+
+  let queryInstructorIds = undefined;
+
+  // If request is from an authenticated student (role = learner), filter by matching Faculty, Department & Academic Year
+  if (user && user.role === "learner") {
+    const studentProfile = await prisma.profile.findUnique({
+      where: { user_id: user.userId }
+    });
+
+    const studentFaculty = normalizeFaculty(studentProfile?.faculty);
+    const studentDept = normalizeDept(studentProfile?.department);
+    const studentYear = normalizeYear(studentProfile?.current_academic_year);
+
+    // Find all active lecturers
+    const lecturers = await prisma.user.findMany({
+      where: { role: "lecturer", is_active: true },
+      include: { profile: true }
+    });
+
+    // Match lecturers whose faculty, department, and academic year match student's own
+    const matchedLecturerIds = lecturers.filter(lecturer => {
+      const lp = lecturer.profile;
+      if (!lp) return false;
+
+      const lecturerFaculty = normalizeFaculty(lp.faculty);
+      const lecturerDept = normalizeDept(lp.department);
+      const lecturerYear = normalizeYear(lp.current_academic_year);
+
+      // Match Faculty
+      if (studentFaculty && lecturerFaculty) {
+        if (studentFaculty !== lecturerFaculty) return false;
+      } else if (studentFaculty || lecturerFaculty) {
+        return false;
+      }
+
+      // Match Department / Program
+      if (studentDept && lecturerDept) {
+        if (studentDept !== lecturerDept) return false;
+      } else if (studentDept || lecturerDept) {
+        return false;
+      }
+
+      // Match Academic Year
+      if (studentYear != null && lecturerYear != null) {
+        if (studentYear !== lecturerYear) return false;
+      } else if (studentYear != null || lecturerYear != null) {
+        return false;
+      }
+
+      return true;
+    }).map(l => l.id);
+
+    if (matchedLecturerIds.length === 0) {
+      return res.json({ data: [] });
+    }
+
+    queryInstructorIds = matchedLecturerIds;
+  }
+
+  const courses = await Course.findAll({
+    provider,
+    category,
+    level,
+    query: q,
+    isInternal,
+    instructorIds: queryInstructorIds
+  });
   
   const formattedData = courses.map((row) => ({
     id: row.id,
@@ -20,9 +103,15 @@ exports.getAllCourses = async (req, res) => {
     external_id: row.external_id || "",
     skill_level: row.skill_level || "",
     instructor_name: row.instructor_full_name || row.instructor_name || "",
-    instructor: row.instructor_name ? {
+    instructor_faculty: row.instructor_faculty || "",
+    instructor_department: row.instructor_department || "",
+    instructor_academic_year: row.instructor_academic_year != null ? row.instructor_academic_year : "",
+    instructor: (row.instructor_name || row.instructor_full_name) ? {
       name: row.instructor_full_name || row.instructor_name,
-      email: row.instructor_email
+      email: row.instructor_email,
+      faculty: row.instructor_faculty,
+      department: row.instructor_department,
+      academicYear: row.instructor_academic_year
     } : null,
     provider: {
       name: row.provider_name,
@@ -72,7 +161,13 @@ exports.getCourseById = async (req, res) => {
       description: course.description || "",
       thumbnailUrl: course.thumbnail_url || "",
       isInternal: course.is_internal,
-      instructor: course.instructor_name ? { name: course.instructor_name, email: course.instructor_email } : null,
+      instructor: course.instructor_name ? {
+        name: course.instructor_full_name || course.instructor_name,
+        email: course.instructor_email,
+        faculty: course.instructor_faculty,
+        department: course.instructor_department,
+        academicYear: course.instructor_academic_year
+      } : null,
       provider: {
         name: course.provider_name,
         slug: course.provider_slug
@@ -102,7 +197,6 @@ exports.createCourse = async (req, res) => {
   }
 
   // Get provider
-  const { prisma } = require("../config/db");
   const provider = await prisma.provider.findFirst({
     where: { slug: String(providerSlug).toLowerCase() }
   });

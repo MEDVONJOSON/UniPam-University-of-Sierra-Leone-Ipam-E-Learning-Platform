@@ -22,6 +22,28 @@ function authRequired(req, res, next) {
   }
 }
 
+function authOptional(req, res, next) {
+  const authHeader = req.headers.authorization || "";
+  const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7).trim() : "";
+
+  if (!token) {
+    return next();
+  }
+
+  try {
+    const payload = jwt.verify(token, env.jwtSecret);
+    req.auth = {
+      userId: payload.sub,
+      email: payload.email,
+      role: payload.role
+    };
+  } catch (_) {
+    // Silently proceed if optional token is invalid or expired
+  }
+  return next();
+}
+
 module.exports = {
-  authRequired
+  authRequired,
+  authOptional
 };

@@ -398,8 +398,9 @@ exports.updateUser = async (req, res) => {
       }
     });
 
-    // Update corresponding course if it exists
-    if (moduleTitle !== undefined || moduleCode !== undefined || academicYear !== undefined) {
+    // Update or create corresponding course for lecturer
+    const isLect = (updatedUser.role === "lecturer" || user.role === "lecturer");
+    if (isLect && (moduleTitle !== undefined || moduleCode !== undefined || academicYear !== undefined || faculty !== undefined)) {
       const existingCourse = await prisma.course.findFirst({ where: { instructor_id: id } });
       if (existingCourse) {
         await prisma.course.update({
@@ -408,7 +409,29 @@ exports.updateUser = async (req, res) => {
             title: moduleTitle !== undefined ? moduleTitle : undefined,
             external_id: moduleCode !== undefined ? moduleCode : undefined,
             skill_level: academicYear !== undefined ? academicYear : undefined,
-            category: faculty !== undefined ? faculty : undefined
+            category: faculty !== undefined ? faculty : undefined,
+            instructor_name: fullName !== undefined ? fullName : undefined
+          }
+        });
+      } else if (moduleTitle || moduleCode) {
+        const provider = await prisma.provider.findFirst({ where: { slug: "unipam" } });
+        const providerId = provider?.id || (await prisma.provider.create({ data: { name: "UniPam", slug: "unipam" } })).id;
+        await prisma.course.create({
+          data: {
+            provider_id: providerId,
+            external_id: moduleCode || "MOD-101",
+            title: moduleTitle || `${fullName || updatedUser.profile?.full_name || 'Lecturer'}'s Module`,
+            category: faculty || updatedUser.profile?.faculty || "Information Systems & Technology",
+            skill_level: academicYear || (updatedUser.profile?.current_academic_year ? `Year ${updatedUser.profile.current_academic_year}` : "Undergraduate"),
+            duration_label: "1 Semester",
+            has_certificate: true,
+            cost_type: "free",
+            external_url: "https://unipam.edu.sl/",
+            description: `Academic course module coordinated by ${fullName || updatedUser.profile?.full_name || 'Lecturer'}. Code: ${moduleCode || 'N/A'}.`,
+            is_internal: true,
+            instructor_id: id,
+            instructor_name: fullName || updatedUser.profile?.full_name || 'Lecturer',
+            is_active: true
           }
         });
       }

@@ -1,9 +1,11 @@
 const { prisma } = require("../config/db");
 
 class Course {
-  static async findAll({ provider, category, level, query, isInternal, instructorId }) {
+  static async findAll({ provider, category, level, query, isInternal, instructorId, instructorIds }) {
     const where = {};
-    if (instructorId) {
+    if (instructorIds && Array.isArray(instructorIds)) {
+      where.instructor_id = { in: instructorIds };
+    } else if (instructorId) {
       where.instructor_id = instructorId;
     }
     if (provider) {
@@ -38,19 +40,33 @@ class Course {
       take: 200
     });
 
-    const instructorIds = [...new Set(courses.map(c => c.instructor_id).filter(Boolean))];
+    const allInstructorIds = [...new Set(courses.map(c => c.instructor_id).filter(Boolean))];
     const instructors = await prisma.user.findMany({
-      where: { id: { in: instructorIds } },
+      where: { id: { in: allInstructorIds } },
       include: { profile: true }
     });
-    const instructorMap = Object.fromEntries(instructors.map(u => [u.id, { email: u.email, fullName: u.profile?.full_name || null }]));
+    const instructorMap = Object.fromEntries(
+      instructors.map(u => [
+        u.id,
+        {
+          email: u.email,
+          fullName: u.profile?.full_name || null,
+          faculty: u.profile?.faculty || null,
+          department: u.profile?.department || null,
+          academicYear: u.profile?.current_academic_year || null
+        }
+      ])
+    );
 
     return courses.map(c => ({
       ...c,
       provider_name: c.provider.name,
       provider_slug: c.provider.slug,
       instructor_email: c.instructor_id ? instructorMap[c.instructor_id]?.email : null,
-      instructor_full_name: c.instructor_id ? instructorMap[c.instructor_id]?.fullName : null
+      instructor_full_name: c.instructor_id ? instructorMap[c.instructor_id]?.fullName : null,
+      instructor_faculty: c.instructor_id ? instructorMap[c.instructor_id]?.faculty : null,
+      instructor_department: c.instructor_id ? instructorMap[c.instructor_id]?.department : null,
+      instructor_academic_year: c.instructor_id ? instructorMap[c.instructor_id]?.academicYear : null
     }));
   }
 
@@ -64,19 +80,25 @@ class Course {
     if (!course) return null;
 
     let instructorEmail = null;
+    let instructorProfile = null;
     if (course.instructor_id) {
       const user = await prisma.user.findUnique({
         where: { id: course.instructor_id },
-        select: { email: true }
+        include: { profile: true }
       });
       instructorEmail = user?.email || null;
+      instructorProfile = user?.profile || null;
     }
 
     return {
       ...course,
       provider_name: course.provider.name,
       provider_slug: course.provider.slug,
-      instructor_email: instructorEmail
+      instructor_email: instructorEmail,
+      instructor_full_name: instructorProfile?.full_name || course.instructor_name || null,
+      instructor_faculty: instructorProfile?.faculty || null,
+      instructor_department: instructorProfile?.department || null,
+      instructor_academic_year: instructorProfile?.current_academic_year || null
     };
   }
 
