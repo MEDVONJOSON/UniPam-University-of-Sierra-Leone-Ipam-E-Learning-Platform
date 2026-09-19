@@ -92,15 +92,39 @@ exports.listMessages = async (req, res) => {
 
     } else {
       // ── Student view ──────────────────────────────────────────────────────
-      // Students see messages sent by them, addressed to them, or broadcasts
-      orConditions = [
-        { from_user_id: userId },
-        { to_user_id: userId },
-        { to_user_id: "all" },
-        { to_user_id: "all_students" },
-        { to_user_id: "all_faculty_students" },
-        { to_user_id: "all_department_students" }
-      ];
+      // 1. Messages sent by this student
+      orConditions.push({ from_user_id: userId });
+
+      // 2. Incoming messages/broadcasts from matching lecturers:
+      // Filter lecturers by matching Faculty, Department, and Academic Year
+      const profile = await prisma.profile.findUnique({
+        where: { user_id: userId }
+      });
+
+      const lecturerProfileFilter = buildProfileMatchFilter(profile);
+
+      // Incoming messages from lecturers who share the student's Faculty, Department & Academic Year
+      orConditions.push({
+        from_role: "lecturer",
+        sender: { profile: lecturerProfileFilter },
+        OR: [
+          { to_user_id: userId },
+          { to_user_id: "all" },
+          { to_user_id: "all_students" },
+          { to_user_id: "all_faculty_students" },
+          { to_user_id: "all_department_students" }
+        ]
+      });
+
+      // Direct system / admin messages
+      orConditions.push({
+        from_role: "admin",
+        OR: [
+          { to_user_id: userId },
+          { to_user_id: "all" },
+          { to_user_id: "all_students" }
+        ]
+      });
     }
 
     const list = await prisma.message.findMany({
@@ -237,40 +261,33 @@ exports.sendMessage = async (req, res) => {
 
         let targetUsers = [];
 
-        if (
-          to_user_id === "all_department_students" &&
-          (senderProfile?.department_id || senderProfile?.department)
-        ) {
-          const matchingProfiles = await prisma.profile.findMany({
-            where: {
-              OR: [
-                ...(senderProfile.department_id ? [{ department_id: senderProfile.department_id }] : []),
-                ...(senderProfile.department     ? [{ department: { contains: senderProfile.department, mode: "insensitive" } }] : [])
-              ],
-              user: { role: { not: "lecturer" }, id: { not: userId } }
-            },
-            select: { user_id: true }
-          });
-          targetUsers = matchingProfiles.map(p => ({ id: p.user_id }));
+        if (senderRole === "lecturer" && senderProfile) {
+          const studentMatch = {
+            user: { role: { not: "lecturer" }, id: { not: userId } }
+          };
 
-        } else if (
-          to_user_id === "all_faculty_students" &&
-          (senderProfile?.faculty_id || senderProfile?.faculty)
-        ) {
+          if (senderProfile.faculty) {
+            studentMatch.faculty = { equals: senderProfile.faculty, mode: "insensitive" };
+          } else if (senderProfile.faculty_id) {
+            studentMatch.faculty_id = senderProfile.faculty_id;
+          }
+
+          if (senderProfile.department) {
+            studentMatch.department = { equals: senderProfile.department, mode: "insensitive" };
+          }
+
+          if (senderProfile.current_academic_year != null) {
+            studentMatch.current_academic_year = senderProfile.current_academic_year;
+          }
+
           const matchingProfiles = await prisma.profile.findMany({
-            where: {
-              OR: [
-                ...(senderProfile.faculty_id ? [{ faculty_id: senderProfile.faculty_id }] : []),
-                ...(senderProfile.faculty     ? [{ faculty: { contains: senderProfile.faculty, mode: "insensitive" } }] : [])
-              ],
-              user: { role: { not: "lecturer" }, id: { not: userId } }
-            },
+            where: studentMatch,
             select: { user_id: true }
           });
           targetUsers = matchingProfiles.map(p => ({ id: p.user_id }));
         }
 
-        // Fallback → all students
+        // Fallback for admin or general broadcast
         if (targetUsers.length === 0) {
           const allStudents = await prisma.user.findMany({
             where:  { role: { not: "lecturer" }, id: { not: userId } },

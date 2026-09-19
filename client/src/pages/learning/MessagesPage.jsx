@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { getCurrentUser } from "../../services/authService";
 import {
-  getEnrollments, getMessages, sendMessage, markMessageRead, deleteMessage, getMyCourses, getLecturerMessageFilters
+  getEnrollments, getMessages, sendMessage, markMessageRead, deleteMessage, getMyCourses, getLecturerMessageFilters, getCourses
 } from "../../services/platformService";
 import {
   MessageCircle, Bell, Send, CheckCircle2, AlertCircle,
@@ -29,7 +29,7 @@ function MessagesPage() {
   const [openDropdownId, setOpenDropdownId]     = useState(null);
 
   const [composeForm, setComposeForm] = useState({
-    to_user_id: isLecturer ? "all_faculty_students" : "lecturer-uuid",
+    to_user_id: isLecturer ? "all_faculty_students" : "all",
     to_name: isLecturer ? "All Students Enrolled in this Faculty" : "Course Lecturer",
     course_id: "General (All Modules)", course_title: "General (All Modules)", subject: "", message: "",
     category: isLecturer ? "announcement" : "inquiry"
@@ -40,15 +40,16 @@ function MessagesPage() {
       setLoading(true);
       try {
         const filters = isLecturer ? { departmentFilter, moduleFilter } : {};
-        const [msgs, enrols, fetchedCourses, filtersData] = await Promise.all([
+        const [msgs, enrols, studentCourses, fetchedCourses, filtersData] = await Promise.all([
           getMessages(filters).catch(() => []),
           !isLecturer ? getEnrollments().catch(() => []) : Promise.resolve([]),
+          !isLecturer ? getCourses().catch(() => []) : Promise.resolve([]),
           isLecturer ? getMyCourses().catch(() => []) : Promise.resolve([]),
           isLecturer ? getLecturerMessageFilters().catch(() => ({})) : Promise.resolve({})
         ]);
         setMessages(msgs || []);
         setEnrollments(enrols || []);
-        setCourses(fetchedCourses || []);
+        setCourses(isLecturer ? (fetchedCourses || []) : (studentCourses || []));
         if (isLecturer && filtersData && Object.keys(filtersData).length > 0) {
           setLecturerFilters(filtersData);
         }
@@ -71,9 +72,9 @@ function MessagesPage() {
       let toName = composeForm.to_name;
 
       if (!isLecturer) {
-        const sel = enrollments.find(e => e.course_id === composeForm.course_id);
+        const sel = courses.find(c => c.id === composeForm.course_id) || enrollments.find(e => e.course_id === composeForm.course_id);
         courseTitle = sel ? sel.title : (composeForm.course_title || "General Academic Inquiry");
-        toName = replyTo ? replyTo.from_name : (sel ? `${sel.provider_name || "Faculty"} Lecturer` : "Course Lecturer");
+        toName = replyTo ? replyTo.from_name : (sel ? (sel.instructor_name || sel.instructor?.name || "Course Lecturer") : "Course Lecturer");
       } else {
         courseTitle = composeForm.course_id || "General (All Modules)";
         if (composeForm.to_user_id === "all_faculty_students") toName = "All Students Enrolled in this Faculty";
@@ -543,8 +544,48 @@ function MessagesPage() {
             {replyTo && (<button type="button" onClick={() => { setReplyTo(null); setComposeForm(f => ({ ...f, to_user_id: "lecturer-uuid", to_name: "Course Lecturer" })); }} className="text-[10px] font-bold text-slate-400 hover:text-red-500 uppercase">Cancel Reply</button>)}
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div><label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5">Select Enrolled Course</label><div className="relative"><select value={composeForm.course_id} onChange={e => setComposeForm(f => ({ ...f, course_id: e.target.value }))} className="block w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all outline-none appearance-none pr-10"><option value="">General (Departmental Inquiry)</option>{enrollments.map(e => <option key={e.id} value={e.course_id}>{e.title}</option>)}</select><ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" /></div></div>
-            <div><label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5">Inquiry Type</label><div className="relative"><select value={composeForm.category} onChange={e => setComposeForm(f => ({ ...f, category: e.target.value }))} className="block w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all outline-none appearance-none pr-10"><option value="inquiry">Question on Lecture Material</option><option value="feedback">General Academic Advice</option></select><ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" /></div></div>
+            <div>
+              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5">Select Enrolled Course / Module</label>
+              <div className="relative">
+                <select
+                  value={composeForm.course_id}
+                  onChange={e => {
+                    const selectedId = e.target.value;
+                    const matchedCourse = courses.find(c => c.id === selectedId);
+                    setComposeForm(f => ({
+                      ...f,
+                      course_id: selectedId,
+                      course_title: matchedCourse ? matchedCourse.title : (selectedId ? selectedId : "General (Departmental Inquiry)"),
+                      to_user_id: matchedCourse?.instructor_id || "all",
+                      to_name: matchedCourse?.instructor_name || matchedCourse?.instructor?.name || "Course Lecturer"
+                    }));
+                  }}
+                  className="block w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all outline-none appearance-none pr-10"
+                >
+                  <option value="">General (Departmental Inquiry)</option>
+                  {courses.map(c => (
+                    <option key={c.id} value={c.id}>
+                      {c.title} {c.instructor_name ? `— Lecturer: ${c.instructor_name}` : ""}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+              </div>
+            </div>
+            <div>
+              <label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5">Inquiry Type</label>
+              <div className="relative">
+                <select
+                  value={composeForm.category}
+                  onChange={e => setComposeForm(f => ({ ...f, category: e.target.value }))}
+                  className="block w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-800 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all outline-none appearance-none pr-10"
+                >
+                  <option value="inquiry">Question on Lecture Material</option>
+                  <option value="feedback">General Academic Advice</option>
+                </select>
+                <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+              </div>
+            </div>
           </div>
           <div><label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5">Subject / Topic *</label><input type="text" placeholder="e.g. Question regarding Week 3 Database Normalization" value={composeForm.subject} onChange={e => setComposeForm(f => ({ ...f, subject: e.target.value }))} className="block w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-800 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all outline-none" required /></div>
           <div><label className="block text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1.5">Message / Inquiry *</label><textarea rows={5} placeholder="Type your question here..." value={composeForm.message} onChange={e => setComposeForm(f => ({ ...f, message: e.target.value }))} className="block w-full px-4 py-3.5 bg-slate-50 border border-slate-200 rounded-xl text-sm font-medium text-slate-800 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all outline-none" required /></div>
